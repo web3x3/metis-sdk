@@ -118,7 +118,7 @@ impl Default for ParallelExecutor {
 }
 
 impl ParallelExecutor {
-    /// New a parrallel VM with the compiler feature. The default compiler is an AOT-based one.
+    /// New a parallel VM with the compiler feature. The default compiler is an AOT-based one.
     #[cfg(feature = "compiler")]
     pub fn compiler() -> Self {
         Self {
