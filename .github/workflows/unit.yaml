@@ -1,4 +1,4 @@
-name: CI
+name: Unit test
 
 on:
   push:
@@ -14,7 +14,6 @@ env:
 jobs:
   ubuntu-test:
     name: Ubuntu Test
-    if: github.event.pull_request.draft == false
     strategy:
       matrix:
         os: [ubuntu-latest, ubuntu-22.04-arm]
@@ -43,14 +42,6 @@ jobs:
           echo "LLVM_SYS_${v}0_PREFIX=/usr/lib/llvm-${v}/" >> $GITHUB_ENV
           echo "PATH=/usr/lib/llvm-${v}/bin:$PATH" >> $GITHUB_ENV
 
-      - name: Install typos
-        uses: taiki-e/install-action@typos
-      - name: Check typos
-        run: typos .
-      - name: Cargo fmt
-        run: cargo fmt --all -- --check
-      - name: Cargo clippy
-        run: cargo clippy --workspace --all-features --benches --examples --tests -- -D warnings
       - name: Run tests
         run: cargo test -r --workspace --all-features
 
@@ -77,9 +68,5 @@ jobs:
           echo "LLVM_SYS_${v}0_PREFIX=$(brew --prefix llvm@${v})" >> $GITHUB_ENV
           echo "PATH=$(brew --prefix)/opt/llvm@${v}/bin:$PATH" >> $GITHUB_ENV
           echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" >> $GITHUB_ENV
-      - name: Cargo fmt
-        run: cargo fmt --all -- --check
-      - name: Cargo clippy
-        run: cargo clippy --workspace --all-features --benches --examples --tests -- -D warnings
       - name: Run tests
         run: cargo test -r --workspace --all-features
