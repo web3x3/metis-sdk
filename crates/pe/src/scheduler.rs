@@ -153,31 +153,31 @@ impl TaskProvider for NormalProvider {
 }
 
 // TODO2：use one scheduler for both execution and validation
-// The parallel executor collaborative scheduler coordinates execution & validation
-// tasks among work threads.
-//
-// To pick a task, threads increment the smaller of the (execution and
-// validation) task counters until they find a task that is ready to be
-// performed. To redo a task for a transaction, the thread updates the status
-// and reduces the corresponding counter to the transaction index if it had a
-// larger value.
-//
-// An incarnation may write to a memory location that was previously
-// read by a higher transaction. Thus, when an incarnation finishes, new
-// validation tasks are created for higher transactions.
-//
-// Validation tasks are scheduled optimistically and in parallel. Identifying
-// validation failures and aborting incarnations as soon as possible is critical
-// for performance, as any incarnation that reads values written by an
-// incarnation that aborts also must abort.
-// When an incarnation writes only to a subset of memory locations written
-// by the previously completed incarnation of the same transaction, we schedule
-// validation just for the incarnation. This is sufficient as the whole write
-// set of the previous incarnation is marked as ESTIMATE during the abort.
-// The abort leads to optimistically creating validation tasks for higher
-// transactions. Threads that perform these tasks can already detect validation
-// failure due to the ESTIMATE markers on memory locations, instead of waiting
-// for a subsequent incarnation to finish.
+/// The parallel executor collaborative scheduler coordinates execution & validation
+/// tasks among work threads.
+///
+/// To pick a task, threads increment the smaller of the (execution and
+/// validation) task counters until they find a task that is ready to be
+/// performed. To redo a task for a transaction, the thread updates the status
+/// and reduces the corresponding counter to the transaction index if it had a
+/// larger value.
+///
+/// An incarnation may write to a memory location that was previously
+/// read by a higher transaction. Thus, when an incarnation finishes, new
+/// validation tasks are created for higher transactions.
+///
+/// Validation tasks are scheduled optimistically and in parallel. Identifying
+/// validation failures and aborting incarnations as soon as possible is critical
+/// for performance, as any incarnation that reads values written by an
+/// incarnation that aborts also must abort.
+/// When an incarnation writes only to a subset of memory locations written
+/// by the previously completed incarnation of the same transaction, we schedule
+/// validation just for the incarnation. This is sufficient as the whole write
+/// set of the previous incarnation is marked as ESTIMATE during the abort.
+/// The abort leads to optimistically creating validation tasks for higher
+/// transactions. Threads that perform these tasks can already detect validation
+/// failure due to the ESTIMATE markers on memory locations, instead of waiting
+/// for a subsequent incarnation to finish.
 #[derive(Debug)]
 pub(crate) struct Scheduler<T: TaskProvider> {
     /// The provider of transactions.
@@ -244,7 +244,7 @@ impl<T: TaskProvider> Scheduler<T> {
         None
     }
 
-    // next_task returns the next task to execute.
+    /// Returns the next task to execute.
     pub(crate) fn next_task(&self) -> Option<Task> {
         // Try to do re-execution first.
         if let Some(tx_idx) = self.execution_queue.pop() {
@@ -263,10 +263,10 @@ impl<T: TaskProvider> Scheduler<T> {
         None
     }
 
-    // Add [tx_idx] as a dependent of [blocking_tx_idx] so [tx_idx] is
-    // re-executed when the next [blocking_tx_idx] incarnation is executed.
-    // Return [false] if we encounter a race condition when [blocking_tx_idx]
-    // gets re-executed before the dependency can be added.
+    /// Add [tx_idx] as a dependent of [blocking_tx_idx] so [tx_idx] is
+    /// re-executed when the next [blocking_tx_idx] incarnation is executed.
+    /// Return [false] if we encounter a race condition when [blocking_tx_idx]
+    /// gets re-executed before the dependency can be added.
     pub(crate) fn add_dependency(&self, tx_idx: TxIdx, blocking_tx_idx: TxIdx) -> bool {
         // This is an important lock to prevent a race condition where the blocking
         // transaction completes re-execution before this dependency can be added.
@@ -382,9 +382,9 @@ impl<T: TaskProvider> Scheduler<T> {
         self.num_validated.load(Ordering::Relaxed) == self.provider.num_tasks()
     }
 
-    // When there is a successful abort, schedule the transaction for re-execution
-    // and the higher transactions for validation. The re-execution task is returned
-    // for the aborted transaction.
+    /// When there is a successful abort, schedule the transaction for re-execution
+    /// and the higher transactions for validation. The re-execution task is returned
+    /// for the aborted transaction.
     pub(crate) fn finish_validation(&self, tx_idx: TxIdx, aborted: bool) -> Option<Task> {
         let tx = self.transactions_status.get(tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);

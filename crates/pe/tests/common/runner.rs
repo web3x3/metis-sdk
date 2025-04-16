@@ -39,6 +39,6 @@ where
             #[cfg(feature = "compiler")]
             pe.worker.clone(),
         ),
-        pe.execute(&db, EvmEnv::default(), txs, concurrency_level,),
+        pe.execute(&db, EvmEnv::default(), txs, concurrency_level),
     );
 }
