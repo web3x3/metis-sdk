@@ -16,7 +16,7 @@ use std::{
 use alloy_evm::EvmEnv;
 use alloy_primitives::{TxNonce, U256};
 use metis_primitives::{
-    Account, AccountInfo, KECCAK_EMPTY, SpecId, Transaction, hash_deterministic,
+    Account, AccountInfo, AccountStatus, KECCAK_EMPTY, SpecId, Transaction, hash_deterministic,
 };
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
@@ -328,7 +328,8 @@ impl ParallelExecutor {
                         account.info.balance = balance;
                         account.info.nonce = nonce;
                     } else {
-                        // Insert a new account.
+                        // Insert a new account with the touched status.
+                        // Only when account is marked as touched we will save it to database.
                         tx_result.state.insert(
                             address,
                             Account {
@@ -338,6 +339,7 @@ impl ParallelExecutor {
                                     code_hash,
                                     code: Some(code.clone()),
                                 },
+                                status: AccountStatus::Touched,
                                 ..Default::default()
                             },
                         );

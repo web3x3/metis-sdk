@@ -32,12 +32,12 @@ type LazyAddresses = HashSet<Address, BuildSuffixHasher>;
 #[derive(Debug)]
 pub struct MvMemory {
     /// The list of transaction incarnations and written values for each memory location
-    // No more hashing is required as we already identify memory locations by their hash
-    // in the read & write sets. [dashmap] having a dedicated interface for this use case
-    // (that skips hashing for [u64] keys) would make our code cleaner and "faster".
-    // Nevertheless, the compiler should be good enough to optimize these cases anyway.
+    /// No more hashing is required as we already identify memory locations by their hash
+    /// in the read & write sets. [dashmap] having a dedicated interface for this use case
+    /// (that skips hashing for [u64] keys) would make our code cleaner and "faster".
+    /// Nevertheless, the compiler should be good enough to optimize these cases anyway.
     pub(crate) data: DashMap<MemoryLocationHash, BTreeMap<TxIdx, MemoryEntry>, BuildIdentityHasher>,
-    // list of transactions that reaad the memory location
+    /// List of transactions that reaad the memory location
     pub(crate) location_reads: DashMap<MemoryLocationHash, BTreeSet<TxIdx>, BuildIdentityHasher>,
     /// Last read & written locations of each transaction
     last_locations: Vec<Mutex<LastLocations>>,
@@ -87,10 +87,10 @@ impl MvMemory {
         }
     }
 
-    // Apply a new pair of read & write sets to the multi-version data structure.
-    // Return whether a write occurred to a memory location not written to by
-    // the previous incarnation of the same transaction. This determines whether
-    // the executed higher transactions need re-validation.
+    /// Apply a new pair of read & write sets to the multi-version data structure.
+    /// Return whether a write occurred to a memory location not written to by
+    /// the previous incarnation of the same transaction. This determines whether
+    /// the executed higher transactions need re-validation.
     pub(crate) fn record(
         &self,
         tx_version: &TxVersion,
@@ -178,18 +178,18 @@ impl MvMemory {
         affected_txs.into_iter().collect()
     }
 
-    // Obtain the last read set recorded by an execution of [tx_idx] and check
-    // that re-reading each memory location in the read set still yields the
-    // same read origins.
-    // This is invoked during validation, when the incarnation being validated is
-    // already executed and has recorded the read set. However, if the thread
-    // performing a validation for incarnation i of a transaction is slow, it is
-    // possible that this function invocation observes a read set recorded by a
-    // latter (> i) incarnation. In this case, incarnation i is guaranteed to be
-    // already aborted (else higher incarnations would never start), and the
-    // validation task will have no effect regardless of the outcome (only
-    // validations that successfully abort affect the state and each incarnation
-    // can be aborted at most once).
+    /// Obtain the last read set recorded by an execution of [tx_idx] and check
+    /// that re-reading each memory location in the read set still yields the
+    /// same read origins.
+    /// This is invoked during validation, when the incarnation being validated is
+    /// already executed and has recorded the read set. However, if the thread
+    /// performing a validation for incarnation i of a transaction is slow, it is
+    /// possible that this function invocation observes a read set recorded by a
+    /// latter (> i) incarnation. In this case, incarnation i is guaranteed to be
+    /// already aborted (else higher incarnations would never start), and the
+    /// validation task will have no effect regardless of the outcome (only
+    /// validations that successfully abort affect the state and each incarnation
+    /// can be aborted at most once).
     pub(crate) fn validate_read_locations(&self, tx_idx: TxIdx) -> bool {
         for (location, prior_origins) in &index_mutex!(self.last_locations, tx_idx).read {
             if let Some(written_transactions) = self.data.get(location) {
