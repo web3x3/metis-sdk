@@ -23,7 +23,8 @@ use metis_vm::ExtCompileWorker;
 #[cfg(feature = "compiler")]
 use revm::ExecuteEvm;
 use revm::{
-    context::{TxEnv, result::InvalidTransaction},
+    DatabaseCommit,
+    context::{ContextTr, TxEnv, result::InvalidTransaction},
     database::CacheDB,
 };
 
@@ -444,6 +445,8 @@ pub fn execute_sequential<DB: DatabaseRef>(
             evm.transact(tx)
                 .map_err(|err| ExecutionError::Custom(err.to_string()))?
         };
+
+        evm.db().commit(result_and_state.state.clone());
 
         let mut execution_result = TxExecutionResult::from_raw(tx_type, result_and_state);
 
