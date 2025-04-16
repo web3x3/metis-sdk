@@ -4,7 +4,7 @@ use std::{
 };
 
 use alloy_primitives::{Address, B256};
-use dashmap::DashMap;
+use dashmap::{DashMap, DashSet};
 use hashbrown::HashMap;
 use metis_primitives::{BuildIdentityHasher, BuildSuffixHasher, hash_deterministic};
 use revm::bytecode::Bytecode;
@@ -23,8 +23,6 @@ struct LastLocations {
     write: Vec<MemoryLocationHash>,
 }
 
-type LazyAddresses = HashSet<Address, BuildSuffixHasher>;
-
 /// The `MvMemory` contains shared memory in a form of a multi-version data
 /// structure for values written and read by different transactions. It stores
 /// multiple writes for each memory location, along with a value and an associated
@@ -42,7 +40,7 @@ pub struct MvMemory {
     /// Last read & written locations of each transaction
     last_locations: Vec<Mutex<LastLocations>>,
     /// Lazy addresses that need full evaluation at the end of the block
-    lazy_addresses: Mutex<LazyAddresses>,
+    lazy_addresses: DashSet<Address, BuildSuffixHasher>,
     /// New bytecodes deployed in this block
     pub(crate) new_bytecodes: DashMap<B256, Bytecode, BuildSuffixHasher>,
 }
@@ -73,7 +71,7 @@ impl MvMemory {
             data,
             location_reads: DashMap::default(),
             last_locations: (0..block_size).map(|_| Mutex::default()).collect(),
-            lazy_addresses: Mutex::new(LazyAddresses::from_iter(lazy_addresses)),
+            lazy_addresses: DashSet::from_iter(lazy_addresses),
             // TODO: Fine-tune the number of shards, like to the next number of two from the
             // number of worker threads.
             new_bytecodes: DashMap::default(),
@@ -81,9 +79,8 @@ impl MvMemory {
     }
 
     pub(crate) fn add_lazy_addresses(&self, new_lazy_addresses: impl IntoIterator<Item = Address>) {
-        let mut lazy_addresses = self.lazy_addresses.lock().unwrap();
         for address in new_lazy_addresses {
-            lazy_addresses.insert(address);
+            self.lazy_addresses.insert(address);
         }
     }
 
@@ -226,7 +223,7 @@ impl MvMemory {
     }
 
     pub(crate) fn consume_lazy_addresses(&self) -> impl IntoIterator<Item = Address> {
-        std::mem::take(&mut *self.lazy_addresses.lock().unwrap()).into_iter()
+        self.lazy_addresses.clone().into_iter()
     }
 }
 
