@@ -15,15 +15,14 @@ async fn test_compare_receipt() -> Result<(), Box<dyn Error>> {
     let parallel_receipt = {
         let (chain_spec, db, recovered_block) =
             common::tx::get_test_withdraw_config(sender, keypair);
-        let config = EthEvmConfig::new(chain_spec);
-        let provider = BlockParallelExecutorProvider::new(config);
+        let provider = BlockParallelExecutorProvider::new(EthEvmConfig::new(chain_spec));
         let mut executor = provider.executor(db);
 
         let BlockExecutionResult { receipts, .. } = executor.execute_one(&recovered_block).unwrap();
         receipts.first().unwrap().clone()
     };
 
-    let custom_receipt = {
+    let sequential_receipt = {
         let (chain_spec, db, recovered_block) =
             common::tx::get_test_withdraw_config(sender, keypair);
         let provider = BasicBlockExecutorProvider::new(EthEvmConfig::new(chain_spec));
@@ -32,7 +31,7 @@ async fn test_compare_receipt() -> Result<(), Box<dyn Error>> {
         receipts.first().unwrap().clone()
     };
 
-    assert_eq!(parallel_receipt, custom_receipt);
+    assert_eq!(parallel_receipt, sequential_receipt);
 
     Ok(())
 }
