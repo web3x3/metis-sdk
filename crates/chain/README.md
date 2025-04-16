@@ -1,35 +1,44 @@
 # Chain
 
-This document aims to introduce how to use metis sdk to quickly build a chain node
+This document provides a guide on utilizing the Metis SDK to rapidly construct blockchain nodes. The implementation leverages parallel transaction execution to enhance performance while maintaining compatibility with Ethereum's execution layer standards.
 
-## ParallelExecutorBuilder
-metis-sdk provides a pluggable component for implementing a custom virtual machine
+## Quick Start
 
-The ParallelExecutorBuilder implement general trait of ExecutorBuilder which provides method of `build_evm` to generate ParallelExecutor
+Execute the following command to launch a Metis devnet:
 
-data structure and main functions as follow:
+```shell
+cargo run -r --bin metis --dev
+```
+
+## Core Components
+
+### `ParallelExecutorBuilder`
+
+The `ParallelExecutorBuilder` implements the `ExecutorBuilder` trait, serving as a factory for creating parallelized EVM executors.
+
 ```rust
 #[derive(Debug, Default, Clone, Copy)]
 #[non_exhaustive]
 pub struct ParallelExecutorBuilder;
 
-// general function to build parallel evm
-async fn build_evm(
-    self,
-    ctx: &BuilderContext<Node>,
-) -> eyre::Result<(Self::EVM, Self::Executor)>{}
+impl ExecutorBuilder for ParallelExecutorBuilder {
+    async fn build_evm(
+        self,
+        ctx: &BuilderContext<Node>,
+    ) -> eyre::Result<(Self::EVM, Self::Executor)> {
+        // Implementation details
+    }
+}
 ```
 
-## ParallelExecutor
+### `ParallelExecutor`
 
-During specific execution, evm needs to process 3 stages of block content:
+During specific execution, the parallel executor needs to process 3 stages of block content:
+
 - Applies any necessary changes before executing the block's transactions.
 - Executing block transactions
 - Applies any necessary changes after executing the block's transactions, completes execution and returns the underlying EVM along with execution result.
 
-The ParallelExecutor implements the general trait executor which used to calculate the three-stage content. This executor will use ParallelEvm to parallelize block transactions in the second step 
-
-data structure and main functions
 ```rust
 pub struct ParallelExecutor<DB> {
     strategy_factory: EthEvmConfig,
@@ -51,10 +60,10 @@ pub fn execute_block(
 ) -> Result<BlockExecutionResult<Receipt>, BlockExecutionError> {}
 ```
 
-## NodeBuilder
-We use general `reth::builder::NodeBuilder<ChainSpec>` to build chain nodes. NodeBuilder provides execution plug-ins. The advantage of this is that the metis-sdk provider can be run in a specific node as a plug-in.
+### NodeBuilder
 
-data structure:
+We use general `reth::builder::NodeBuilder<ChainSpec>` to build chain nodes. `NodeBuilder` provides execution plugins. The advantage of this is that the metis-sdk provider can be run in a specific node as a plugin.
+
 ```rust
 pub struct NodeBuilder<DB, ChainSpec> {
     /// All settings for how the node should be configured.
@@ -63,26 +72,9 @@ pub struct NodeBuilder<DB, ChainSpec> {
     database: DB,
 }
 ```
-- database: use the default form, e.g: direction of `chain`
-- config: all settings for full node
 
-follow code show us how to generate an NodeBuilder
-```rust
-impl Default for NodeConfig<ChainSpec> {
-    fn default() -> Self {
-        Self::new(MAINNET.clone())
-    }
-}
+The `ChainSpec` comes from genesis file, for example:
 
-impl<ChainSpec> NodeBuilder<(), ChainSpec> {
-    /// Create a new [`NodeBuilder`].
-    pub const fn new(config: NodeConfig<ChainSpec>) -> Self {
-        Self { config, database: () }
-    }
-}
-```
-
-the `ChainSpec` comes from genesis file, for example:
 ```rust
 pub fn custom_chain() -> Arc<ChainSpec> {
     let custom_genesis = r#"
@@ -127,6 +119,7 @@ pub fn custom_chain() -> Arc<ChainSpec> {
 ```
 
 We can also use `reth_ethereum::chainspec::ChainSpec` dependency, which has the general genesis configuration of various chains:
+
 ```rust
 pub static MAINNET: LazyLock<Arc<ChainSpec>> = LazyLock::new(|| {..});
 pub static SEPOLIA: LazyLock<Arc<ChainSpec>> = LazyLock::new(|| {..});
@@ -134,8 +127,9 @@ pub static HOLESKY: LazyLock<Arc<ChainSpec>> = LazyLock::new(|| {..});
 ...
 ```
 
-# Example
-so, how to build an node with the `NodeBuilder`? here is an example.
+## Example
+
+Here is an example for how to build an node with the `NodeBuilder`.
 
 ```rust
 pub fn get_test_node_config() -> NodeConfig<ChainSpec> {
@@ -156,6 +150,7 @@ async fn main() -> eyre::Result<()> {
         .testing_node(tasks.executor())
         .with_types::<EthereumNode>()
         .with_components(
+            // Note: we use `ParallelExecutorBuilder` here.
             EthereumNode::components().executor(ParallelExecutorBuilder::default()),
         )
         .with_add_ons(EthereumAddOns::default())
