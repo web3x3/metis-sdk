@@ -29,6 +29,9 @@ jobs:
           override: true
           components: clippy, rustfmt
       - uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Add LLVM deb repository
         uses: myci-actions/add-deb-repo@11
         with:
@@ -61,6 +64,9 @@ jobs:
           override: true
           components: clippy, rustfmt
       - uses: taiki-e/install-action@nextest
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install LLVM (brew)
         run: |
           v=${{ env.LLVM_MAJOR_VERSION }}

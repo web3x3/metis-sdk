@@ -42,6 +42,9 @@ jobs:
           echo "LLVM_SYS_${v}0_PREFIX=/usr/lib/llvm-${v}/" >> $GITHUB_ENV
           echo "PATH=/usr/lib/llvm-${v}/bin:$PATH" >> $GITHUB_ENV
 
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install typos
         uses: taiki-e/install-action@typos
       - name: Check typos
@@ -74,6 +77,9 @@ jobs:
           echo "LLVM_SYS_${v}0_PREFIX=$(brew --prefix llvm@${v})" >> $GITHUB_ENV
           echo "PATH=$(brew --prefix)/opt/llvm@${v}/bin:$PATH" >> $GITHUB_ENV
           echo "LIBRARY_PATH=/opt/homebrew/lib:$LIBRARY_PATH" >> $GITHUB_ENV
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Cargo fmt
         run: cargo fmt --all -- --check
       - name: Cargo clippy
