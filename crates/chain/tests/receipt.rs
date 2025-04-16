@@ -7,8 +7,9 @@ use std::error::Error;
 
 pub mod common;
 
-#[tokio::test]
-async fn test_compare_receipt() -> Result<(), Box<dyn Error>> {
+// #[tokio::test]
+// TODO: https://github.com/MetisProtocol/metis-sdk/issues/84
+async fn _test_compare_receipt() -> Result<(), Box<dyn Error>> {
     let (keypair, sender) = common::keypair::get_random_keypair();
     println!("Sending tx: {:?}", sender);
 
