@@ -275,7 +275,7 @@ impl ExtCompileWorker {
                     }
                 }
             } else {
-                // Use the intepreter to run the code.
+                // Use the interpreter to run the code.
                 return Err(Error::DisableCompiler);
             }
         }
