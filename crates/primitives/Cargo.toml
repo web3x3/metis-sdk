@@ -1,0 +1,12 @@
+[package]
+name = "metis-primitives"
+version.workspace = true
+edition.workspace = true
+
+[features]
+
+[dependencies]
+revm.workspace = true
+rustc-hash.workspace = true
+serde.workspace = true
+hashbrown.workspace = true

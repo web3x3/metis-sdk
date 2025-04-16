@@ -1,0 +1,41 @@
+[package]
+name = "metis-vm"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+metis-primitives.workspace = true
+alloy-sol-types.workspace = true
+thiserror.workspace = true
+anyhow.workspace = true
+rustc-hash.workspace = true
+tokio.workspace = true
+revm.workspace = true
+
+revmc = { git = "https://github.com/paradigmxyz/revmc", features = ["llvm-prefer-dynamic"], optional = true }
+smallvec = "1.14.0"
+libloading = "0.8.6"
+lru = "0.13.0"
+alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.5.1", features = ["llamacpp"], optional = true }
+
+[build-dependencies]
+revmc-build = { git = "https://github.com/paradigmxyz/revmc", optional = true }
+
+[features]
+compiler = ["dep:revmc", "dep:revmc-build"]
+inference = ["dep:alith"]
+
+[[example]]
+name = "interpreter"
+
+[[example]]
+name = "aot_compiler"
+required-features = ["compiler"]
+
+[[example]]
+name = "jit_compiler"
+required-features = ["compiler"]
+
+[[example]]
+name = "inference"
+required-features = ["inference"]
