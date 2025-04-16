@@ -9,9 +9,8 @@ use std::error::Error;
 
 pub mod common;
 
-// #[tokio::test]
-// TODO: https://github.com/MetisProtocol/metis-sdk/issues/84
-async fn _test_parallel_evm_node() -> Result<(), Box<dyn Error>> {
+#[tokio::test]
+async fn test_parallel_evm_node() -> Result<(), Box<dyn Error>> {
     let result = async {
         let tasks = TaskManager::current();
 
