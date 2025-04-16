@@ -7,7 +7,7 @@ use reth_ethereum::node::EthereumNode;
 pub mod common;
 
 #[tokio::test]
-async fn test_custom_evm_node() -> eyre::Result<()> {
+async fn test_sequential_evm_node() -> eyre::Result<()> {
     let tasks = TaskManager::current();
     let node_config = common::node::get_test_node_config();
     let NodeHandle {
