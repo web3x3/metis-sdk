@@ -6569,6 +6569,7 @@ dependencies = [
  "reth-evm-ethereum",
  "reth-exex-test-utils",
  "reth-node-api",
+ "reth-node-core",
  "reth-node-ethereum",
  "reth-primitives",
  "reth-primitives-traits",

@@ -12,6 +12,11 @@ optimism = [
 ]
 compiler = ["metis-vm/compiler", "dep:revmc-build"]
 jemalloc = ["dep:tikv-jemallocator"]
+asm-keccak = [
+    "reth-primitives/asm-keccak",
+    "alloy-primitives/asm-keccak",
+    "revm/asm-keccak",
+]
 
 [dependencies]
 metis-primitives.workspace = true

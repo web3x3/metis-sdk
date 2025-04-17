@@ -72,6 +72,7 @@ reth-node-builder = { git = "https://github.com/paradigmxyz/reth", tag = "v1.3.1
 reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.3.10" }
 reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.3.10" }
 reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.3.10" }
+reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.3.10" }
 
 # Allocators
 tikv-jemallocator = "0.6.0"
