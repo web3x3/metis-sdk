@@ -8,7 +8,7 @@ use alloy_primitives::TxKind;
 use hashbrown::HashMap;
 #[cfg(feature = "optimism")]
 use metis_primitives::Transaction;
-use metis_primitives::{BuildIdentityHasher, EvmState, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, EvmState, I257, hash_deterministic};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 #[cfg(feature = "optimism")]
@@ -275,9 +275,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
         let mut new_origins = SmallVec::new();
 
         let mut final_account = None;
-        let mut balance_addition = U256::ZERO;
-        // The sign of [balance_addition] since it can be negative for lazy senders.
-        let mut positive_addition = true;
+        let mut balance_addition = I257::ZERO;
         let mut nonce_addition = 0;
 
         // Try reading from multi-version data
@@ -319,22 +317,10 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                                     break;
                                 }
                                 MemoryValue::LazyRecipient(addition) => {
-                                    if positive_addition {
-                                        balance_addition =
-                                            balance_addition.saturating_add(*addition);
-                                    } else {
-                                        positive_addition = *addition >= balance_addition;
-                                        balance_addition = balance_addition.abs_diff(*addition);
-                                    }
+                                    balance_addition += (*addition).into()
                                 }
                                 MemoryValue::LazySender(subtraction) => {
-                                    if positive_addition {
-                                        positive_addition = balance_addition >= *subtraction;
-                                        balance_addition = balance_addition.abs_diff(*subtraction);
-                                    } else {
-                                        balance_addition =
-                                            balance_addition.saturating_add(*subtraction);
-                                    }
+                                    balance_addition -= (*subtraction).into();
                                     nonce_addition += 1;
                                 }
                                 _ => return Err(ReadError::InvalidMemoryValueType),
@@ -363,7 +349,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
             }
             final_account = match self.vm.db.basic_ref(address) {
                 Ok(Some(basic)) => Some(basic),
-                Ok(None) => (balance_addition > U256::ZERO).then_some(AccountInfo::default()),
+                Ok(None) => (balance_addition.sign() > 0).then_some(AccountInfo::default()),
                 Err(err) => return Err(ReadError::StorageError(err.to_string())),
             };
         }
@@ -389,11 +375,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
 
             // Fully evaluate the account and register it to read cache
             // to later check if they have changed (been written to).
-            if positive_addition {
-                account.balance = account.balance.saturating_add(balance_addition);
-            } else {
-                account.balance = account.balance.saturating_sub(balance_addition);
-            };
+            account.balance = (balance_addition + account.balance.into()).abs_value();
 
             let code_hash = if Some(location_hash) == self.to_hash {
                 self.to_code_hash
