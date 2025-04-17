@@ -14,6 +14,10 @@ Metis SDK is redefining the landscape of blockchain scalability, performance, an
 - **Flexible Deployment**: Supports Layer 1, Layer 2, and Layer 3 network configurations, tailored to diverse application needs.
 - **AI Features Support**: Use [LazAI](https://lazai.network) and [Alith](https://github.com/0xLazAI/alith) to provide AI related on-chain or off-chain tasks including data processing, model inference, fine tuning, etc.
 
+## Quick Start
+
+See [here](./crates/chain/README.md) to run a chain node.
+
 ## Contributing
 
 We welcome any contributions to Metis SDK! See the [contributing guide](./docs/CONTRIBUTING.md) for more information.
