@@ -32,6 +32,7 @@ reth-chain-state = {workspace = true, features = ["test-utils"]}
 reth-primitives-traits.workspace = true
 reth-ethereum-primitives.workspace = true
 reth-node-api.workspace = true
+reth-node-core.workspace = true
 
 tokio.workspace = true
 serde.workspace = true
@@ -71,3 +72,9 @@ jemalloc = ["reth/jemalloc", "metis-pe/jemalloc"]
 optimism = ["metis-pe/optimism"]
 compiler = ["metis-pe/compiler", "dep:revmc-build"]
 inference = ["dep:alith"]
+asm-keccak = [
+    "reth-node-core/asm-keccak",
+    "reth-primitives/asm-keccak",
+    "alloy-primitives/asm-keccak",
+    "metis-pe/asm-keccak",
+]
