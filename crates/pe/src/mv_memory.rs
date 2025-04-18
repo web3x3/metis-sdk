@@ -12,8 +12,8 @@ use revm::context::{BlockEnv, TxEnv};
 use std::fmt::Debug;
 
 use crate::{
-    MemoryEntry, MemoryLocation, MemoryLocationHash, ReadOrigin, ReadSet, TxIdx, TxVersion,
-    WriteSet,
+    MemoryEntry, MemoryLocation, MemoryLocationHash, MemoryValue, ReadOrigin, ReadSet, TxIdx,
+    TxVersion, WriteSet,
 };
 
 #[derive(Default, Debug)]
@@ -156,9 +156,16 @@ impl MvMemory {
             .flat_map(|l| {
                 if let Some(txid_set) = self.location_reads.get(l) {
                     if let Some(written_transactions) = self.data.get(l) {
-                        if let Some((txid, _)) =
-                            written_transactions.range(tx_version.tx_idx + 1..).next()
-                        {
+                        let iter = written_transactions.range(tx_version.tx_idx + 1..);
+                        for (txid, m) in iter {
+                            if matches!(
+                                m,
+                                MemoryEntry::Data(_, MemoryValue::LazyRecipient(_))
+                                    | MemoryEntry::Data(_, MemoryValue::LazySender(_))
+                            ) {
+                                continue;
+                            }
+
                             return txid_set
                                 .range(tx_version.tx_idx + 1..txid + 1)
                                 .cloned()
