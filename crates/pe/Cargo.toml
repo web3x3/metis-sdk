@@ -8,14 +8,14 @@ optimism = [
   "dep:op-alloy-consensus",
   "dep:op-alloy-network",
   "dep:op-alloy-rpc-types",
-  "dep:op-revm"
+  "dep:op-revm",
 ]
 compiler = ["metis-vm/compiler", "dep:revmc-build"]
 jemalloc = ["dep:tikv-jemallocator"]
 asm-keccak = [
-    "reth-primitives/asm-keccak",
-    "alloy-primitives/asm-keccak",
-    "revm/asm-keccak",
+  "reth-primitives/asm-keccak",
+  "alloy-primitives/asm-keccak",
+  "revm/asm-keccak",
 ]
 
 [dependencies]
@@ -43,9 +43,9 @@ thiserror.workspace = true
 crossbeam.workspace = true
 
 # OP Alloy and OP Revm dependencies
-op-alloy-consensus = { version = "0.13.0", optional = true }
-op-alloy-network = { version = "0.13.0", optional = true }
-op-alloy-rpc-types = { version = "0.13.0", optional = true}
+op-alloy-consensus = { version = "0.14.1", optional = true }
+op-alloy-network = { version = "0.14.1", optional = true }
+op-alloy-rpc-types = { version = "0.14.1", optional = true }
 op-revm = { version = "3.0.2", optional = true }
 
 # Reth dependencies
