@@ -60,6 +60,12 @@ impl<T: Into<usize> + From<usize> + fmt::Debug> fmt::Debug for AtomicWrapper<T> 
     }
 }
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum AccountMeta {
+    CA(U256),
+    EOA(U256),
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
 pub enum MemoryLocation {
     // TODO: Separate an account's balance and nonce?

@@ -1,6 +1,6 @@
 use crate::{
-    FinishExecFlags, MemoryEntry, MemoryLocation, MemoryLocationHash, MemoryValue, ReadOrigin,
-    ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
+    AccountMeta, FinishExecFlags, MemoryEntry, MemoryLocation, MemoryLocationHash, MemoryValue,
+    ReadOrigin, ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
     mv_memory::{MvMemory, RewardPolicy, reward_policy},
 };
 use alloy_evm::EvmEnv;
@@ -139,7 +139,7 @@ struct VmDB<'a, DB: DatabaseRef> {
     // Only applied to raw transfers' senders & recipients at the moment.
     is_lazy: bool,
     read_set: ReadSet,
-    read_accounts: HashMap<MemoryLocationHash, (AccountInfo, Option<B256>), BuildIdentityHasher>,
+    read_accounts: HashMap<MemoryLocationHash, AccountMeta, BuildIdentityHasher>,
 }
 
 impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
@@ -394,8 +394,12 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
             } else {
                 Bytecode::default()
             };
-            self.read_accounts
-                .insert(location_hash, (account.clone(), code_hash));
+            let account_meta = if code_hash.is_none() {
+                AccountMeta::EOA(account.balance)
+            } else {
+                AccountMeta::CA(account.balance)
+            };
+            self.read_accounts.insert(location_hash, account_meta);
 
             return Ok(Some(AccountInfo {
                 balance: account.balance,
@@ -570,14 +574,14 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
 
                         let has_code = !account.info.is_empty_code_hash();
                         let is_new_code = has_code
-                            && read_account.is_none_or(|(_, code_hash)| code_hash.is_none());
+                            && read_account.is_none_or(|meta| matches!(meta, AccountMeta::EOA(_)));
 
                         // Write new account changes
                         if is_new_code
                             || read_account.is_none()
-                            || read_account.is_some_and(|(basic, _)| {
-                                basic.nonce != account.info.nonce
-                                    || basic.balance != account.info.balance
+                            || account_location_hash == from_hash // nonce is changed
+                            || read_account.is_some_and(|meta| {
+                                meta != &AccountMeta::CA(account.info.balance) && meta != &AccountMeta::EOA(account.info.balance)
                             })
                         {
                             #[cfg(not(feature = "optimism"))]
