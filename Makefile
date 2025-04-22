@@ -24,3 +24,6 @@ clippy:
 
 fix:
 	cargo clippy --workspace --all-features --benches --examples --tests --fix --allow-dirty
+
+bench:
+	JEMALLOC_SYS_WITH_MALLOC_CONF="thp:always,metadata_thp:always" cargo bench -p metis-pe --features jemalloc
