@@ -24,11 +24,12 @@ pub use revm::context_interface::{
         RecoveredAuthorization, SignedAuthorization, TransactionType,
     },
 };
-pub use revm::database::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef};
+pub use revm::database::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef, PlainAccount};
 pub use revm::precompile::{PrecompileError, PrecompileOutput, PrecompileSpecId, Precompiles};
 pub use revm::primitives::{
     Address, B256, BLOCK_HASH_HISTORY, Bytes, FixedBytes, I256, KECCAK_EMPTY, Log, LogData, TxKind,
     U256, address, alloy_primitives, b256,
+    eip4844::{self, GAS_PER_BLOB},
     eip7702::{self, PER_AUTH_BASE_COST, PER_EMPTY_ACCOUNT_COST},
     fixed_bytes,
     hardfork::SpecId,
