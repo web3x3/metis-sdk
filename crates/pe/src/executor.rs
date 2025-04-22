@@ -67,38 +67,38 @@ enum AbortReason {
     ExecutionError(ExecutionError),
 }
 
-// TODO: Better implementation
+/// An asynchronous garbage collector that manages the lifecycle of objects in a background task.
+/// It allows dropping items asynchronously without blocking the main thread.
 #[derive(Debug)]
-struct AsyncDropper<T> {
-    sender: mpsc::Sender<T>,
+pub struct AsyncDropper<T> {
+    _sender: mpsc::Sender<T>,
     _handle: thread::JoinHandle<()>,
 }
 
 impl<T: Send + 'static> Default for AsyncDropper<T> {
     fn default() -> Self {
-        let (sender, receiver) = mpsc::channel();
+        let (_sender, receiver) = mpsc::channel();
         Self {
-            sender,
+            _sender,
             _handle: std::thread::spawn(move || receiver.into_iter().for_each(drop)),
         }
     }
 }
 
 impl<T> AsyncDropper<T> {
-    fn drop(&self, t: T) {
-        // TODO: Better error handling
-        self.sender.send(t).unwrap();
+    #[inline]
+    pub fn drop(&self, t: T) {
+        let _ = self._sender.send(t);
     }
 }
 
-// TODO: Add Scheduler to the dropper
-// TODO: Port more recyclable resources into here.
 /// The main executor struct that executes blocks with Block-STM algorithm.
 #[derive(Debug)]
 #[cfg_attr(not(feature = "compiler"), derive(Default))]
 pub struct ParallelExecutor {
     execution_results: Vec<Mutex<Option<TxExecutionResult>>>,
     abort_reason: OnceLock<AbortReason>,
+    #[cfg(feature = "async-dropper")]
     dropper: AsyncDropper<(MvMemory, Scheduler<NormalProvider>, Vec<TxEnv>)>,
     /// The compile work shared with different vm instance.
     #[cfg(feature = "compiler")]
@@ -111,6 +111,7 @@ impl Default for ParallelExecutor {
         Self {
             execution_results: Default::default(),
             abort_reason: Default::default(),
+            #[cfg(feature = "async-dropper")]
             dropper: Default::default(),
             worker: Arc::new(ExtCompileWorker::disable()),
         }
@@ -205,6 +206,7 @@ impl ParallelExecutor {
         if let Some(abort_reason) = self.abort_reason.take() {
             match abort_reason {
                 AbortReason::FallbackToSequential => {
+                    #[cfg(feature = "async-dropper")]
                     self.dropper.drop((mv_memory, scheduler, Vec::new()));
                     return execute_sequential(
                         db,
@@ -215,6 +217,7 @@ impl ParallelExecutor {
                     );
                 }
                 AbortReason::ExecutionError(err) => {
+                    #[cfg(feature = "async-dropper")]
                     self.dropper.drop((mv_memory, scheduler, txs));
                     return Err(ParallelExecutorError::ExecutionError(err));
                 }
@@ -349,6 +352,7 @@ impl ParallelExecutor {
             }
         }
 
+        #[cfg(feature = "async-dropper")]
         self.dropper.drop((mv_memory, scheduler, txs));
 
         Ok(fully_evaluated_results)
