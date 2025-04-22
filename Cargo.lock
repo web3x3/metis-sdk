@@ -6647,6 +6647,32 @@ dependencies = [
 ]
 
 [[package]]
+name = "metis-tools"
+version = "0.1.0"
+dependencies = [
+ "alloy-evm",
+ "alloy-rlp",
+ "anyhow",
+ "clap",
+ "hash-db",
+ "hex",
+ "indicatif",
+ "k256",
+ "metis-chain",
+ "metis-pe",
+ "metis-primitives",
+ "num_cpus",
+ "plain_hasher",
+ "rayon",
+ "revm",
+ "serde",
+ "serde_json",
+ "thiserror 2.0.12",
+ "triehash",
+ "walkdir",
+]
+
+[[package]]
 name = "metis-vm"
 version = "0.1.0"
 dependencies = [

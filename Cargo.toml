@@ -43,7 +43,7 @@ alloy-sol-types = { version = "1.0.0", default-features = false, features = [
 ] }
 alloy-eips = { version = "0.14.0", default-features = false }
 alloy-provider = "0.14.0"
-alloy-rlp = "0.3.10"
+alloy-rlp = { version = "0.3.11", features = ["arrayvec"] }
 alloy-rpc-types-eth = "0.14.0"
 alloy-transport = "0.14.0"
 alloy-transport-http = "0.14.0"

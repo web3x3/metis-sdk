@@ -302,7 +302,7 @@ impl ParallelExecutor {
                     }
                     // Assert that evaluated nonce is correct when address is caller.
                     if tx.caller == address {
-                        let executed_nonce = if tx.nonce == 0 {
+                        let executed_nonce = if nonce == 0 {
                             return Err(ParallelExecutorError::UnreachableError);
                         } else {
                             nonce - 1
