@@ -4,6 +4,8 @@ edition.workspace = true
 version.workspace = true
 
 [features]
+default = ["jemalloc", "async-dropper"]
+
 optimism = [
   "dep:op-alloy-consensus",
   "dep:op-alloy-network",
@@ -17,6 +19,7 @@ asm-keccak = [
     "alloy-primitives/asm-keccak",
     "revm/asm-keccak",
 ]
+async-dropper = []
 
 [dependencies]
 metis-primitives.workspace = true
