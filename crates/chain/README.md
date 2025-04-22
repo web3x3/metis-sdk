@@ -10,6 +10,57 @@ Execute the following command to launch a Metis devnet:
 cargo run -r --bin metis --dev
 ```
 
+Execute the following command to launch a Metis devnet with the genesis config file:
+
+```shell
+cargo run -r --bin metis --dev --chain genesis.json
+```
+
+A `genesis.json` example is
+
+```json
+{
+    "nonce": "0x42",
+    "timestamp": "0x0",
+    "extraData": "0x5343",
+    "gasLimit": "0x989680",
+    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "alloc": {
+        "0xf47559c312c063ab186fa9cbada4a8d3411e7bef": {
+            "balance": "0x4a47e3c12448f4ad000000"
+        },
+        "0x9c82df3861e1c1e9bb3a5c5eb0a8dd2f69e755a7": {
+            "balance": "0x4a0"
+        }
+    },
+    "number": "0x0",
+    "gasUsed": "0x0",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "difficulty": "0x1",
+    "coinbase": "0xf47559c312c063ab186fa9cbada4a8d3411e7bef",
+    "config": {
+        "ethash": {
+            "fixedDifficulty": 1,
+            "minimumDifficulty": 1
+        },
+        "chainId": 133717,
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "istanbulBlock": 0,
+        "berlinBlock": 0,
+        "londonBlock": 0,
+        "terminalTotalDifficulty": 0,
+        "terminalTotalDifficultyPassed": true,
+        "shanghaiTime": 0
+    }
+}
+```
+
 ## Core Components
 
 ### `ParallelExecutorBuilder`
