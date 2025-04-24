@@ -286,7 +286,8 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
         let mut new_origins = SmallVec::new();
 
         let mut final_account = None;
-        let mut balance_addition = I257::ZERO;
+        // Note we use the negative zero for the fast check (balance_addition > 0)
+        let mut balance_addition = I257::NEGATIVE_ZERO;
         let mut nonce_addition = 0;
 
         // Try reading from multi-version data

@@ -159,14 +159,17 @@ pub struct I257 {
 }
 
 impl I257 {
+    #[inline]
     pub fn new(value: U256, is_negative: bool) -> Self {
         I257 { value, is_negative }
     }
 
+    #[inline]
     pub fn abs_value(&self) -> U256 {
         self.value
     }
 
+    #[inline]
     pub fn sign(&self) -> i8 {
         if self.is_negative { -1 } else { 1 }
     }
@@ -174,6 +177,11 @@ impl I257 {
     pub const ZERO: I257 = I257 {
         value: U256::ZERO,
         is_negative: false,
+    };
+
+    pub const NEGATIVE_ZERO: I257 = I257 {
+        value: U256::ZERO,
+        is_negative: true,
     };
 }
 
