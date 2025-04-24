@@ -57,6 +57,9 @@ reth-primitives.workspace = true
 # jemalloc
 tikv-jemallocator = { workspace = true, optional = true }
 
+# RPC Database
+tokio.workspace = true
+
 # Testing
 pretty_assertions = "1"
 
