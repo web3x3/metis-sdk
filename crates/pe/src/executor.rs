@@ -15,28 +15,19 @@ use std::{
 };
 
 use alloy_evm::EvmEnv;
-use alloy_primitives::{TxNonce, U256};
+#[cfg(feature = "compiler")]
+use metis_primitives::ExecuteEvm;
 use metis_primitives::{
-    Account, AccountInfo, AccountStatus, KECCAK_EMPTY, SpecId, Transaction, hash_deterministic,
+    Account, AccountInfo, AccountStatus, CacheDB, ContextTr, DatabaseCommit, DatabaseRef,
+    InvalidTransaction, KECCAK_EMPTY, SpecId, Transaction, TxEnv, TxNonce, U256,
+    hash_deterministic,
 };
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
-#[cfg(feature = "compiler")]
-use revm::ExecuteEvm;
-use revm::{
-    DatabaseCommit,
-    context::{ContextTr, TxEnv, result::InvalidTransaction},
-    database::CacheDB,
-};
-
-use revm::DatabaseRef;
 
 /// Errors when executing a block with the parallel executor.
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum ParallelExecutorError {
-    /// Transactions lack information for execution.
-    #[error("The transaction data is missing")]
-    MissingTransactionData,
     /// Nonce mismatch error including nonce too low and nonce too high errors.
     #[error("Nonce mismatch for tx #{tx_idx}. Expected {executed_nonce}, got {tx_nonce}")]
     NonceMismatch {

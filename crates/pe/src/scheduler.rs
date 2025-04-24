@@ -8,6 +8,7 @@ use smallvec::SmallVec;
 
 use crate::{AtomicWrapper, FinishExecFlags, IncarnationStatus, Task, TxIdx, TxStatus, TxVersion};
 
+/// Transaction graph.
 #[derive(Debug)]
 pub struct TransactionsGraph {
     /// The number of transactions in this block.
@@ -15,12 +16,12 @@ pub struct TransactionsGraph {
     /// The number of transactions that have been executed.
     num_done: AtomicUsize,
     /// The queue of transactions to execute.
-    transactions_queue: ArrayQueue<TxIdx>,
+    queue: ArrayQueue<TxIdx>,
     /// The number of transactions each transaction depends on.
-    transactions_degree: Vec<AtomicUsize>,
+    degree: Vec<AtomicUsize>,
     /// The list of dependent transactions to resume when the
     /// key transaction is re-executed.
-    transactions_dependents: Vec<Mutex<Vec<TxIdx>>>,
+    dependency: Vec<Mutex<Vec<TxIdx>>>,
 }
 
 impl TransactionsGraph {
@@ -28,9 +29,9 @@ impl TransactionsGraph {
         let graph = Self {
             block_size,
             num_done: AtomicUsize::new(0),
-            transactions_queue: ArrayQueue::new(block_size),
-            transactions_degree: (0..block_size).map(|_| AtomicUsize::new(0)).collect(),
-            transactions_dependents: (0..block_size).map(|_| Mutex::default()).collect(),
+            queue: ArrayQueue::new(block_size),
+            degree: (0..block_size).map(|_| AtomicUsize::new(0)).collect(),
+            dependency: (0..block_size).map(|_| Mutex::default()).collect(),
         };
         for (tx_idx, blocking_tx_idx) in dependencies {
             graph.add_dependency(tx_idx, blocking_tx_idx);
@@ -40,24 +41,24 @@ impl TransactionsGraph {
 
     pub fn init(&self) {
         for i in 0..self.block_size {
-            if self.transactions_degree[i].load(Ordering::Relaxed) == 0 {
-                self.transactions_queue.push(i).unwrap();
+            if self.degree[i].load(Ordering::Relaxed) == 0 {
+                self.queue.push(i).unwrap();
             }
         }
     }
 
     pub fn add_dependency(&self, tx_idx: TxIdx, blocking_tx_idx: TxIdx) {
-        let mut blocking_dependents = index_mutex!(self.transactions_dependents, blocking_tx_idx);
+        let mut blocking_dependents = index_mutex!(self.dependency, blocking_tx_idx);
         blocking_dependents.push(tx_idx);
-        self.transactions_degree[tx_idx].fetch_add(1, Ordering::Relaxed);
+        self.degree[tx_idx].fetch_add(1, Ordering::Relaxed);
     }
 
     pub fn remove_dependency(&self, blocking_tx_idx: TxIdx) {
-        let mut blocking_dependents = index_mutex!(self.transactions_dependents, blocking_tx_idx);
+        let mut blocking_dependents = index_mutex!(self.dependency, blocking_tx_idx);
         for txid in blocking_dependents.iter() {
-            let degree = self.transactions_degree[*txid].fetch_sub(1, Ordering::Relaxed);
+            let degree = self.degree[*txid].fetch_sub(1, Ordering::Relaxed);
             if degree == 0 {
-                self.transactions_queue.push(*txid).unwrap();
+                self.queue.push(*txid).unwrap();
             }
         }
 
@@ -65,7 +66,7 @@ impl TransactionsGraph {
     }
 
     pub fn pop(&self) -> Option<TxIdx> {
-        if let Some(txid) = self.transactions_queue.pop() {
+        if let Some(txid) = self.queue.pop() {
             self.num_done.fetch_sub(1, Ordering::Relaxed);
             Some(txid)
         } else {
@@ -73,6 +74,7 @@ impl TransactionsGraph {
         }
     }
 
+    #[inline]
     pub fn block_size(&self) -> usize {
         self.block_size
     }
@@ -184,10 +186,10 @@ pub(crate) struct Scheduler<T: TaskProvider> {
     execution_queue: ArrayQueue<TxIdx>,
     /// The most up-to-date incarnation number (initially 0) and
     /// the status of this incarnation.
-    transactions_status: Vec<AtomicWrapper<TxStatus>>,
+    tx_status: Vec<AtomicWrapper<TxStatus>>,
     /// The list of dependent transactions to resume when the
     /// key transaction is re-executed.
-    transactions_dependents: Vec<Mutex<SmallVec<[TxIdx; 1]>>>,
+    tx_dependency: Vec<Mutex<SmallVec<[TxIdx; 1]>>>,
     /// The number of validated transactions
     num_validated: AtomicUsize,
 }
@@ -198,7 +200,7 @@ impl<T: TaskProvider> Scheduler<T> {
         Self {
             provider,
             execution_queue: ArrayQueue::new(block_size),
-            transactions_status: (0..block_size)
+            tx_status: (0..block_size)
                 .map(|_| {
                     AtomicWrapper::new(TxStatus {
                         incarnation: 0,
@@ -206,13 +208,13 @@ impl<T: TaskProvider> Scheduler<T> {
                     })
                 })
                 .collect(),
-            transactions_dependents: (0..block_size).map(|_| Mutex::default()).collect(),
+            tx_dependency: (0..block_size).map(|_| Mutex::default()).collect(),
             num_validated: AtomicUsize::new(0),
         }
     }
 
     fn try_execute(&self, tx_idx: TxIdx) -> Option<TxVersion> {
-        let tx = self.transactions_status.get(tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);
 
         if old_status.status == IncarnationStatus::ReadyToExecute {
@@ -264,8 +266,8 @@ impl<T: TaskProvider> Scheduler<T> {
     pub(crate) fn add_dependency(&self, tx_idx: TxIdx, blocking_tx_idx: TxIdx) -> bool {
         // This is an important lock to prevent a race condition where the blocking
         // transaction completes re-execution before this dependency can be added.
-        let mut blocking_dependents = index_mutex!(self.transactions_dependents, blocking_tx_idx);
-        let tx = self.transactions_status.get(blocking_tx_idx).unwrap();
+        let mut blocking_dependents = index_mutex!(self.tx_dependency, blocking_tx_idx);
+        let tx = self.tx_status.get(blocking_tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);
         if matches!(
             old_status.status,
@@ -274,7 +276,7 @@ impl<T: TaskProvider> Scheduler<T> {
             return false;
         }
 
-        let tx = self.transactions_status.get(tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_idx).unwrap();
         let mut tx_status = tx.load(Ordering::Relaxed);
         tx_status.status = IncarnationStatus::Blocking;
         tx.store(tx_status, Ordering::Relaxed);
@@ -284,7 +286,7 @@ impl<T: TaskProvider> Scheduler<T> {
     }
 
     fn add_blocking_task(&self, tx_idx: TxIdx) {
-        let tx = self.transactions_status.get(tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);
         let incarnation = old_status.incarnation + 1;
         if old_status.status != IncarnationStatus::ReadyToExecute
@@ -305,7 +307,7 @@ impl<T: TaskProvider> Scheduler<T> {
     }
 
     fn add_execution_task(&self, tx_idx: TxIdx) {
-        let tx = self.transactions_status.get(tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);
         let is_validated = old_status.status == IncarnationStatus::Validated;
         let incarnation = old_status.incarnation + 1;
@@ -335,15 +337,15 @@ impl<T: TaskProvider> Scheduler<T> {
         &self,
         tx_version: TxVersion,
         flags: FinishExecFlags,
-        affected_transactions: Vec<TxIdx>,
+        affected_txs: Vec<TxIdx>,
     ) -> Option<Task> {
         self.provider.finish_task(tx_version.tx_idx);
         // affected transactions must be re-executed
-        for tx_idx in affected_transactions {
+        for tx_idx in affected_txs {
             self.add_execution_task(tx_idx);
         }
 
-        let tx = self.transactions_status.get(tx_version.tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_version.tx_idx).unwrap();
         let mut old_status = tx.load(Ordering::Relaxed);
 
         debug_assert_eq!(old_status.status, IncarnationStatus::Executing);
@@ -361,7 +363,7 @@ impl<T: TaskProvider> Scheduler<T> {
         };
 
         // Resume dependent transactions
-        let mut dependents = index_mutex!(self.transactions_dependents, tx_version.tx_idx);
+        let mut dependents = index_mutex!(self.tx_dependency, tx_version.tx_idx);
 
         for tx_idx in dependents.drain(..) {
             self.add_blocking_task(tx_idx);
@@ -379,7 +381,7 @@ impl<T: TaskProvider> Scheduler<T> {
     /// and the higher transactions for validation. The re-execution task is returned
     /// for the aborted transaction.
     pub(crate) fn finish_validation(&self, tx_idx: TxIdx, aborted: bool) -> Option<Task> {
-        let tx = self.transactions_status.get(tx_idx).unwrap();
+        let tx = self.tx_status.get(tx_idx).unwrap();
         let old_status = tx.load(Ordering::Relaxed);
         let incarnation = old_status.incarnation;
 
