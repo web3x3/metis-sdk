@@ -67,24 +67,20 @@ pub enum AccountMeta {
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]
-pub enum MemoryLocation {
-    // TODO: Separate an account's balance and nonce?
+pub enum Location {
     Basic(Address),
     CodeHash(Address),
     Storage(Address, U256),
 }
 
-/// We only need the full memory location to read from storage.
+/// We only need the full location to read from storage.
 /// We then identify the locations with its hash in the multi-version
 /// data, write and read sets, which is much faster than rehashing
 /// on every single lookup & validation.
-pub type MemoryLocationHash = u64;
+pub type LocationHash = u64;
 
-// TODO: It would be nice if we could tie the different cases of
-// memory locations & values at the type level, to prevent lots of
-// matches & potentially dangerous mismatch mistakes.
 #[derive(Debug, Clone, PartialEq, Eq)]
-pub enum MemoryValue {
+pub enum LocationValue {
     Basic(AccountInfo),
     CodeHash(B256),
     Storage(U256),
@@ -103,13 +99,13 @@ pub enum MemoryValue {
 }
 
 #[derive(Debug)]
-pub enum MemoryEntry {
-    Data(TxIncarnation, MemoryValue),
+pub enum Entry {
+    Data(TxIncarnation, LocationValue),
     // When an incarnation is aborted due to a validation failure, the
     // entries in the multi-version data structure corresponding to its
     // write set are replaced with this special ESTIMATE marker.
     // This signifies that the next incarnation is estimated to write to
-    // the same memory locations. An incarnation stops and is immediately
+    // the same locations. An incarnation stops and is immediately
     // aborted whenever it reads a value marked as an ESTIMATE written by
     // a lower transaction, instead of potentially wasting a full execution
     // and aborting during validation.
@@ -175,9 +171,9 @@ impl From<TxStatus> for usize {
 }
 
 /// We maintain an in-memory multi-version data structure that stores for
-/// each memory location the latest value written per transaction, along
+/// each location the latest value written per transaction, along
 /// with the associated transaction incarnation. When a transaction reads
-/// a memory location, it obtains from the multi-version data structure the
+/// a location, it obtains from the multi-version data structure the
 /// value written to this location by the highest transaction that appears
 /// before it in the block, along with the associated version. If no previous
 /// transactions have written to a location, the value would be read from the
@@ -188,7 +184,7 @@ pub struct TxVersion {
     pub tx_incarnation: TxIncarnation,
 }
 
-/// The origin of a memory read. It could be from the live multi-version
+/// The origin of a read. It could be from the live multi-version
 /// data structure or from storage (chain state before block execution).
 #[derive(Debug, PartialEq)]
 pub enum ReadOrigin {
@@ -206,15 +202,24 @@ pub enum Task {
     Validation(TxIdx),
 }
 
-/// Most memory locations only have one read origin. Lazy updated ones like
+/// Most locations only have one read origin. Lazy updated ones like
 /// the beneficiary balance, raw transfer senders & recipients, etc. have a
 /// list of lazy updates all the way to the first strict/absolute value.
 pub type ReadOrigins = SmallVec<[ReadOrigin; 1]>;
 
 /// For validation: a list of read origins (previous transaction versions)
-/// for each read memory location.
-pub type ReadSet = HashMap<MemoryLocationHash, ReadOrigins, BuildIdentityHasher>;
+/// for each read location.
+pub type ReadSet = HashMap<LocationHash, ReadOrigins, BuildIdentityHasher>;
 
 /// The updates made by this transaction incarnation, which is applied
 /// to the multi-version data structure at the end of execution.
-pub type WriteSet = HashMap<MemoryLocationHash, MemoryValue, BuildIdentityHasher>;
+pub type WriteSet = HashMap<LocationHash, LocationValue, BuildIdentityHasher>;
+
+/// Read and write set for each transaction.
+#[derive(Default, Debug)]
+pub struct ReadWriteSet {
+    /// Read locations in the transaction.
+    pub read: ReadSet,
+    /// Write locations in the transaction.
+    pub write: SmallVec<[LocationHash; 2]>,
+}

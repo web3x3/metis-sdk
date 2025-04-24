@@ -27,6 +27,7 @@ bitflags! {
     }
 }
 
+pub mod dropper;
 pub mod executor;
 pub mod mv_memory;
 pub use mv_memory::MvMemory;
