@@ -96,8 +96,12 @@ pub enum ReadError {
     InconsistentRead,
     /// Found an invalid nonce, like the first transaction of a sender
     /// not having a (+1) nonce from storage.
-    #[error("Tx #{0} has invalid nonce")]
-    InvalidNonce(TxIdx),
+    #[error("Nonce {tx} too high, expected {state}")]
+    NonceTooHigh { tx: u64, state: u64 },
+    /// Found an invalid nonce, like the first transaction of a sender
+    /// not having a (-1) nonce from storage.
+    #[error("Nonce {tx} too low, expected {state}")]
+    NonceTooLow { tx: u64, state: u64 },
     /// Read a self-destructed account that is very hard to handle, as
     /// there is no performant way to mark all storage slots as cleared.
     #[error("Tried to read self-destructed account")]
@@ -113,6 +117,18 @@ impl From<ReadError> for VmExecutionError {
             ReadError::InconsistentRead => Self::Retry,
             ReadError::SelfDestructedAccount => Self::FallbackToSequential,
             ReadError::Blocking(tx_idx) => Self::Blocking(tx_idx),
+            ReadError::NonceTooHigh { tx, state } => {
+                Self::ExecutionError(EVMError::Transaction(InvalidTransaction::NonceTooHigh {
+                    tx,
+                    state,
+                }))
+            }
+            ReadError::NonceTooLow { tx, state } => {
+                Self::ExecutionError(EVMError::Transaction(InvalidTransaction::NonceTooLow {
+                    tx,
+                    state,
+                }))
+            }
             _ => Self::ExecutionError(EVMError::Database(err)),
         }
     }
@@ -356,9 +372,27 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
             account.nonce += nonce_addition;
             if location_hash == self.from_hash && self.tx.nonce != account.nonce {
                 return if self.tx_idx > 0 {
-                    Err(ReadError::Blocking(self.tx_idx - 1))
+                    // For nonce too low error, only block the preceding transactions and
+                    // cannot make the nonce of the account the same as tx.nonce, so return
+                    // an error here.
+                    if self.tx.nonce < account.nonce {
+                        Err(ReadError::NonceTooLow {
+                            tx: self.tx.nonce,
+                            state: account.nonce,
+                        })
+                    } else {
+                        Err(ReadError::Blocking(self.tx_idx - 1))
+                    }
+                } else if self.tx.nonce < account.nonce {
+                    Err(ReadError::NonceTooLow {
+                        tx: self.tx.nonce,
+                        state: account.nonce,
+                    })
                 } else {
-                    Err(ReadError::InvalidNonce(self.tx_idx))
+                    Err(ReadError::NonceTooHigh {
+                        tx: self.tx.nonce,
+                        state: account.nonce,
+                    })
                 };
             }
 

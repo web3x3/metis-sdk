@@ -7,9 +7,8 @@ use revm::primitives::{Address, U256, alloy_primitives::U160};
 
 pub mod common;
 
-// #[test]
-// TODO: https://github.com/MetisProtocol/metis-sdk/issues/128
-fn _repeat_raw_transfer_same_address() {
+#[test]
+fn repeat_raw_transfer_same_address() {
     let block_size = 10; // number of transactions
     common::test_execute(
         // Mock the beneficiary account (`Address:ZERO`) and the next `block_size` user accounts.
@@ -18,8 +17,8 @@ fn _repeat_raw_transfer_same_address() {
             Default::default(),
             Default::default(),
         ),
-        (1..=block_size)
-            .map(|_| {
+        vec![
+            {
                 let caller = Address::from(U160::from(1));
                 let to = Address::from(U160::from(2));
                 TxEnv {
@@ -31,8 +30,9 @@ fn _repeat_raw_transfer_same_address() {
                     nonce: 1,
                     ..TxEnv::default()
                 }
-            })
-            .collect(),
+            };
+            block_size
+        ],
     );
 }
 
