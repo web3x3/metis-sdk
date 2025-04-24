@@ -11,7 +11,9 @@ pub use revm::bytecode::{
     eof::{CodeInfo as EofCodeInfo, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, Eof, EofBody},
     opcode::{OpCode, OpCodeInfo},
 };
-pub use revm::context::{Block, BlockEnv, CfgEnv, ContextTr, TransactTo, Transaction, TxEnv};
+pub use revm::context::{
+    Block, BlockEnv, CfgEnv, ContextTr, TransactTo, Transaction, TxEnv, result::EVMError,
+};
 pub use revm::context_interface::{
     block::{BlobExcessGasAndPrice, calc_blob_gasprice, calc_excess_blob_gas},
     cfg::Cfg,

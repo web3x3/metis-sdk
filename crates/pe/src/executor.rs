@@ -18,7 +18,7 @@ use alloy_evm::EvmEnv;
 #[cfg(feature = "compiler")]
 use metis_primitives::ExecuteEvm;
 use metis_primitives::{
-    Account, AccountInfo, AccountStatus, CacheDB, ContextTr, DatabaseCommit, DatabaseRef,
+    Account, AccountInfo, AccountStatus, CacheDB, ContextTr, DatabaseCommit, DatabaseRef, EVMError,
     InvalidTransaction, KECCAK_EMPTY, SpecId, Transaction, TxEnv, TxNonce, U256,
     hash_deterministic,
 };
@@ -404,15 +404,13 @@ pub fn execute_sequential<DB: DatabaseRef>(
 
             let mut t = metis_vm::CompilerHandler::new(worker.clone());
             evm.set_tx(tx);
-            t.run(&mut evm)
-                .map_err(|err| ExecutionError::Custom(err.to_string()))?
+            t.run(&mut evm).map_err(evm_err_to_exec_error::<DB>)?
         };
         #[cfg(not(feature = "compiler"))]
         let result_and_state = {
             use revm::ExecuteEvm;
 
-            evm.transact(tx)
-                .map_err(|err| ExecutionError::Custom(err.to_string()))?
+            evm.transact(tx).map_err(evm_err_to_exec_error::<DB>)?
         };
 
         evm.db().commit(result_and_state.state.clone());
@@ -426,4 +424,17 @@ pub fn execute_sequential<DB: DatabaseRef>(
         results.push(execution_result);
     }
     Ok(results)
+}
+
+#[inline]
+fn evm_err_to_exec_error<DB: DatabaseRef>(err: EVMError<DB::Error>) -> ParallelExecutorError {
+    match err {
+        EVMError::Transaction(err) => ExecutionError::Transaction(err).into(),
+        EVMError::Header(err) => ExecutionError::Header(err).into(),
+        EVMError::Custom(err) => ExecutionError::Custom(err).into(),
+        // Note that parallel execution requires recording the wrapper DB for read-write sets,
+        // so DB errors of parallel and sequential executor are different. So we convert the
+        // database error to the custom error.
+        EVMError::Database(err) => ExecutionError::Custom(err.to_string()).into(),
+    }
 }
