@@ -1,5 +1,6 @@
 use crate::{
-    MemoryEntry, MemoryLocation, MemoryValue, Task, TxIdx, TxVersion,
+    Entry, Location, LocationValue, Task, TxIdx, TxVersion,
+    dropper::AsyncDropper,
     mv_memory::{MvMemory, build_mv_memory},
     scheduler::{NormalProvider, Scheduler, TaskProvider},
     vm::{ExecutionError, TxExecutionResult, Vm, VmExecutionError, VmExecutionResult, build_evm},
@@ -9,7 +10,7 @@ use std::sync::Arc;
 use std::{
     fmt::Debug,
     num::NonZeroUsize,
-    sync::{Mutex, OnceLock, mpsc},
+    sync::{Mutex, OnceLock},
     thread,
 };
 
@@ -65,31 +66,6 @@ pub type ParallelExecutorResult = Result<Vec<TxExecutionResult>, ParallelExecuto
 enum AbortReason {
     FallbackToSequential,
     ExecutionError(ExecutionError),
-}
-
-/// An asynchronous garbage collector that manages the lifecycle of objects in a background task.
-/// It allows dropping items asynchronously without blocking the main thread.
-#[derive(Debug)]
-pub struct AsyncDropper<T> {
-    _sender: mpsc::Sender<T>,
-    _handle: thread::JoinHandle<()>,
-}
-
-impl<T: Send + 'static> Default for AsyncDropper<T> {
-    fn default() -> Self {
-        let (_sender, receiver) = mpsc::channel();
-        Self {
-            _sender,
-            _handle: std::thread::spawn(move || receiver.into_iter().for_each(drop)),
-        }
-    }
-}
-
-impl<T> AsyncDropper<T> {
-    #[inline]
-    pub fn drop(&self, t: T) {
-        let _ = self._sender.send(t);
-    }
 }
 
 /// The main executor struct that executes blocks with Block-STM algorithm.
@@ -167,7 +143,6 @@ impl ParallelExecutor {
             }
         }
 
-        // TODO: Better thread handling
         thread::scope(|scope| {
             for _ in 0..concurrency_level.into() {
                 scope.spawn(|| {
@@ -193,7 +168,7 @@ impl ParallelExecutor {
                             continue;
                         }
 
-                        if scheduler.is_finish() {
+                        if scheduler.is_finished() {
                             break;
                         }
 
@@ -237,7 +212,7 @@ impl ParallelExecutor {
         // We fully evaluate (the balance and nonce of) the beneficiary account
         // and raw transfer recipients that may have been atomically updated.
         for address in mv_memory.consume_lazy_addresses() {
-            let location_hash = hash_deterministic(MemoryLocation::Basic(address));
+            let location_hash = hash_deterministic(Location::Basic(address));
             if let Some(write_history) = mv_memory.data.get(&location_hash) {
                 let mut balance = U256::ZERO;
                 let mut nonce = 0;
@@ -245,7 +220,7 @@ impl ParallelExecutor {
                 // Read from DB if the first multi-version entry is not an absolute value.
                 if !matches!(
                     write_history.first_key_value(),
-                    Some((_, MemoryEntry::Data(_, MemoryValue::Basic(_))))
+                    Some((_, Entry::Data(_, LocationValue::Basic(_))))
                 ) {
                     if let Ok(Some(account)) = db.basic_ref(address) {
                         balance = account.balance;
@@ -258,20 +233,20 @@ impl ParallelExecutor {
                     Err(err) => return Err(ParallelExecutorError::StorageError(err.to_string())),
                 };
 
-                for (tx_idx, memory_entry) in write_history.iter() {
+                for (tx_idx, entry) in write_history.iter() {
                     let tx = unsafe { txs.get_unchecked(*tx_idx) };
-                    match memory_entry {
-                        MemoryEntry::Data(_, MemoryValue::Basic(info)) => {
+                    match entry {
+                        Entry::Data(_, LocationValue::Basic(info)) => {
                             // We fall back to sequential execution when reading a self-destructed account,
                             // so an empty account here would be a bug
                             debug_assert!(!(info.balance.is_zero() && info.nonce == 0));
                             balance = info.balance;
                             nonce = info.nonce;
                         }
-                        MemoryEntry::Data(_, MemoryValue::LazyRecipient(addition)) => {
+                        Entry::Data(_, LocationValue::LazyRecipient(addition)) => {
                             balance = balance.saturating_add(*addition);
                         }
-                        MemoryEntry::Data(_, MemoryValue::LazySender(subtraction)) => {
+                        Entry::Data(_, LocationValue::LazySender(subtraction)) => {
                             // We must re-do extra sender balance checks as we mock
                             // the max value in [Vm] during execution. Ideally we
                             // can turn off these redundant checks in revm.
@@ -297,7 +272,6 @@ impl ParallelExecutor {
                             balance = balance.saturating_sub(*subtraction);
                             nonce += 1;
                         }
-                        // TODO: Better error handling
                         _ => unreachable!(),
                     }
                     // Assert that evaluated nonce is correct when address is caller.

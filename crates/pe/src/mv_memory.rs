@@ -12,33 +12,25 @@ use revm::context::{BlockEnv, TxEnv};
 use std::fmt::Debug;
 
 use crate::{
-    MemoryEntry, MemoryLocation, MemoryLocationHash, MemoryValue, ReadOrigin, ReadSet, TxIdx,
+    Entry, Location, LocationHash, LocationValue, ReadOrigin, ReadSet, ReadWriteSet, TxIdx,
     TxVersion, WriteSet,
 };
 
-#[derive(Default, Debug)]
-struct LastLocations {
-    read: ReadSet,
-    // Consider [SmallVec] since most transactions explicitly write to 2 locations!
-    write: Vec<MemoryLocationHash>,
-}
-
 /// The `MvMemory` contains shared memory in a form of a multi-version data
 /// structure for values written and read by different transactions. It stores
-/// multiple writes for each memory location, along with a value and an associated
+/// multiple writes for each location, along with a value and an associated
 /// version of a corresponding transaction.
 #[derive(Debug)]
 pub struct MvMemory {
-    /// The list of transaction incarnations and written values for each memory location
-    /// No more hashing is required as we already identify memory locations by their hash
+    /// The list of transaction incarnations and written values for each location
+    /// No more hashing is required as we already identify locations by their hash
     /// in the read & write sets. [dashmap] having a dedicated interface for this use case
     /// (that skips hashing for [u64] keys) would make our code cleaner and "faster".
-    /// Nevertheless, the compiler should be good enough to optimize these cases anyway.
-    pub(crate) data: DashMap<MemoryLocationHash, BTreeMap<TxIdx, MemoryEntry>, BuildIdentityHasher>,
-    /// List of transactions that reaad the memory location
-    pub(crate) location_reads: DashMap<MemoryLocationHash, BTreeSet<TxIdx>, BuildIdentityHasher>,
-    /// Last read & written locations of each transaction
-    last_locations: Vec<Mutex<LastLocations>>,
+    pub(crate) data: DashMap<LocationHash, BTreeMap<TxIdx, Entry>, BuildIdentityHasher>,
+    /// List of transactions that reaad the location
+    pub(crate) location_reads: DashMap<LocationHash, BTreeSet<TxIdx>, BuildIdentityHasher>,
+    /// List of read & written locations of each transaction
+    locations: Vec<Mutex<ReadWriteSet>>,
     /// Lazy addresses that need full evaluation at the end of the block
     lazy_addresses: DashSet<Address, BuildSuffixHasher>,
     /// New bytecodes deployed in this block
@@ -48,11 +40,9 @@ pub struct MvMemory {
 impl MvMemory {
     pub(crate) fn new(
         block_size: usize,
-        estimated_locations: impl IntoIterator<Item = (MemoryLocationHash, Vec<TxIdx>)>,
+        estimated_locations: impl IntoIterator<Item = (LocationHash, Vec<TxIdx>)>,
         lazy_addresses: impl IntoIterator<Item = Address>,
     ) -> Self {
-        // TODO: Fine-tune the number of shards, like to the next number of two from the
-        // number of worker threads.
         let data = DashMap::default();
         // We preallocate estimated locations to avoid restructuring trees at runtime
         // while holding a write lock. Ideally [dashmap] would have a lock-free
@@ -63,29 +53,28 @@ impl MvMemory {
                 location_hash,
                 estimated_tx_idxs
                     .into_iter()
-                    .map(|tx_idx| (tx_idx, MemoryEntry::Estimate))
+                    .map(|tx_idx| (tx_idx, Entry::Estimate))
                     .collect(),
             );
         }
         Self {
             data,
             location_reads: DashMap::default(),
-            last_locations: (0..block_size).map(|_| Mutex::default()).collect(),
+            locations: (0..block_size).map(|_| Mutex::default()).collect(),
             lazy_addresses: DashSet::from_iter(lazy_addresses),
-            // TODO: Fine-tune the number of shards, like to the next number of two from the
-            // number of worker threads.
             new_bytecodes: DashMap::default(),
         }
     }
 
+    #[inline]
     pub(crate) fn add_lazy_addresses(&self, new_lazy_addresses: impl IntoIterator<Item = Address>) {
         for address in new_lazy_addresses {
             self.lazy_addresses.insert(address);
         }
     }
 
-    /// Apply a new pair of read & write sets to the multi-version data structure.
-    /// Return whether a write occurred to a memory location not written to by
+    /// Record the pair of read & write sets to the multi-version data structure.
+    /// Return whether a write occurred to a location not written to by
     /// the previous incarnation of the same transaction. This determines whether
     /// the executed higher transactions need re-validation.
     pub(crate) fn record(
@@ -102,28 +91,21 @@ impl MvMemory {
                 .insert(tx_version.tx_idx);
         }
 
-        let mut last_locations = index_mutex!(self.last_locations, tx_version.tx_idx);
-        for location in last_locations
-            .read
-            .keys()
-            .filter(|k| !read_set.contains_key(*k))
-        {
+        let mut locations = index_mutex!(self.locations, tx_version.tx_idx);
+        for location in locations.read.keys().filter(|k| !read_set.contains_key(*k)) {
             self.location_reads
                 .get_mut(location)
                 .unwrap()
                 .remove(&tx_version.tx_idx);
         }
-        last_locations.read = read_set;
+        locations.read = read_set;
 
-        // TODO2: DOCs
         let mut changed_locations = Vec::new();
 
-        // TODO: Group updates by shard to avoid locking operations.
         // Remove old locations that aren't written to anymore.
-        // TODO2: USE hashset for write_set
-        let mut last_location_idx = 0;
-        while last_location_idx < last_locations.write.len() {
-            let prev_location = unsafe { last_locations.write.get_unchecked(last_location_idx) };
+        let mut location_idx = 0;
+        while location_idx < locations.write.len() {
+            let prev_location = unsafe { locations.write.get_unchecked(location_idx) };
             if !write_set.contains_key(prev_location) {
                 if let Some(mut written_transactions) = self.data.get_mut(prev_location) {
                     written_transactions.remove(&tx_version.tx_idx);
@@ -131,19 +113,17 @@ impl MvMemory {
                 // add removed locations
                 changed_locations.push(*prev_location);
                 // remove location
-                last_locations.write.swap_remove(last_location_idx);
+                locations.write.swap_remove(location_idx);
             } else {
-                last_location_idx += 1;
+                location_idx += 1;
             }
         }
 
         for (location, value) in write_set {
-            if let Some(MemoryEntry::Data(_, old_value)) =
-                self.data.entry(location).or_default().insert(
-                    tx_version.tx_idx,
-                    MemoryEntry::Data(tx_version.tx_incarnation, value.clone()),
-                )
-            {
+            if let Some(Entry::Data(_, old_value)) = self.data.entry(location).or_default().insert(
+                tx_version.tx_idx,
+                Entry::Data(tx_version.tx_incarnation, value.clone()),
+            ) {
                 if old_value == value {
                     continue;
                 }
@@ -160,8 +140,8 @@ impl MvMemory {
                         for (txid, m) in iter {
                             if matches!(
                                 m,
-                                MemoryEntry::Data(_, MemoryValue::LazyRecipient(_))
-                                    | MemoryEntry::Data(_, MemoryValue::LazySender(_))
+                                Entry::Data(_, LocationValue::LazyRecipient(_))
+                                    | Entry::Data(_, LocationValue::LazySender(_))
                             ) {
                                 continue;
                             }
@@ -182,8 +162,8 @@ impl MvMemory {
         affected_txs.into_iter().collect()
     }
 
-    /// Obtain the last read set recorded by an execution of [tx_idx] and check
-    /// that re-reading each memory location in the read set still yields the
+    /// Obtain the read set recorded by an execution of [tx_idx] and check
+    /// that re-reading each location in the read set still yields the
     /// same read origins.
     /// This is invoked during validation, when the incarnation being validated is
     /// already executed and has recorded the read set. However, if the thread
@@ -195,13 +175,13 @@ impl MvMemory {
     /// validations that successfully abort affect the state and each incarnation
     /// can be aborted at most once).
     pub(crate) fn validate_read_locations(&self, tx_idx: TxIdx) -> bool {
-        for (location, prior_origins) in &index_mutex!(self.last_locations, tx_idx).read {
+        for (location, prior_origins) in &index_mutex!(self.locations, tx_idx).read {
             if let Some(written_transactions) = self.data.get(location) {
                 let mut iter = written_transactions.range(..tx_idx);
                 for prior_origin in prior_origins {
                     if let ReadOrigin::MvMemory(prior_version) = prior_origin {
                         // Found something: Must match version.
-                        if let Some((closest_idx, MemoryEntry::Data(tx_incarnation, ..))) =
+                        if let Some((closest_idx, Entry::Data(tx_incarnation, ..))) =
                             iter.next_back()
                         {
                             if closest_idx != &prior_version.tx_idx
@@ -245,9 +225,9 @@ pub enum RewardPolicy {
     #[cfg(feature = "optimism")]
     Optimism {
         /// L1 Fee Recipient
-        l1_fee_recipient_location_hash: crate::MemoryLocationHash,
+        l1_fee_recipient_location_hash: crate::LocationHash,
         /// Base Fee Vault
-        base_fee_vault_location_hash: crate::MemoryLocationHash,
+        base_fee_vault_location_hash: crate::LocationHash,
     },
 }
 
@@ -255,10 +235,10 @@ pub enum RewardPolicy {
 #[inline]
 pub fn reward_policy() -> RewardPolicy {
     RewardPolicy::Optimism {
-        l1_fee_recipient_location_hash: hash_deterministic(MemoryLocation::Basic(
+        l1_fee_recipient_location_hash: hash_deterministic(Location::Basic(
             op_revm::constants::L1_FEE_RECIPIENT,
         )),
-        base_fee_vault_location_hash: hash_deterministic(MemoryLocation::Basic(
+        base_fee_vault_location_hash: hash_deterministic(Location::Basic(
             op_revm::constants::BASE_FEE_RECIPIENT,
         )),
     }
@@ -272,8 +252,7 @@ pub fn reward_policy() -> RewardPolicy {
 
 #[cfg(feature = "optimism")]
 pub fn build_mv_memory(block_env: &BlockEnv, txs: &[TxEnv]) -> MvMemory {
-    let _beneficiary_location_hash =
-        hash_deterministic(MemoryLocation::Basic(block_env.beneficiary));
+    let _beneficiary_location_hash = hash_deterministic(Location::Basic(block_env.beneficiary));
     let l1_fee_recipient_location_hash = hash_deterministic(op_revm::constants::L1_FEE_RECIPIENT);
     let base_fee_recipient_location_hash =
         hash_deterministic(op_revm::constants::BASE_FEE_RECIPIENT);
@@ -281,8 +260,6 @@ pub fn build_mv_memory(block_env: &BlockEnv, txs: &[TxEnv]) -> MvMemory {
     // TODO: Estimate more locations based on sender, to, etc.
     let mut estimated_locations = HashMap::with_hasher(BuildIdentityHasher::default());
     for (index, _tx) in txs.iter().enumerate() {
-        // TODO: Benchmark to check whether adding these estimated
-        // locations helps or harms the performance.
         estimated_locations
             .entry(l1_fee_recipient_location_hash)
             .or_insert_with(|| Vec::with_capacity(1))
@@ -309,8 +286,7 @@ pub fn build_mv_memory(block_env: &BlockEnv, txs: &[TxEnv]) -> MvMemory {
     use crate::TxIdx;
 
     let block_size = txs.len();
-    let beneficiary_location_hash =
-        hash_deterministic(MemoryLocation::Basic(block_env.beneficiary));
+    let beneficiary_location_hash = hash_deterministic(Location::Basic(block_env.beneficiary));
 
     // TODO: Estimate more locations based on sender, to and the bytecode static code analysis, etc.
     let mut estimated_locations = HashMap::with_hasher(BuildIdentityHasher::default());

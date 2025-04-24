@@ -1,6 +1,6 @@
 use crate::{
-    AccountMeta, FinishExecFlags, MemoryEntry, MemoryLocation, MemoryLocationHash, MemoryValue,
-    ReadOrigin, ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
+    AccountMeta, Entry, FinishExecFlags, Location, LocationHash, LocationValue, ReadOrigin,
+    ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
     mv_memory::{MvMemory, RewardPolicy, reward_policy},
 };
 use alloy_evm::EvmEnv;
@@ -59,6 +59,7 @@ pub struct TxExecutionResult {
 
 impl TxExecutionResult {
     /// Construct an execution result from the raw result and state.
+    #[inline]
     pub fn from_raw(tx_type: TxType, ResultAndState { result, state }: ResultAndState) -> Self {
         Self {
             receipt: Receipt {
@@ -79,18 +80,18 @@ pub(crate) enum VmExecutionError {
     ExecutionError(ExecutionError),
 }
 
-/// Errors when reading a memory location.
+/// Errors when reading a location.
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ReadError {
-    /// Cannot read memory location from storage.
+    /// Cannot read location from storage.
     // TODO: More concrete type
-    #[error("Failed reading memory from storage: {0}")]
+    #[error("Failed reading from storage: {0}")]
     StorageError(String),
-    /// This memory location has been written by a lower transaction.
-    #[error("Read of memory location is blocked by tx #{0}")]
+    /// This location has been written by a lower transaction.
+    #[error("Read of location is blocked by tx #{0}")]
     Blocking(TxIdx),
     /// There has been an inconsistent read like reading the same
-    /// location from storage in the first call but from [`VmMemory`] in
+    /// location from storage in the first call but from [`Vm`] in
     /// the next.
     #[error("Inconsistent read")]
     InconsistentRead,
@@ -102,10 +103,10 @@ pub enum ReadError {
     /// there is no performant way to mark all storage slots as cleared.
     #[error("Tried to read self-destructed account")]
     SelfDestructedAccount,
-    /// The stored memory value type doesn't match its location type.
+    /// The stored value type doesn't match its location type.
     // TODO: Handle this at the type level?
-    #[error("Invalid type of stored memory value")]
-    InvalidMemoryValueType,
+    #[error("Invalid type of stored value")]
+    InvalidValueType,
 }
 
 impl From<ReadError> for VmExecutionError {
@@ -132,14 +133,14 @@ struct VmDB<'a, DB: DatabaseRef> {
     vm: &'a Vm<'a, DB>,
     tx_idx: TxIdx,
     tx: &'a TxEnv,
-    from_hash: MemoryLocationHash,
-    to_hash: Option<MemoryLocationHash>,
+    from_hash: LocationHash,
+    to_hash: Option<LocationHash>,
     to_code_hash: Option<B256>,
     // Indicates if we lazy update this transaction.
     // Only applied to raw transfers' senders & recipients at the moment.
     is_lazy: bool,
     read_set: ReadSet,
-    read_accounts: HashMap<MemoryLocationHash, AccountMeta, BuildIdentityHasher>,
+    read_accounts: HashMap<LocationHash, AccountMeta, BuildIdentityHasher>,
 }
 
 impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
@@ -147,8 +148,8 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
         vm: &'a Vm<'a, DB>,
         tx_idx: TxIdx,
         tx: &'a TxEnv,
-        from_hash: MemoryLocationHash,
-        to_hash: Option<MemoryLocationHash>,
+        from_hash: LocationHash,
+        to_hash: Option<LocationHash>,
     ) -> Result<Self, ReadError> {
         let mut db = Self {
             vm,
@@ -164,7 +165,7 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
             read_accounts: HashMap::with_capacity_and_hasher(2, BuildIdentityHasher::default()),
         };
         // We only lazy update raw transfers that already have the sender
-        // or recipient in [MvMemory] since sequentially evaluating memory
+        // or recipient in [`MvMemory`] since sequentially evaluating memory
         // locations with only one entry is much costlier than fully
         // evaluating it concurrently.
         // TODO: Only lazy update in block syncing mode, not for block
@@ -178,7 +179,7 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
         Ok(db)
     }
 
-    fn hash_basic(&self, address: &Address) -> MemoryLocationHash {
+    fn hash_basic(&self, address: &Address) -> LocationHash {
         if address == &self.tx.caller {
             return self.from_hash;
         }
@@ -187,7 +188,7 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
                 return self.to_hash.unwrap();
             }
         }
-        hash_deterministic(MemoryLocation::Basic(*address))
+        hash_deterministic(Location::Basic(*address))
     }
 
     // Push a new read origin. Return an error when there's already
@@ -204,21 +205,19 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
     }
 
     fn get_code_hash(&mut self, address: Address) -> Result<Option<B256>, ReadError> {
-        let location_hash = hash_deterministic(MemoryLocation::CodeHash(address));
+        let location_hash = hash_deterministic(Location::CodeHash(address));
         let read_origins = self.read_set.entry(location_hash).or_default();
 
-        // Try to read the latest code hash in [MvMemory]
-        // TODO: Memoize read locations (expected to be small) here in [Vm] to avoid
-        // contention in [MvMemory]
+        // Try to read the latest code hash in [`MvMemory`]
         if let Some(written_transactions) = self.vm.mv_memory.data.get(&location_hash) {
-            if let Some((tx_idx, MemoryEntry::Data(tx_incarnation, value))) =
+            if let Some((tx_idx, Entry::Data(tx_incarnation, value))) =
                 written_transactions.range(..self.tx_idx).next_back()
             {
                 match value {
-                    MemoryValue::SelfDestructed => {
+                    LocationValue::SelfDestructed => {
                         return Err(ReadError::SelfDestructedAccount);
                     }
-                    MemoryValue::CodeHash(code_hash) => {
+                    LocationValue::CodeHash(code_hash) => {
                         Self::push_origin(
                             read_origins,
                             ReadOrigin::MvMemory(TxVersion {
@@ -286,10 +285,10 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                 // Fully evaluate lazy updates
                 loop {
                     match iter.next_back() {
-                        Some((blocking_idx, MemoryEntry::Estimate)) => {
+                        Some((blocking_idx, Entry::Estimate)) => {
                             return Err(ReadError::Blocking(*blocking_idx));
                         }
-                        Some((closest_idx, MemoryEntry::Data(tx_incarnation, value))) => {
+                        Some((closest_idx, Entry::Data(tx_incarnation, value))) => {
                             // About to push a new origin
                             // Inconsistent: new origin will be longer than the previous!
                             if has_prev_origins && read_origins.len() == new_origins.len() {
@@ -308,7 +307,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                             }
                             new_origins.push(origin);
                             match value {
-                                MemoryValue::Basic(basic) => {
+                                LocationValue::Basic(basic) => {
                                     // TODO: Return [SelfDestructedAccount] if [basic] is
                                     // [SelfDestructed]?
                                     // For now we are betting on [code_hash] triggering the
@@ -316,14 +315,14 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                                     final_account = Some(basic.clone());
                                     break;
                                 }
-                                MemoryValue::LazyRecipient(addition) => {
+                                LocationValue::LazyRecipient(addition) => {
                                     balance_addition += (*addition).into()
                                 }
-                                MemoryValue::LazySender(subtraction) => {
+                                LocationValue::LazySender(subtraction) => {
                                     balance_addition -= (*subtraction).into();
                                     nonce_addition += 1;
                                 }
-                                _ => return Err(ReadError::InvalidMemoryValueType),
+                                _ => return Err(ReadError::InvalidValueType),
                             }
                         }
                         None => {
@@ -420,7 +419,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
     }
 
     fn storage(&mut self, address: Address, index: U256) -> Result<U256, Self::Error> {
-        let location_hash = hash_deterministic(MemoryLocation::Storage(address, index));
+        let location_hash = hash_deterministic(Location::Storage(address, index));
 
         let read_origins = self.read_set.entry(location_hash).or_default();
 
@@ -431,7 +430,7 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                     written_transactions.range(..self.tx_idx).next_back()
                 {
                     match entry {
-                        MemoryEntry::Data(tx_incarnation, MemoryValue::Storage(value)) => {
+                        Entry::Data(tx_incarnation, LocationValue::Storage(value)) => {
                             Self::push_origin(
                                 read_origins,
                                 ReadOrigin::MvMemory(TxVersion {
@@ -441,8 +440,8 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                             )?;
                             return Ok(*value);
                         }
-                        MemoryEntry::Estimate => return Err(ReadError::Blocking(*closest_idx)),
-                        _ => return Err(ReadError::InvalidMemoryValueType),
+                        Entry::Estimate => return Err(ReadError::Blocking(*closest_idx)),
+                        _ => return Err(ReadError::InvalidValueType),
                     }
                 }
             }
@@ -469,7 +468,7 @@ pub(crate) struct Vm<'a, DB: DatabaseRef> {
     mv_memory: &'a MvMemory,
     evm_env: &'a EvmEnv,
     txs: &'a [TxEnv],
-    beneficiary_location_hash: MemoryLocationHash,
+    beneficiary_location_hash: LocationHash,
     reward_policy: RewardPolicy,
     #[cfg(feature = "compiler")]
     worker: Arc<ExtCompileWorker>,
@@ -488,7 +487,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
             mv_memory,
             evm_env,
             txs,
-            beneficiary_location_hash: hash_deterministic(MemoryLocation::Basic(
+            beneficiary_location_hash: hash_deterministic(Location::Basic(
                 evm_env.block_env.beneficiary,
             )),
             reward_policy: reward_policy(),
@@ -497,13 +496,13 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
         }
     }
 
-    // Execute a transaction. This can read from memory but cannot modify any state.
-    // A successful execution returns:
-    //   - A write-set consisting of memory locations and their updated values.
-    //   - A read-set consisting of memory locations and their origins.
+    // Execute a transaction. A successful execution returns:
+    //   - A write-set consisting of locations and their updated values.
+    //   - A read-set consisting of locations and their origins.
+    //   - A transaction list affected by the current tx version.
     //
     // An execution may observe a read dependency on a lower transaction. This happens
-    // when the last incarnation of the dependency wrote to a memory location that
+    // when the last incarnation of the dependency wrote to a location that
     // this transaction reads, but it aborted before the read. In this case, the
     // dependency index is returned via [blocking_tx_idx]. An execution task for this
     // transaction is re-scheduled after the blocking dependency finishes its
@@ -519,11 +518,11 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
     ) -> Result<VmExecutionResult, VmExecutionError> {
         // SAFETY: A correct scheduler would guarantee this index to be inbound.
         let tx = unsafe { self.txs.get_unchecked(tx_version.tx_idx) };
-        let from_hash = hash_deterministic(MemoryLocation::Basic(tx.caller));
+        let from_hash = hash_deterministic(Location::Basic(tx.caller));
         let to_hash = tx
             .kind
             .to()
-            .map(|to| hash_deterministic(MemoryLocation::Basic(*to)));
+            .map(|to| hash_deterministic(Location::Basic(*to)));
 
         // Execute
         let mut db = VmDB::new(self, tx_version.tx_idx, tx, from_hash, to_hash)
@@ -553,19 +552,17 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                     WriteSet::with_capacity_and_hasher(100, BuildIdentityHasher::default());
                 for (address, account) in &result_and_state.state {
                     if account.is_selfdestructed() {
-                        // TODO: Also write [SelfDestructed] to the basic location?
                         // For now we are betting on [code_hash] triggering the sequential
                         // fallback when we read a self-destructed contract.
                         write_set.insert(
-                            hash_deterministic(MemoryLocation::CodeHash(*address)),
-                            MemoryValue::SelfDestructed,
+                            hash_deterministic(Location::CodeHash(*address)),
+                            LocationValue::SelfDestructed,
                         );
                         continue;
                     }
 
                     if account.is_touched() {
-                        let account_location_hash =
-                            hash_deterministic(MemoryLocation::Basic(*address));
+                        let account_location_hash = hash_deterministic(Location::Basic(*address));
 
                         #[cfg(not(feature = "optimism"))]
                         let read_account = evm.db().read_accounts.get(&account_location_hash);
@@ -592,12 +589,12 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                                 if account_location_hash == from_hash {
                                     write_set.insert(
                                         account_location_hash,
-                                        MemoryValue::LazySender(U256::MAX - account.info.balance),
+                                        LocationValue::LazySender(U256::MAX - account.info.balance),
                                     );
                                 } else if Some(account_location_hash) == to_hash {
                                     write_set.insert(
                                         account_location_hash,
-                                        MemoryValue::LazyRecipient(tx.value),
+                                        LocationValue::LazyRecipient(tx.value),
                                     );
                                 }
                             }
@@ -618,7 +615,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                             {
                                 write_set.insert(
                                     account_location_hash,
-                                    MemoryValue::Basic(AccountInfo {
+                                    LocationValue::Basic(AccountInfo {
                                         balance: account.info.balance,
                                         nonce: account.info.nonce,
                                         code_hash: account.info.code_hash,
@@ -631,8 +628,8 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                         // Write new contract
                         if is_new_code {
                             write_set.insert(
-                                hash_deterministic(MemoryLocation::CodeHash(*address)),
-                                MemoryValue::CodeHash(account.info.code_hash),
+                                hash_deterministic(Location::CodeHash(*address)),
+                                LocationValue::CodeHash(account.info.code_hash),
                             );
                             self.mv_memory
                                 .new_bytecodes
@@ -641,11 +638,10 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                         }
                     }
 
-                    // TODO: We should move this changed check to our read set like for account info?
                     for (slot, value) in account.changed_storage_slots() {
                         write_set.insert(
-                            hash_deterministic(MemoryLocation::Storage(*address, *slot)),
-                            MemoryValue::Storage(value.present_value),
+                            hash_deterministic(Location::Storage(*address, *slot)),
+                            LocationValue::Storage(value.present_value),
                         );
                     }
                 }
@@ -658,7 +654,8 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                     evm.ctx(),
                 )?;
 
-                drop(evm); // release db
+                // Drop the vm instance and the database instance.
+                drop(evm);
 
                 if db.is_lazy {
                     self.mv_memory
@@ -726,7 +723,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
             gas_price = gas_price.saturating_sub(self.evm_env.block_env.basefee as u128);
         }
         let gas_price = U256::from(gas_price);
-        let rewards: SmallVec<[(MemoryLocationHash, U256); 1]> = match self.reward_policy {
+        let rewards: SmallVec<[(LocationHash, U256); 1]> = match self.reward_policy {
             RewardPolicy::Ethereum => {
                 smallvec![(
                     self.beneficiary_location_hash,
@@ -772,19 +769,19 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
         for (recipient, amount) in rewards {
             if let Some(value) = write_set.get_mut(&recipient) {
                 match value {
-                    MemoryValue::Basic(basic) => {
+                    LocationValue::Basic(basic) => {
                         basic.balance = basic.balance.saturating_add(amount)
                     }
-                    MemoryValue::LazySender(subtraction) => {
+                    LocationValue::LazySender(subtraction) => {
                         *subtraction = subtraction.saturating_sub(amount)
                     }
-                    MemoryValue::LazyRecipient(addition) => {
+                    LocationValue::LazyRecipient(addition) => {
                         *addition = addition.saturating_add(amount)
                     }
-                    _ => return Err(ReadError::InvalidMemoryValueType.into()),
+                    _ => return Err(ReadError::InvalidValueType.into()),
                 }
             } else {
-                write_set.insert(recipient, MemoryValue::LazyRecipient(amount));
+                write_set.insert(recipient, LocationValue::LazyRecipient(amount));
             }
         }
 
