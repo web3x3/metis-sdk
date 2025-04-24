@@ -8,7 +8,7 @@ use metis_primitives::{
     AccessListItem, Address, B256, Bytecode, Bytes, HashMap, SpecId, TxEnv, U256, as_u64_saturated,
     keccak256,
 };
-use metis_tools::find_all_json_tests;
+use metis_tools::{find_all_json_tests, get_block_spec};
 use pretty_assertions::assert_eq;
 use revm::database::{CacheState, State};
 use revm::primitives::TxKind;
@@ -266,34 +266,6 @@ fn check_execute_results(results: &[TxExecutionResult], name: &str, suite: &Suit
                 name, idx, i
             );
         }
-    }
-}
-
-fn get_block_spec(timestamp: u64, block_number: u64) -> SpecId {
-    if timestamp >= 1710338135 {
-        SpecId::CANCUN
-    } else if timestamp >= 1681338455 {
-        SpecId::SHANGHAI
-    } else if block_number >= 15537394 {
-        SpecId::MERGE
-    } else if block_number >= 12965000 {
-        SpecId::LONDON
-    } else if block_number >= 12244000 {
-        SpecId::BERLIN
-    } else if block_number >= 9069000 {
-        SpecId::ISTANBUL
-    } else if block_number >= 7280000 {
-        SpecId::PETERSBURG
-    } else if block_number >= 4370000 {
-        SpecId::BYZANTIUM
-    } else if block_number >= 2675000 {
-        SpecId::SPURIOUS_DRAGON
-    } else if block_number >= 2463000 {
-        SpecId::TANGERINE
-    } else if block_number >= 1150000 {
-        SpecId::HOMESTEAD
-    } else {
-        SpecId::FRONTIER
     }
 }
 

@@ -6633,6 +6633,7 @@ dependencies = [
  "smallvec",
  "thiserror 2.0.12",
  "tikv-jemallocator",
+ "tokio",
  "walkdir",
 ]
 
@@ -6650,11 +6651,15 @@ dependencies = [
 name = "metis-tools"
 version = "0.1.0"
 dependencies = [
+ "alloy-consensus",
  "alloy-evm",
+ "alloy-provider",
  "alloy-rlp",
+ "alloy-rpc-types-eth",
  "anyhow",
  "clap",
  "hash-db",
+ "hashbrown 0.15.2",
  "hex",
  "indicatif",
  "k256",
@@ -6665,10 +6670,12 @@ dependencies = [
  "plain_hasher",
  "pretty_assertions",
  "rayon",
+ "reqwest 0.12.15",
  "revm",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
+ "tokio",
  "triehash",
  "walkdir",
 ]
@@ -11265,11 +11272,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2e5c80c5a2fd605f2119ee32a63fb3be941fb6a81ced8cdb3397abca28317224"
 dependencies = [
  "alloy-eips",
+ "alloy-provider",
+ "alloy-transport",
  "revm-bytecode",
  "revm-database-interface",
  "revm-primitives 18.0.0",
  "revm-state",
  "serde",
+ "tokio",
 ]
 
 [[package]]
@@ -11282,6 +11292,7 @@ dependencies = [
  "revm-primitives 18.0.0",
  "revm-state",
  "serde",
+ "tokio",
 ]
 
 [[package]]

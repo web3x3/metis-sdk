@@ -8,14 +8,20 @@ metis-pe.workspace = true
 metis-chain.workspace = true
 metis-primitives.workspace = true
 
+revm = { workspace = true, features = ["alloydb"] }
 alloy-evm.workspace = true
-revm.workspace = true
+alloy-rpc-types-eth.workspace = true
+alloy-provider.workspace = true
+alloy-consensus.workspace = true
 rayon.workspace = true
 anyhow.workspace = true
 alloy-rlp.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 thiserror.workspace = true
+reqwest.workspace = true
+tokio.workspace = true
+hashbrown.workspace = true
 
 hex = "0.4.3"
 num_cpus = "1.16.0"
@@ -39,6 +45,11 @@ doc = false
 [[bin]]
 name = "metis-blocktest"
 path = "bins/blocktest/main.rs"
+doc = false
+
+[[bin]]
+name = "metis-blockfetch"
+path = "bins/blockfetch/main.rs"
 doc = false
 
 [features]
