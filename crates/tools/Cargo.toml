@@ -28,7 +28,18 @@ plain_hasher = "0.2"
 triehash = "0.8"
 k256 = { version = "0.13.3", features = ["ecdsa"] }
 
+# Testing
+pretty_assertions = "1"
+
 [[bin]]
 name = "metis-ethertest"
 path = "bins/ethertest/main.rs"
 doc = false
+
+[[bin]]
+name = "metis-blocktest"
+path = "bins/blocktest/main.rs"
+doc = false
+
+[features]
+compiler = ["metis-pe/compiler"]

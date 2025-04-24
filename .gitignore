@@ -15,6 +15,3 @@ venv.bak/
 
 # DEV
 scripts/dev_*
-
-# TEST DATA
-data/

@@ -6663,6 +6663,7 @@ dependencies = [
  "metis-primitives",
  "num_cpus",
  "plain_hasher",
+ "pretty_assertions",
  "rayon",
  "revm",
  "serde",
