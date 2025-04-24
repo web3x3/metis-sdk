@@ -16,7 +16,7 @@ use crate::{
     TxVersion, WriteSet,
 };
 
-/// The `MvMemory` contains shared memory in a form of a multi-version data
+/// The [`MvMemory`] contains shared memory in a form of a multi-version data
 /// structure for values written and read by different transactions. It stores
 /// multiple writes for each location, along with a value and an associated
 /// version of a corresponding transaction.
@@ -83,14 +83,14 @@ impl MvMemory {
         read_set: ReadSet,
         write_set: WriteSet,
     ) -> Vec<TxIdx> {
-        // update location_reads
+        // Update location_reads
         for location in read_set.keys() {
             self.location_reads
                 .entry(*location)
                 .or_default()
                 .insert(tx_version.tx_idx);
         }
-
+        // Update read set
         let mut locations = index_mutex!(self.locations, tx_version.tx_idx);
         for location in locations.read.keys().filter(|k| !read_set.contains_key(*k)) {
             self.location_reads
@@ -102,13 +102,13 @@ impl MvMemory {
 
         let mut changed_locations = Vec::new();
 
-        // Remove old locations that aren't written to anymore.
+        // Update write set and remove old locations that aren't written to anymore.
         let mut location_idx = 0;
         while location_idx < locations.write.len() {
             let prev_location = unsafe { locations.write.get_unchecked(location_idx) };
             if !write_set.contains_key(prev_location) {
-                if let Some(mut written_transactions) = self.data.get_mut(prev_location) {
-                    written_transactions.remove(&tx_version.tx_idx);
+                if let Some(mut written_txs) = self.data.get_mut(prev_location) {
+                    written_txs.remove(&tx_version.tx_idx);
                 }
                 // add removed locations
                 changed_locations.push(*prev_location);
@@ -135,8 +135,8 @@ impl MvMemory {
             .iter()
             .flat_map(|l| {
                 if let Some(txid_set) = self.location_reads.get(l) {
-                    if let Some(written_transactions) = self.data.get(l) {
-                        let iter = written_transactions.range(tx_version.tx_idx + 1..);
+                    if let Some(written_txs) = self.data.get(l) {
+                        let iter = written_txs.range(tx_version.tx_idx + 1..);
                         for (txid, m) in iter {
                             if matches!(
                                 m,
@@ -176,8 +176,8 @@ impl MvMemory {
     /// can be aborted at most once).
     pub(crate) fn validate_read_locations(&self, tx_idx: TxIdx) -> bool {
         for (location, prior_origins) in &index_mutex!(self.locations, tx_idx).read {
-            if let Some(written_transactions) = self.data.get(location) {
-                let mut iter = written_transactions.range(..tx_idx);
+            if let Some(written_txs) = self.data.get(location) {
+                let mut iter = written_txs.range(..tx_idx);
                 for prior_origin in prior_origins {
                     if let ReadOrigin::MvMemory(prior_version) = prior_origin {
                         // Found something: Must match version.
@@ -215,8 +215,6 @@ impl MvMemory {
 }
 
 /// Different chains may have varying reward policies.
-/// This enum specifies which policy to follow, with optional
-/// pre-calculated data to assist in reward calculations.
 #[derive(Debug, Clone)]
 pub enum RewardPolicy {
     /// Ethereum

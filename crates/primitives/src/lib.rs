@@ -1,7 +1,9 @@
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
-pub use alloy_primitives::{Signature, SignatureError, Signed, Uint};
+pub use alloy_primitives::{
+    Signature, SignatureError, Signed, TxHash, TxIndex, TxKind, TxNonce, TxNumber, Uint,
+};
 pub use hashbrown::HashMap;
 pub use revm::bytecode::{
     Bytecode,
@@ -9,7 +11,7 @@ pub use revm::bytecode::{
     eof::{CodeInfo as EofCodeInfo, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, Eof, EofBody},
     opcode::{OpCode, OpCodeInfo},
 };
-pub use revm::context::{Block, BlockEnv, CfgEnv, TransactTo, Transaction, TxEnv};
+pub use revm::context::{Block, BlockEnv, CfgEnv, ContextTr, TransactTo, Transaction, TxEnv};
 pub use revm::context_interface::{
     block::{BlobExcessGasAndPrice, calc_blob_gasprice, calc_excess_blob_gas},
     cfg::Cfg,
@@ -24,11 +26,13 @@ pub use revm::context_interface::{
         RecoveredAuthorization, SignedAuthorization, TransactionType,
     },
 };
-pub use revm::database::{DBErrorMarker, Database, DatabaseCommit, DatabaseRef, PlainAccount};
+pub use revm::database::{
+    CacheDB, DBErrorMarker, Database, DatabaseCommit, DatabaseRef, PlainAccount,
+};
 pub use revm::precompile::{PrecompileError, PrecompileOutput, PrecompileSpecId, Precompiles};
 pub use revm::primitives::{
-    Address, B256, BLOCK_HASH_HISTORY, Bytes, FixedBytes, I256, KECCAK_EMPTY, Log, LogData, TxKind,
-    U256, address, alloy_primitives, b256,
+    Address, B256, BLOCK_HASH_HISTORY, Bytes, FixedBytes, I256, KECCAK_EMPTY, Log, LogData, U256,
+    address, alloy_primitives, b256,
     eip4844::{self, GAS_PER_BLOB},
     eip7702::{self, PER_AUTH_BASE_COST, PER_EMPTY_ACCOUNT_COST},
     fixed_bytes,
@@ -40,6 +44,7 @@ pub use revm::primitives::{
 pub use revm::state::{
     Account, AccountInfo, AccountStatus, EvmState, EvmStorageSlot as StorageSlot,
 };
+pub use revm::{ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 pub use rustc_hash::FxBuildHasher;
 
 /// Mapping from address to [`Account`].

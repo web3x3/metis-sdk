@@ -7,7 +7,7 @@ use revm::state::AccountInfo;
 use std::fmt::Debug;
 use std::sync::Arc;
 
-/// Memory Database error definitions
+/// Database error definitions.
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
 pub enum DBError {
     #[error("Storage error: {0}")]

@@ -193,9 +193,6 @@ pub enum ReadOrigin {
 }
 
 /// A scheduled worker task
-/// TODO: Add more useful work when there are idle workers like near
-/// the end of block execution, while waiting for a huge blocking
-/// transaction to resolve, etc.
 #[derive(Debug)]
 pub enum Task {
     Execution(TxVersion),

@@ -84,7 +84,6 @@ pub(crate) enum VmExecutionError {
 #[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
 pub enum ReadError {
     /// Cannot read location from storage.
-    // TODO: More concrete type
     #[error("Failed reading from storage: {0}")]
     StorageError(String),
     /// This location has been written by a lower transaction.
@@ -104,7 +103,6 @@ pub enum ReadError {
     #[error("Tried to read self-destructed account")]
     SelfDestructedAccount,
     /// The stored value type doesn't match its location type.
-    // TODO: Handle this at the type level?
     #[error("Invalid type of stored value")]
     InvalidValueType,
 }
@@ -127,8 +125,8 @@ pub(crate) struct VmExecutionResult {
 }
 
 // A database interface that intercepts reads while executing a specific
-// transaction with Revm. It provides values from the multi-version data
-// structure & storage, and tracks the read set of the current execution.
+// transaction. It provides values from the multi-version data structure
+// and storage, and tracks the read set of the current execution.
 struct VmDB<'a, DB: DatabaseRef> {
     vm: &'a Vm<'a, DB>,
     tx_idx: TxIdx,
@@ -168,8 +166,6 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
         // or recipient in [`MvMemory`] since sequentially evaluating memory
         // locations with only one entry is much costlier than fully
         // evaluating it concurrently.
-        // TODO: Only lazy update in block syncing mode, not for block
-        // building.
         if let TxKind::Call(to) = tx.kind {
             db.to_code_hash = db.get_code_hash(to)?;
             db.is_lazy = db.to_code_hash.is_none()
@@ -209,9 +205,9 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
         let read_origins = self.read_set.entry(location_hash).or_default();
 
         // Try to read the latest code hash in [`MvMemory`]
-        if let Some(written_transactions) = self.vm.mv_memory.data.get(&location_hash) {
+        if let Some(written_txs) = self.vm.mv_memory.data.get(&location_hash) {
             if let Some((tx_idx, Entry::Data(tx_incarnation, value))) =
-                written_transactions.range(..self.tx_idx).next_back()
+                written_txs.range(..self.tx_idx).next_back()
             {
                 match value {
                     LocationValue::SelfDestructed => {
@@ -279,8 +275,8 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
 
         // Try reading from multi-version data
         if self.tx_idx > 0 {
-            if let Some(written_transactions) = self.vm.mv_memory.data.get(&location_hash) {
-                let mut iter = written_transactions.range(..self.tx_idx);
+            if let Some(written_txs) = self.vm.mv_memory.data.get(&location_hash) {
+                let mut iter = written_txs.range(..self.tx_idx);
 
                 // Fully evaluate lazy updates
                 loop {
@@ -308,10 +304,6 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                             new_origins.push(origin);
                             match value {
                                 LocationValue::Basic(basic) => {
-                                    // TODO: Return [SelfDestructedAccount] if [basic] is
-                                    // [SelfDestructed]?
-                                    // For now we are betting on [code_hash] triggering the
-                                    // sequential fallback when we read a self-destructed contract.
                                     final_account = Some(basic.clone());
                                     break;
                                 }
@@ -364,8 +356,6 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
             account.nonce += nonce_addition;
             if location_hash == self.from_hash && self.tx.nonce != account.nonce {
                 return if self.tx_idx > 0 {
-                    // TODO: Better retry strategy -- immediately, to the
-                    // closest sender tx, to the missing sender tx, etc.
                     Err(ReadError::Blocking(self.tx_idx - 1))
                 } else {
                     Err(ReadError::InvalidNonce(self.tx_idx))
@@ -425,10 +415,8 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
 
         // Try reading from multi-version data
         if self.tx_idx > 0 {
-            if let Some(written_transactions) = self.vm.mv_memory.data.get(&location_hash) {
-                if let Some((closest_idx, entry)) =
-                    written_transactions.range(..self.tx_idx).next_back()
-                {
+            if let Some(written_txs) = self.vm.mv_memory.data.get(&location_hash) {
+                if let Some((closest_idx, entry)) = written_txs.range(..self.tx_idx).next_back() {
                     match entry {
                         Entry::Data(tx_incarnation, LocationValue::Storage(value)) => {
                             Self::push_origin(
@@ -656,10 +644,12 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
 
                 // Drop the vm instance and the database instance.
                 drop(evm);
-
+                // Append lazy addresses when the mode is lazy.
                 if db.is_lazy {
-                    self.mv_memory
-                        .add_lazy_addresses([tx.caller, tx.kind.into_to().unwrap_or_default()]);
+                    self.mv_memory.add_lazy_addresses([tx.caller]);
+                    if let Some(to) = tx.kind.into_to() {
+                        self.mv_memory.add_lazy_addresses([to]);
+                    }
                 }
 
                 let flags = if tx_version.tx_idx > 0 && !db.is_lazy {
@@ -680,12 +670,6 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
             }
             Err(EVMError::Database(read_error)) => Err(read_error.into()),
             Err(err) => {
-                // Optimistically retry in case some previous internal transactions send
-                // more fund to the sender but hasn't been executed yet.
-                // TODO: Let users define this behaviour through a mode enum or something.
-                // Since this retry is safe for syncing canonical blocks but can deadlock
-                // on new or faulty blocks. We can skip the transaction for new blocks and
-                // error out after a number of tries for the latter.
                 if tx_version.tx_idx > 0
                     && matches!(
                         err,
