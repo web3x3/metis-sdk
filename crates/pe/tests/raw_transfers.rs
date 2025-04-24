@@ -8,6 +8,32 @@ use revm::primitives::{Address, U256, alloy_primitives::U160};
 pub mod common;
 
 #[test]
+fn raw_transfer_not_existing_single_address() {
+    let block_size = 1; // number of transactions
+    common::test_execute(
+        // Mock the beneficiary account (`Address:ZERO`) and the next `block_size` user accounts.
+        InMemoryDB::new(
+            (0..=block_size).map(common::mock_account).collect(),
+            Default::default(),
+            Default::default(),
+        ),
+        vec![{
+            let caller = Address::from(U160::from(1));
+            let to = Address::from(U160::from(2));
+            TxEnv {
+                caller,
+                kind: TransactTo::Call(to),
+                value: U256::from(1),
+                gas_limit: common::RAW_TRANSFER_GAS_LIMIT,
+                gas_price: 1_u128,
+                nonce: 1,
+                ..TxEnv::default()
+            }
+        }],
+    );
+}
+
+#[test]
 fn repeat_raw_transfer_same_address() {
     let block_size = 10; // number of transactions
     common::test_execute(
