@@ -137,33 +137,22 @@ impl ParallelExecutor {
         thread::scope(|scope| {
             for _ in 0..concurrency_level.into() {
                 scope.spawn(|| {
-                    let mut task = scheduler.next_task();
-                    while self.abort_reason.get().is_none() {
-                        task = match task {
-                            Some(Task::Execution(tx_version)) => {
+                    let mut next_task = scheduler.next_task();
+                    while let Some(task) = next_task {
+                        next_task = match task {
+                            Task::Execution(tx_version) => {
                                 self.try_execute(&vm, &scheduler, tx_version)
                             }
-                            Some(Task::Validation(tx_idx)) => {
-                                try_validate(&mv_memory, &scheduler, tx_idx)
+                            Task::Validation(tx_version) => {
+                                try_validate(&mv_memory, &scheduler, &tx_version)
                             }
-                            None => None,
                         };
-
-                        if task.is_some() {
-                            continue;
-                        }
-
-                        task = scheduler.next_task();
-
-                        if task.is_some() {
-                            continue;
-                        }
-
-                        if scheduler.is_finished() {
+                        if self.abort_reason.get().is_some() {
                             break;
                         }
-
-                        thread::yield_now();
+                        if next_task.is_none() {
+                            next_task = scheduler.next_task();
+                        }
                     }
                 });
             }
@@ -338,6 +327,7 @@ impl ParallelExecutor {
                     None
                 }
                 Err(VmExecutionError::FallbackToSequential) => {
+                    scheduler.abort();
                     self.abort_reason
                         .get_or_init(|| AbortReason::FallbackToSequential);
                     None
@@ -353,6 +343,7 @@ impl ParallelExecutor {
                     None
                 }
                 Err(VmExecutionError::ExecutionError(err)) => {
+                    scheduler.abort();
                     self.abort_reason
                         .get_or_init(|| AbortReason::ExecutionError(err));
                     None
@@ -360,13 +351,12 @@ impl ParallelExecutor {
                 Ok(VmExecutionResult {
                     execution_result,
                     flags,
-                    affected_txs,
                 }) => {
                     {
                         *index_mutex!(self.execution_results, tx_version.tx_idx) =
                             Some(execution_result);
                     }
-                    scheduler.finish_execution(tx_version, flags, affected_txs)
+                    scheduler.finish_execution(tx_version, flags)
                 }
             };
         }
@@ -377,10 +367,14 @@ impl ParallelExecutor {
 fn try_validate<T: TaskProvider>(
     mv_memory: &MvMemory,
     scheduler: &Scheduler<T>,
-    tx_idx: TxIdx,
+    tx_version: &TxVersion,
 ) -> Option<Task> {
-    let read_set_valid = mv_memory.validate_read_locations(tx_idx);
-    scheduler.finish_validation(tx_idx, !read_set_valid)
+    let read_set_valid = mv_memory.validate_read_locations(tx_version.tx_idx);
+    let aborted = !read_set_valid && scheduler.try_validation_abort(tx_version);
+    if aborted {
+        mv_memory.convert_writes_to_estimates(tx_version.tx_idx);
+    }
+    scheduler.finish_validation(tx_version, aborted)
 }
 
 /// Execute transactions sequentially.
