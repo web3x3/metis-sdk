@@ -4,7 +4,7 @@ edition.workspace = true
 version.workspace = true
 
 [features]
-default = ["jemalloc", "async-dropper"]
+default = ["async-dropper"]
 
 optimism = [
   "dep:op-alloy-consensus",
