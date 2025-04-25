@@ -61,6 +61,39 @@ A `genesis.json` example is
 }
 ```
 
+> Note that these commands will not open any HTTP/WS ports by default. You can change this by adding the --http, --ws flags, respectively and using the --http.api and --ws.api flags to enable various ETH compatible JSON-RPC APIs.
+
+### Observability with Prometheus & Grafana
+
+Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
+
+```shell
+cargo run -r --bin metis --dev --chain genesis.json --metrics 127.0.0.1:9001
+```
+
+When you use metis chain for deployment, you can expose this ports
+
+```text
+8545
+8546
+8551
+8045
+8046
+# Expose the 9001 for metric.
+9001
+# Expose the 30303 port (TCP and UDP) for peering with other nodes.
+30303
+30303/udp
+```
+
+## CLI Reference
+
+Metis chain is built on reth, they use almost the same CLI parameters, you can find more CLI information [here](https://reth.rs/cli/reth.html).
+
+## Interacting with Metis Chain over JSON-RPC
+
+Metis chain is built on reth, they both have the same ETH compatible JSON-RPC, you can find more JSON-RPC information [here](https://reth.rs/jsonrpc/intro.html).
+
 ## Core Components
 
 ### `ParallelExecutorBuilder`
