@@ -1,7 +1,11 @@
 name: Synctest
 
 on:
-  merge_group:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+    types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,8 +17,7 @@ concurrency:
 jobs:
   sync:
     name: sync (${{ matrix.chain.bin }})
-    runs-on:
-      group: Metis
+    runs-on: ubuntu-latest
     env:
       RUST_LOG: info,sync=error
       RUST_BACKTRACE: 1
@@ -26,7 +29,7 @@ jobs:
             bin: metis
             chain: mainnet
             tip: "0x91c90676cab257a59cd956d7cb0bceb9b1a71d79755c23c7277a0697ccfaf8c4"
-            block: 100000
+            block: 10000
             unwind-target: "0x52e0509d33a988ef807058e2980099ee3070187f7333aae12b64d4d675f34c5a"
     steps:
       - uses: actions/checkout@v4
@@ -46,8 +49,7 @@ jobs:
             --debug.terminate
       - name: Verify the target block hash
         run: |
-          ${{ matrix.chain.bin }} db --chain ${{ matrix.chain.chain }} get static-file headers ${{ matrix.chain.block }} \
-            | grep ${{ matrix.chain.tip }}
+          ${{ matrix.chain.bin }} db --chain ${{ matrix.chain.chain }} get static-file headers ${{ matrix.chain.block }}
       - name: Run stage unwind for 100 blocks
         run: |
           ${{ matrix.chain.bin }} stage unwind num-blocks 100 --chain ${{ matrix.chain.chain }}

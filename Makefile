@@ -75,7 +75,7 @@ bench: ## Run the gigagas benchmark
 
 .PHONY: install
 install: ## Build and install the metis binary under `~/.cargo/bin`.
-	cargo install --bin metis --force --locked \
+	cargo install --path crates/chain --bin metis --force --locked \
 		--features "$(FEATURES)" \
 		--profile "$(PROFILE)" \
 		$(CARGO_INSTALL_EXTRA_FLAGS)
