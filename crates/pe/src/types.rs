@@ -131,14 +131,14 @@ pub type TxIncarnation = usize;
 ///
 /// Blocked execution:
 /// - Executing(i) --add_dependency--> Aborting(i)
-/// - Blocking(i) --resume--> ReadyToExecute(i+1)
+/// - Aborted(i) --resume--> ReadyToExecute(i+1)
 #[derive(PartialEq, Clone, Debug)]
 pub enum IncarnationStatus {
     ReadyToExecute = 0,
     Executing,
     Executed,
     Validated,
-    Blocking,
+    Aborted,
 }
 
 #[derive(PartialEq, Clone, Debug)]
@@ -155,7 +155,7 @@ impl From<usize> for TxStatus {
             1 => IncarnationStatus::Executing,
             2 => IncarnationStatus::Executed,
             3 => IncarnationStatus::Validated,
-            _ => IncarnationStatus::Blocking,
+            _ => IncarnationStatus::Aborted,
         };
         Self {
             incarnation,
@@ -196,7 +196,7 @@ pub enum ReadOrigin {
 #[derive(Debug)]
 pub enum Task {
     Execution(TxVersion),
-    Validation(TxIdx),
+    Validation(TxVersion),
 }
 
 /// Most locations only have one read origin. Lazy updated ones like

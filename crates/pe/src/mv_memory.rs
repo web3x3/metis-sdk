@@ -1,7 +1,4 @@
-use std::{
-    collections::{BTreeMap, BTreeSet, HashSet},
-    sync::Mutex,
-};
+use std::{collections::BTreeMap, sync::Mutex};
 
 use alloy_primitives::{Address, B256};
 use dashmap::{DashMap, DashSet};
@@ -12,8 +9,7 @@ use revm::context::{BlockEnv, TxEnv};
 use std::fmt::Debug;
 
 use crate::{
-    Entry, Location, LocationHash, LocationValue, ReadOrigin, ReadSet, ReadWriteSet, TxIdx,
-    TxVersion, WriteSet,
+    Entry, Location, LocationHash, ReadOrigin, ReadSet, ReadWriteSet, TxIdx, TxVersion, WriteSet,
 };
 
 /// The [`MvMemory`] contains shared memory in a form of a multi-version data
@@ -27,8 +23,6 @@ pub struct MvMemory {
     /// in the read & write sets. [dashmap] having a dedicated interface for this use case
     /// (that skips hashing for [u64] keys) would make our code cleaner and "faster".
     pub(crate) data: DashMap<LocationHash, BTreeMap<TxIdx, Entry>, BuildIdentityHasher>,
-    /// List of transactions that reaad the location
-    pub(crate) location_reads: DashMap<LocationHash, BTreeSet<TxIdx>, BuildIdentityHasher>,
     /// List of read & written locations of each transaction
     locations: Vec<Mutex<ReadWriteSet>>,
     /// Lazy addresses that need full evaluation at the end of the block
@@ -59,7 +53,6 @@ impl MvMemory {
         }
         Self {
             data,
-            location_reads: DashMap::default(),
             locations: (0..block_size).map(|_| Mutex::default()).collect(),
             lazy_addresses: DashSet::from_iter(lazy_addresses),
             new_bytecodes: DashMap::default(),
@@ -82,22 +75,9 @@ impl MvMemory {
         tx_version: &TxVersion,
         read_set: ReadSet,
         write_set: WriteSet,
-    ) -> Vec<TxIdx> {
-        // Update location_reads
-        for location in read_set.keys() {
-            self.location_reads
-                .entry(*location)
-                .or_default()
-                .insert(tx_version.tx_idx);
-        }
+    ) -> bool {
         // Update read set
         let mut locations = index_mutex!(self.locations, tx_version.tx_idx);
-        for location in locations.read.keys().filter(|k| !read_set.contains_key(*k)) {
-            self.location_reads
-                .get_mut(location)
-                .unwrap()
-                .remove(&tx_version.tx_idx);
-        }
         locations.read = read_set;
 
         let mut changed_locations = Vec::new();
@@ -119,47 +99,21 @@ impl MvMemory {
             }
         }
 
+        // Register new writes.
+        let mut wrote_new_location = false;
+
         for (location, value) in write_set {
-            if let Some(Entry::Data(_, old_value)) = self.data.entry(location).or_default().insert(
+            self.data.entry(location).or_default().insert(
                 tx_version.tx_idx,
-                Entry::Data(tx_version.tx_incarnation, value.clone()),
-            ) {
-                if old_value == value {
-                    continue;
-                }
+                Entry::Data(tx_version.tx_incarnation, value),
+            );
+            if !locations.write.contains(&location) {
+                locations.write.push(location);
+                wrote_new_location = true;
             }
-            changed_locations.push(location);
         }
 
-        let affected_txs: HashSet<TxIdx> = changed_locations
-            .iter()
-            .flat_map(|l| {
-                if let Some(txid_set) = self.location_reads.get(l) {
-                    if let Some(written_txs) = self.data.get(l) {
-                        let iter = written_txs.range(tx_version.tx_idx + 1..);
-                        for (txid, m) in iter {
-                            if matches!(
-                                m,
-                                Entry::Data(_, LocationValue::LazyRecipient(_))
-                                    | Entry::Data(_, LocationValue::LazySender(_))
-                            ) {
-                                continue;
-                            }
-
-                            return txid_set
-                                .range(tx_version.tx_idx + 1..txid + 1)
-                                .cloned()
-                                .collect();
-                        }
-                    }
-                    txid_set.range(tx_version.tx_idx + 1..).cloned().collect()
-                } else {
-                    Vec::new()
-                }
-            })
-            .collect();
-
-        affected_txs.into_iter().collect()
+        wrote_new_location
     }
 
     /// Obtain the read set recorded by an execution of [tx_idx] and check
@@ -209,6 +163,16 @@ impl MvMemory {
         true
     }
 
+    #[inline]
+    pub(crate) fn convert_writes_to_estimates(&self, tx_idx: TxIdx) {
+        for location in &index_mutex!(self.locations, tx_idx).write {
+            if let Some(mut written_txs) = self.data.get_mut(location) {
+                written_txs.insert(tx_idx, Entry::Estimate);
+            }
+        }
+    }
+
+    #[inline]
     pub(crate) fn consume_lazy_addresses(&self) -> impl IntoIterator<Item = Address> {
         self.lazy_addresses.clone().into_iter()
     }
