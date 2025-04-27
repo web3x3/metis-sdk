@@ -7,11 +7,11 @@ use anyhow::{Context as _, Result, anyhow};
 use clap::Parser;
 use hashbrown::HashMap;
 use indicatif::ProgressBar;
-use metis_primitives::{Address, B256, Bytecode, TxEnv, TxKind, U256};
+use metis_primitives::{Address, B256, Bytes, SpecId, TxEnv, TxKind, U256};
 use metis_tools::get_block_spec;
 use reqwest::Url;
 use revm::{
-    Context, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteEvm, InspectEvm, MainBuilder, MainContext,
     database::{AlloyDB, CacheDB, StateBuilder, WrapDatabaseAsync},
 };
 use serde::{Deserialize, Serialize};
@@ -20,7 +20,7 @@ use serde_json::json;
 #[derive(Clone, Debug, PartialEq, Eq, Deserialize, Serialize)]
 pub struct TestAccount {
     pub balance: U256,
-    pub code: Option<Bytecode>,
+    pub code: Option<Bytes>,
     pub code_hash: B256,
     pub nonce: u64,
     pub storage: HashMap<U256, U256>,
@@ -50,6 +50,7 @@ async fn main() -> Result<()> {
     let state_db = WrapDatabaseAsync::new(AlloyDB::new(provider.clone(), prev_id)).unwrap();
     let cache_db: CacheDB<_> = CacheDB::new(state_db);
     let mut state = StateBuilder::new_with_database(cache_db).build();
+    state.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
     let ctx = Context::mainnet()
         .with_db(&mut state)
         .modify_block_chained(|b| {
@@ -64,7 +65,8 @@ async fn main() -> Result<()> {
             c.chain_id = 1;
             c.spec = spec_id;
         });
-    let mut evm = ctx.build_mainnet();
+    let mut evm =
+        ctx.build_mainnet_with_inspector(revm::inspector::inspectors::TracerEip3155::new_stdout());
     let txs = block.transactions.len();
     println!("Found {txs} transactions.");
     let console_bar = Arc::new(ProgressBar::new(txs as u64));
@@ -85,10 +87,15 @@ async fn main() -> Result<()> {
         BlockTransactions::Hashes(items) => {
             for item in items {
                 let tx = provider.get_transaction_by_hash(*item).await?.unwrap();
+                let receipt = provider
+                    .get_transaction_receipt(*item)
+                    .await?
+                    .ok_or_else(|| anyhow!("No receipt found for transaction: {item:?}"))?;
                 let tx = tx_into_env(&tx);
                 txs.push(tx.clone());
                 evm.set_tx(tx);
-                let res = evm.replay()?;
+                let res = evm.inspect_replay()?;
+                assert_eq!(res.result.gas_used(), receipt.gas_used);
                 logs.push(res.result.logs().to_vec());
                 console_bar.inc(1);
             }
@@ -96,19 +103,17 @@ async fn main() -> Result<()> {
         BlockTransactions::Uncle => panic!("Wrong transaction type"),
     }
     let mut pre_state = BTreeMap::<Address, TestAccount>::new();
-    for (address, account) in state.cache.accounts {
-        if let Some(account) = account.account {
-            pre_state.insert(
-                address,
-                TestAccount {
-                    balance: account.info.balance,
-                    code: account.info.code,
-                    code_hash: account.info.code_hash,
-                    nonce: account.info.nonce,
-                    storage: account.storage.iter().map(|(k, v)| (*k, *v)).collect(),
-                },
-            );
-        }
+    for (address, account) in state.cache.trie_account() {
+        pre_state.insert(
+            address,
+            TestAccount {
+                balance: account.info.balance,
+                code: account.info.code.as_ref().map(|code| code.original_bytes()),
+                code_hash: account.info.code_hash,
+                nonce: account.info.nonce,
+                storage: account.storage.iter().map(|(k, v)| (*k, *v)).collect(),
+            },
+        );
     }
     let elapsed = start.elapsed();
     println!(
@@ -117,10 +122,12 @@ async fn main() -> Result<()> {
     );
     let block_file = File::create(format!("data/blocks/{}.json", block.header.number))?;
     let json_suite = json!({
-        "env": &block,
-        "transactions": txs,
-        "logs": logs,
-        "pre": pre_state,
+        "test_name": {
+            "env": &block,
+            "transactions": txs,
+            "logs": logs,
+            "pre": pre_state,
+        },
     });
     serde_json::to_writer_pretty(block_file, &json_suite)?;
     Ok(())

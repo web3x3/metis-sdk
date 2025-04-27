@@ -6,7 +6,7 @@ use alloy_evm::eth::dao_fork::DAO_HARDFORK_BENEFICIARY;
 use alloy_evm::eth::{dao_fork, eip6110};
 use alloy_evm::{Database, IntoTxEnv};
 use alloy_hardforks::EthereumHardfork;
-use metis_primitives::TxEnv;
+use metis_primitives::{SpecId, TxEnv};
 use reth::api::{FullNodeTypes, NodeTypes};
 use reth::builder::BuilderContext;
 use reth::builder::components::ExecutorBuilder;
@@ -162,9 +162,12 @@ where
         &mut self,
         block: &RecoveredBlock<<<Self as Executor<DB>>::Primitives as NodePrimitives>::Block>,
     ) -> Result<BlockExecutionResult<Receipt>, BlockExecutionError> {
+        let evm_env = self.strategy_factory.evm_env(block.header());
+        self.db
+            .set_state_clear_flag(evm_env.cfg_env.spec.is_enabled_in(SpecId::SPURIOUS_DRAGON));
         let results = self.executor.execute(
             StateStorageAdapter::new(&mut self.db),
-            self.strategy_factory.evm_env(block.header()),
+            evm_env,
             block
                 .transactions_recovered()
                 .map(|recover_tx| recover_tx.into_tx_env())
