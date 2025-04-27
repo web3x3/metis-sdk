@@ -4,16 +4,22 @@ This document provides a guide on utilizing the Metis SDK to rapidly construct b
 
 ## Quick Start
 
+Install the `metis` command in the root of the repo.
+
+```shell
+make install
+```
+
 Execute the following command to launch a Metis devnet:
 
 ```shell
-cargo run -r --bin metis --dev
+metis --dev --dev.block-time 2s --http --ws
 ```
 
 Execute the following command to launch a Metis devnet with the genesis config file:
 
 ```shell
-cargo run -r --bin metis --dev --chain genesis.json
+metis --dev --dev.block-time 2s --http --ws --chain genesis.json
 ```
 
 A `genesis.json` example is
@@ -68,17 +74,16 @@ A `genesis.json` example is
 Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
 
 ```shell
-cargo run -r --bin metis --dev --chain genesis.json --metrics 127.0.0.1:9001
+metis --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
 ```
 
 When you use metis chain for deployment, you can expose this ports
 
 ```text
+# Expose the HTTP RPC Port 8545.
 8545
+# Expose the WS RPC Port 8546.
 8546
-8551
-8045
-8046
 # Expose the 9001 for metric.
 9001
 # Expose the 30303 port (TCP and UDP) for peering with other nodes.
