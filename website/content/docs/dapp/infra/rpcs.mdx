@@ -3,14 +3,14 @@ title: RPCs
 ---
 
 import { Card, Cards } from "fumadocs-ui/components/card";
-import { Server, Container, Cloud, Zap, Network, Bolt } from "lucide-react";
+import { File, Server, Container, Cloud, Zap, Network, Bolt } from "lucide-react";
 
 |                 | Testnet                                                  |
 | --------------- | -------------------------------------------------------- |
 | RPCs            | https://chainlist.org/chain/59902                        |
-| Chain ID        | 59902                                                    |
+| Chain ID        | 133717                                                   |
 | Currency Symbol | sMETIS                                                   |
-| Block Explorer  | [Blockscout](https://sepolia-explorer.metisdevops.link/) |
+| Block Explorer  | [Link](https://sepolia-explorer.metisdevops.link/)       |
 
 All public RPCs are rate limited, in the case you need higher rate limits, there are two options:
 
@@ -18,14 +18,20 @@ All public RPCs are rate limited, in the case you need higher rate limits, there
 
 <Cards>
   <Card
-    title="Replica Node (Ansible)"
-    href="https://github.com/MetisProtocol/metis-ansible"
+    title="Build from Source"
+    href="https://github.com/MetisProtocol/metis-sdk/blob/main/crates/chain"
+    external
+    icon={<File />}
+  />
+  <Card
+    title="Replica Node"
+    href="https://github.com/MetisProtocol/metis-sdk/blob/main/operations/replica-node"
     external
     icon={<Server />}
   />
   <Card
-    title="Metis Charts (Kubernetes)"
-    href="https://github.com/metisprotocol/metis-charts"
+    title="Metis Hyperion Charts (Kubernetes)"
+    href="https://github.com/metisprotocol/metis-sdk/blob/main/operations/kubernetes"
     external
     icon={<Container />}
   />

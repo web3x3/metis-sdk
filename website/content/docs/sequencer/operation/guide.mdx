@@ -67,9 +67,9 @@ Submit your node's details via a GitHub pull request for inclusion in the Metis 
 Run the node and wait for block synchronization to complete:
 
 1. Check the logs of the bridge container. Wait until the “`Waiting for themis to be synced`” message disappears, indicating that themis is synchronized to the latest height.
-2. `Query eth_getBlockByNumber` via the l2geth RPC to confirm the block height if it is synchronized to the latest.
+2. `Query eth_getBlockByNumber` via the Hyperion RPC to confirm the block height if it is synchronized to the latest.
 
-Once both the Bridge and L2geth are fully synchronized, you can proceed with the lock operation.
+Once both the Bridge and Hyperion Executor are fully synchronized, you can proceed with the lock operation.
 
 <Callout type="warn">
   Note: Ensure synchronization is complete before proceeding. Continuing
@@ -87,7 +87,7 @@ Once both the Bridge and L2geth are fully synchronized, you can proceed with the
   The Metis tokens to be locked must be on Ethereum L1 (chainid:1)
 </Callout>
 
-You can complete the locking process through the [Sequencer Mining](https://sequencer.metis.io/) page. Alternatively, you can interact directly with the [contract](/sequencer/operation/natspec) to bypass the frontend operations.
+You can complete the locking process through the [Sequencer Mining](https://sequencer.metis.io/) page. Alternatively, you can interact directly with the contract.
 
 ### Locking Options
 
@@ -194,7 +194,7 @@ Once your Sequencer starts earning rewards, you can claim them through the [Sequ
 <Callout type="warn">
   Please double-check your wallet address before submitting. If you are using a
   contract address, make sure it is the correct contract address on Metis
-  Andromeda. Entering an incorrect address could result in the loss of rewards.
+  Hyperion. Entering an incorrect address could result in the loss of rewards.
 </Callout>
 
 ### Steps to Claim Rewards:
@@ -214,11 +214,11 @@ Once your Sequencer starts earning rewards, you can claim them through the [Sequ
 <Callout type="warn">
   Please double-check your wallet address before submitting. If you are using a
   contract address, make sure it is the correct contract address on Metis
-  Andromeda. Entering an incorrect address could result in the loss of rewards.
+  Hyperion. Entering an incorrect address could result in the loss of rewards.
 </Callout>
 
 4. **Rewards Distribution**:
-   - The rewards will be transferred to your specified address on the Metis Andromeda network.
+   - The rewards will be transferred to your specified address on the Metis Hyperion network.
 
 ### Additional Practices
 
