@@ -7,9 +7,9 @@ on:
 
 env:
   REPO_NAME: ${{ github.repository_owner }}/metis-sdk
-  IMAGE_NAME: ${{ github.repository_owner }}/hyperion
+  IMAGE_NAME: metisprotocol/hyperion
   CARGO_TERM_COLOR: always
-  DOCKER_IMAGE_NAME: ghcr.io/${{ github.repository_owner }}/hyperion
+  DOCKER_IMAGE_NAME: ghcr.io/metisprotocol/hyperion
   DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:
