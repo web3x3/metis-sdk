@@ -1,4 +1,7 @@
-# Contributing Guide
+---
+title: Contributing Guide
+icon: "Landmark"
+---
 
 This documentation is _NOT_ intended to be comprehensive; it is meant to be a quick guide for the most useful things.
 

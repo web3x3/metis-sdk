@@ -1,0 +1,12 @@
+{
+  "title": "Metis Hyperion Docs",
+  "pages": [
+    "index",
+    "---DApp---",
+    "...dapp",
+    "---Sequencer---",
+    "...sequencer",
+    "---Network---",
+    "...network"
+  ]
+}
