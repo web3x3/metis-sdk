@@ -91,6 +91,42 @@ When you use metis chain for deployment, you can expose this ports
 30303/udp
 ```
 
+## Docker
+
+Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion
+```
+
+Or a specific version (e.g. v0.1.0) with:
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion:v0.1.0
+```
+
+You can test the image with:
+
+```shell
+docker run --rm ghcr.io/metisprotocol/hyperion --version
+```
+
+To run the node with Docker, run:
+
+```shell
+docker run \
+    -v data:/root/.local/share/reth/mainnet \
+    -d \
+    -p 9001:9001 \
+    -p 30303:30303 \
+    -p 30303:30303/udp \
+    --name hyperion \
+    ghcr.io/metisprotocol/hyperion \
+    node \
+    --dev \
+    --metrics 0.0.0.0:9001
+```
+
 ## CLI Reference
 
 Metis chain is built on reth, they use almost the same CLI parameters, you can find more CLI information [here](https://reth.rs/cli/reth.html).
