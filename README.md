@@ -20,7 +20,11 @@ See [here](./crates/chain/README.md) to run a chain node.
 
 ## Contributing
 
-We welcome any contributions to Metis SDK! See the [contributing guide](./docs/CONTRIBUTING.md) for more information.
+We welcome any contributions to Metis SDK! See the [contributing guide](CONTRIBUTING.md) for more information.
+
+## Documentation
+
+See [here]() for more documents.
 
 ## Acknowledgements
 

@@ -1,0 +1,5 @@
+{
+  "title": "Contract Addresses",
+  "icon": "ScrollText",
+  "pages": ["core", "..."]
+}
