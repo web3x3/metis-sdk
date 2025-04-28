@@ -26,6 +26,10 @@ The speculative and parallel execution of MetisVM utilizes advanced predictive a
 
 MetisVM State-aware caching intelligently caches the frequently-accessed state variables in smart contracts. By tracking the state transitions of contracts, it reduces the need for redundant storage access. This greatly improves the execution speed, especially for state-intensive contracts such as those used for governance and voting in Decentralized Autonomous Organizations (DAOs). The caching mechanism is designed to be efficient and adaptive, ensuring that the cached data is always up-to-date and accurate.
 
+### WASM & RISC-V Support
+
+MetisVM will introduce a dual-layer execution architecture that combines WebAssembly (WASM) and RISC-V to deliver unprecedented flexibility and performance. This hybrid approach allows developers to choose the optimal execution environment based on application requirements while maintaining backward compatibility with EVM ecosystems.
+
 ### AI Infrastructure Support
 
 MetisVM provides foundational support for on-chain AI applications through three critical innovations. By optimizing inference engines, leveraging hardware acceleration, and incorporating TEE and zero-knowledge proofs, MetisVM establishes an environment where AI models can operate efficiently and securely within blockchain infrastructure.
