@@ -71,10 +71,18 @@ jobs:
         run: |
           mkdir artifacts
           [[ "${{ matrix.configs.target }}" == *windows* ]] && ext=".exe"
-          mv "target/${{ matrix.configs.target }}/${{ matrix.configs.profile }}/${{ matrix.build.binary }}${ext}" .
+          mv "target/${{ matrix.configs.target }}/${{ matrix.configs.profile }}/${{ matrix.build.binary }}${ext}" ./artifacts
+
+      - name: Configure GPG and create artifacts
+        run: |
+          cd artifacts
+          tar -czf ${{ matrix.build.binary }}-${{ needs.extract-version.outputs.VERSION }}-${{ matrix.configs.target }}.tar.gz ${{ matrix.build.binary }}*
+          mv *tar.gz* ..
+        shell: bash
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
+          if-no-files-found: error
           name: ${{ matrix.build.binary }}-${{ needs.extract-version.outputs.VERSION }}-${{ matrix.configs.target }}.tar.gz
           path: ${{ matrix.build.binary }}-${{ needs.extract-version.outputs.VERSION }}-${{ matrix.configs.target }}.tar.gz
