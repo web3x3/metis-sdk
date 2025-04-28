@@ -5,6 +5,8 @@ use revm::state::AccountInfo;
 use revm::{Database, DatabaseRef};
 use std::sync::RwLock;
 
+// TODO: remove this database lock because it is read-only
+// for the parallel execution of the state.
 pub struct StateStorageAdapter<'a, DB> {
     pub(crate) state: RwLock<&'a mut State<DB>>,
 }

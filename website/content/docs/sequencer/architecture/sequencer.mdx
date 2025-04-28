@@ -4,7 +4,7 @@ title: Sequencer Node
 
 The Sequencer Node includes:
 
-1. L2 Geth (including the OP-Node)
+1. Hyperion Executor (including the OP-Node)
 2. Batch Submitter (Proposer)
 3. Adapter Module
 4. MPC Module
@@ -12,22 +12,22 @@ The Sequencer Node includes:
 ```mermaid
 graph TB
     subgraph "Sequencer Node"
-        L2Geth[L2 Geth]
+        HyperionExecutor[Hyperion Executor]
         Batcher[Batch Submitter]
         Adapter[Adapter Module]
         MPC[MPC Module]
     end
 
-    Txs[Transactions] -->|Submit| L2Geth
-    L2Geth -->|Sequence| Batcher
+    Txs[Transactions] -->|Submit| HyperionExecutor
+    HyperionExecutor -->|Sequence| Batcher
     Batcher -->|Request Signature| MPC
     MPC -->|Sign Batch| L1[Ethereum L1]
 
     PoS[PoS Layer] -->|Rotation Info| Adapter
-    Adapter -->|Update| L2Geth
+    Adapter -->|Update| HyperionExecutor
 ```
 
-## L2 Geth (including the OP-Node)
+## Hyperion Executor (including the OP-Node)
 
 - It is responsible for transaction sequencing and assembly of the blocks on the Metis layer.
 - The processing logic of whether it is the current block sequencer is added in the `applyTransactionToTip` function, to conduct regular sequencer rotation.

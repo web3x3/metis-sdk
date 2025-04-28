@@ -4,16 +4,16 @@ import { defineChain } from "viem";
 import { connectorsForWallets } from "@rainbow-me/rainbowkit";
 import { injectedWallet } from "@rainbow-me/rainbowkit/wallets";
 
-export const metisSepolia = defineChain({
-  id: 59902,
-  name: "Metis Sepolia",
+export const metisHyperionTestnet = defineChain({
+  id: 133717,
+  name: "Metis Hyperion Testnet",
   nativeCurrency: { name: "sMetis", symbol: "sMETIS", decimals: 18 },
   rpcUrls: {
     default: { http: ["https://sepolia.metisdevops.link"] },
   },
   blockExplorers: {
     default: {
-      name: "Metis Sepolia Explorer",
+      name: "Metis Hyperion Testnet Explorer",
       url: "https://sepolia-explorer.metisdevops.link/",
     },
   },
@@ -33,11 +33,11 @@ const wagmiConnectors = connectorsForWallets(
 );
 
 export const config = createConfig({
-  chains: [metisSepolia],
+  chains: [metisHyperionTestnet],
   connectors: wagmiConnectors,
   ssr: true,
   transports: {
-    [metisSepolia.id]: http(),
+    [metisHyperionTestnet.id]: http(),
   },
   multiInjectedProviderDiscovery: false,
 });

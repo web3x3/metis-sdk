@@ -13,25 +13,33 @@ We have launched a Decentralized Sequencer Pool to achieve full decentralization
 
 To achieve that, we utilize such technologies:
 
+- High Performance Hyperion Executor
 - [Tendermint consensus](https://docs.tendermint.com/v0.34/introduction/what-is-tendermint.html) developed developed by Cosmos
 - [Threshold Signature Scheme](https://github.com/bnb-chain/tss-lib) (TSS)
 - Multi Party Computation (MPC)
-- [Libp2p](https://libp2p.io/)
-- L2 Geth and others
 
 ## Core Components
 
-1. **Ethereum Layer (L1)**
-   - [Smart Contracts](/sequencer/operation/natspec):
+- [**Parallel Execution**](/sequencer/architecture/pe):
+   - The Metis Hyperion Executor is a high-performance executor that processes transactions in parallel, significantly increasing throughput and reducing latency.
+   - It is designed to work seamlessly with the Decentralized Sequencer Pool, ensuring efficient transaction processing and block production.
+- [**Metis VM**](/sequencer/architecture/vm)
+   - A custom-built virtual machine that executes smart contracts and transactions on the Metis Layer 2 network.
+   - It is optimized for performance and compatibility with Ethereum smart contracts, enabling developers to deploy their applications easily.
+- [**Metis DB**](/sequencer/architecture/db)
+   - A high-performance database optimized for storing and retrieving transaction data, state roots, and other relevant information.
+   - It is designed to work in conjunction with the Metis Hyperion Executor and the Decentralized Sequencer Pool.
+- **Ethereum Layer (L1)**
+   - Smart Contracts:
      Responsible for locking METIS tokens, managing sequencer staking, and storing critical data for sequencer rotation.
    - [Finality](/sequencer/architecture/finality):
      Provides security and finality by anchoring transaction batches on Ethereum.
-2. **Consensus Layer (PoS)**
-   - [Tendermint-based Nodes](/sequencer/architecture/selection-rotation):
+- **Consensus Layer (PoS)**
+   - Tendermint-based Nodes:
      Handles consensus on sequencer rotation and election processes.
    - [MPC (Multi-Party Computation)](/sequencer/architecture/mpc):
      Enables secure and decentralized batch signing by sequencer nodes.
-3. **Metis Layer (L2)**
+- **Metis Layer (L2)**
    - [Sequencer Nodes](/sequencer/architecture/sequencer):
      Processes user transactions, assembles blocks, and submits them to Ethereum L1.
    - [Bridge & Adapter Module](/sequencer/architecture/bridge):
@@ -41,13 +49,13 @@ The system operates with seamless coordination between sequencers, validators, a
 
 ### Key Features
 
-1. **Decentralization:**
+- **Decentralization:**
    Every network role is distributed, ensuring fairness and security.
-2. **Fault Tolerance:**
+- **Fault Tolerance:**
    Automatic rotation and reselection of sequencers in the event of failures or malicious activity.
-3. **Efficiency and Scalability:**
+- **Efficiency and Scalability:**
    Transactions are processed in batches for optimized throughput, while finalization happens on Ethereum Layer 1 (L1).
-4. **Transparency and Governance:**
+- **Transparency and Governance:**
    Governed by community voting power based on METIS token staking.
 
 This document provides a detailed breakdown of the system components, workflows, governance mechanisms, technical requirements, and participation processes.
@@ -87,7 +95,7 @@ Simplified transaction flow overview:
 ### Workflow Summary
 
 1. **Transaction Processing:**
-   - Users send transactions to the Metis RPC nodes.
+   - Users send transactions to the Metis Hyperion RPC nodes.
    - The current sequencer validates, assembles, and executes the transactions.
 2. **Batch Submission:**
    - The sequencer forms transaction batches and signs them through MPC.
@@ -98,6 +106,8 @@ Simplified transaction flow overview:
 
 ### Key Features of the Architecture
 
+- **High Performance:**
+  The Metis Hyperion Executor processes transactions in parallel, significantly increasing throughput and reducing latency.
 - **Fair Sequencer Rotation:**
   Sequencer rotation is controlled by staking weights and governed by community consensus.
   Each sequencer's participation is validated through smart contracts on the Ethereum Layer.

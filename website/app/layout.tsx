@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           }}
         >
           <Banner>
-            Metis Hyperion supports Cancun fork
+            Metis Hyperion supports Etherurum Pectra fork
           </Banner>
 
           <DocsLayout tree={source.pageTree} {...baseOptions}>
