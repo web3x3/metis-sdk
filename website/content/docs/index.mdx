@@ -7,18 +7,17 @@ icon: "Landmark"
 import { Card, Cards } from "fumadocs-ui/components/card";
 import { PlayCircle, Code2, Server } from "lucide-react";
 
-Metis is a next-generation **Layer 2 Ethereum solution**, designed to empower decentralized applications and businesses with **scalability, low-cost transactions**, and a user-centric ecosystem. By leveraging advanced technologies like **Optimistic Rollups** and **Decentralized Sequencers**, Metis aims to overcome the limitations of traditional blockchain networks while maintaining the core ethos of decentralization and security.
+Metis SDK is redefining the landscape of blockchain scalability, performance, and usability, addressing the pressing demands of the rapidly evolving Web3 ecosystem. As decentralized applications (DApps) continue to gain traction, the need for infrastructure capable of handling massive transaction volumes, lightning-fast processing speeds, and frictionless user experiences has never been greater. Metis rises to this challenge by introducing the SDK solution to deliver unparalleled throughput, ultra-low latency, and seamless transaction finality.
+
+Metis Hyperion is a next-generation **Layer 2 Ethereum solution** based on Metis SDK, designed to empower decentralized applications and businesses with **scalability, low-cost transactions**, and a user-centric ecosystem. By leveraging advanced technologies like **Optimistic Rollups** and **Decentralized Sequencers**, Metis aims to overcome the limitations of traditional blockchain networks while maintaining the core ethos of decentralization and security.
 
 <Cards className="sm:grid-cols-3">
   <Card
-    title="New to Blockchain"
-    href="/dapp/start/demo/rainbowkit"
+    title="Dapp Development"
+    href="/dapp/start/environment"
     icon={<PlayCircle />}
   >
-    Start the Interactive Demo
-  </Card>
-  <Card title="Experienced DApp Dev" href="/dapp/benefits" icon={<Code2 />}>
-    Benefits of Building
+    Build Dapp
   </Card>
   <Card
     title="Node Providers"
@@ -29,17 +28,19 @@ Metis is a next-generation **Layer 2 Ethereum solution**, designed to empower de
   </Card>
 </Cards>
 
-## Key Features of Metis
+## Key Features of Metis SDK
 
-- **Scalability**: Supports high transaction throughput while maintaining low latency and cost.
-- **Ethereum Compatibility**: Fully compatible with Ethereum's EVM, making it easy for developers to deploy dApps.
-- **Decentralized Sequencing**: Eliminates single points of failure by decentralizing the process of transaction ordering and block production.
-- **Community-Driven Governance**: Encourages collaboration and community-led decision-making.
-- **Cross-Chain Interoperability**: Facilitates seamless asset and data transfer between Ethereum Layer 1 and Metis Layer 2.
+- **Modular Architecture**: Metis SDK is an open-source modular framework designed to provide Web3 developers with a powerful foundation for innovation. It provides plugin features, you can choose according to your needs.
+- **High Performance**: Leverages MetisVM, MetisDB and parallel execution technologies to deliver low-latency, high-throughput on-chain operations.
+- **Strong Compatibility**: Seamlessly integrates with the Ethereum ecosystem, supporting Solidity smart contracts while simplifying DApp migration.
+- **Scalable Consensus Engine**: Supports customizable Sequencer networks, which can be either decentralized or centralized, depending on the specific use case.
+- **Decentralized Sequencer**: For Layer 2, the Metis Sequencer Network consists of multiple decentralized sequencers, each responsible for transaction ordering, validation, and state commitment.
+- **Flexible Deployment**: Supports Layer 1, Layer 2, and Layer 3 network configurations, tailored to diverse application needs.
+- **AI Features Support**: Use [LazAI](https://lazai.network) and [Alith](https://github.com/0xLazAI/alith) to provide AI related on-chain or off-chain tasks including data processing, model inference, fine tuning, etc.
 
-## Structure
+## Metis Hyperion Structure
 
-The entire structure of Metis Layer 2 is designed around several algorithm loops which are designated to mitigate the potential damage and filter the possible malfunctions of decentralized actors and/or other outer ill-wishers.
+The entire structure of Metis Hyperion Layer 2 is designed around several algorithm loops which are designated to mitigate the potential damage and filter the possible malfunctions of decentralized actors and/or other outer ill-wishers.
 
 There are 7 distinguished actors participating in the system (Governance Protocol is a part of L1 / Smart contract, but it handles a number of functions that make it a separate entity):
 
