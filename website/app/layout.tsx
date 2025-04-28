@@ -33,8 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           }}
         >
           <Banner>
-            Metis supports Berlin + PUSH0 of Shanghai (Solidity v0.8.23 and
-            lower)
+            Metis Hyperion supports Cancun fork
           </Banner>
 
           <DocsLayout tree={source.pageTree} {...baseOptions}>
