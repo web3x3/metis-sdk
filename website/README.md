@@ -1,7 +1,19 @@
-# metis-docs
+# Metis SDK Document Website
 
 This is a Next.js application generated with
 [Create Fumadocs](https://github.com/fuma-nama/fumadocs).
+
+Install the dependency:
+
+```bash
+npm i
+# or
+pnpm i
+# or
+yarn i
+# or
+bun i
+```
 
 Run development server:
 
@@ -11,9 +23,37 @@ npm run dev
 pnpm dev
 # or
 yarn dev
+# or
+bun run dev
 ```
 
 Open http://localhost:3000 with your browser to see the result.
+
+Build and start the production server:
+
+- Build
+
+```bash
+npm run build
+# or
+pnpm build
+# or
+yarn build
+# or
+bun run build
+```
+
+- Start the server
+
+```bash
+npm run start
+# or
+pnpm start
+# or
+yarn start
+# or
+bun run start
+```
 
 ## Learn More
 
