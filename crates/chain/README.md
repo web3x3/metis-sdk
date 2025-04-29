@@ -4,7 +4,9 @@ This document provides a guide on utilizing the Metis SDK to rapidly construct b
 
 ## Quick Start
 
-Install the `metis` command in the root of the repo.
+### Build from Source
+
+Firstly, see [here](../../CONTRIBUTING.md) to install build dependencies. Then install the `metis` command in the root of the repo.
 
 ```shell
 make install
@@ -69,29 +71,8 @@ A `genesis.json` example is
 
 > Note that these commands will not open any HTTP/WS ports by default. You can change this by adding the --http, --ws flags, respectively and using the --http.api and --ws.api flags to enable various ETH compatible JSON-RPC APIs.
 
-### Observability with Prometheus & Grafana
 
-Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
-
-```shell
-metis --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
-```
-
-When you use metis chain for deployment, you can expose this ports
-
-```text
-# Expose the HTTP RPC Port 8545.
-8545
-# Expose the WS RPC Port 8546.
-8546
-# Expose the 9001 for metric.
-9001
-# Expose the 30303 port (TCP and UDP) for peering with other nodes.
-30303
-30303/udp
-```
-
-## Docker
+### Docker
 
 Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.
 
@@ -125,6 +106,28 @@ docker run \
     node \
     --dev \
     --metrics 0.0.0.0:9001
+```
+
+### Observability with Prometheus & Grafana
+
+Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
+
+```shell
+metis --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
+```
+
+When you use metis chain for deployment, you can expose this ports
+
+```text
+# Expose the HTTP RPC Port 8545.
+8545
+# Expose the WS RPC Port 8546.
+8546
+# Expose the 9001 for metric.
+9001
+# Expose the 30303 port (TCP and UDP) for peering with other nodes.
+30303
+30303/udp
 ```
 
 ## CLI Reference
