@@ -9,12 +9,12 @@ export const metisHyperionTestnet = defineChain({
   name: "Metis Hyperion Testnet",
   nativeCurrency: { name: "sMetis", symbol: "sMETIS", decimals: 18 },
   rpcUrls: {
-    default: { http: ["https://sepolia.metisdevops.link"] },
+    default: { http: ["https://hyperion-testnet.metisdevops.link/"] },
   },
   blockExplorers: {
     default: {
       name: "Metis Hyperion Testnet Explorer",
-      url: "https://sepolia-explorer.metisdevops.link/",
+      url: "https://hyperion-testnet-explorer.metisdevops.link/",
     },
   },
 });
