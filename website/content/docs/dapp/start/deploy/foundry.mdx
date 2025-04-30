@@ -53,7 +53,7 @@ You will need to edit the `foundry.toml` file to include Metis network details:
 ```toml
 [profile.default]
 rpc_endpoints = {
-    hyperion-testnet = "https://sepolia.metisdevops.link"  # Hyperion Testnet
+    hyperion-testnet = "https://hyperion-testnet.metisdevops.link/"  # Hyperion Testnet
 }
 ```
 
@@ -72,7 +72,7 @@ forge build
 Deploy using Foundry:
 
 ```bash
-forge create --rpc-url https://sepolia.metisdevops.link src/MyContract.sol:MyContract
+forge create --rpc-url https://hyperion-testnet.metisdevops.link/ src/MyContract.sol:MyContract
 ```
 
 </Step>

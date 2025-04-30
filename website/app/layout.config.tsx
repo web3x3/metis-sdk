@@ -22,8 +22,7 @@ export const baseOptions: BaseLayoutProps = {
       items: [
         {
           text: "Testnet",
-          // TODO: update the testnet explorer URL.
-          url: "https://sepolia-explorer.metisdevops.link",
+          url: "https://hyperion-testnet-explorer.metisdevops.link/",
         }
       ],
     },
