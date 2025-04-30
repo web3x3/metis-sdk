@@ -92,20 +92,26 @@ You can test the image with:
 docker run --rm ghcr.io/metisprotocol/hyperion --version
 ```
 
-To run the node with Docker, run:
+To run the dev node with Docker, run:
 
 ```shell
 docker run \
-    -v data:/root/.local/share/reth/mainnet \
+    -v data:/root/.local/share/reth/ \
     -d \
+    -p 8545 \
+    -p 8546 \
     -p 9001:9001 \
     -p 30303:30303 \
     -p 30303:30303/udp \
     --name hyperion \
     ghcr.io/metisprotocol/hyperion \
     node \
+    --datadir=data \
+    --metrics 0.0.0.0:9001 \
     --dev \
-    --metrics 0.0.0.0:9001
+    --dev.block-time 2s --chain genesis.json \
+    --http --http.api=all --http.addr=0.0.0.0 --http.port=8545 \
+    --ws --ws.api=all --ws.addr=0.0.0.0 --ws.port=8546
 ```
 
 ### Observability with Prometheus & Grafana
