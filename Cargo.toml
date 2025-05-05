@@ -90,7 +90,7 @@ color-eyre = "0.6.3"
 criterion = "0.5.1"
 dashmap = "6.1.0"
 flate2 = "1.0.35"
-hashbrown = "0.15.2"
+hashbrown = "0.15.3"
 rand = "0.9.0"
 rayon = "1.10.0"
 reqwest = { version = "0.12.15", default-features = false, features = [
