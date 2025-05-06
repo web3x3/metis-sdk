@@ -7,7 +7,7 @@ import { injectedWallet } from "@rainbow-me/rainbowkit/wallets";
 export const metisHyperionTestnet = defineChain({
   id: 133717,
   name: "Metis Hyperion Testnet",
-  nativeCurrency: { name: "sMetis", symbol: "sMETIS", decimals: 18 },
+  nativeCurrency: { name: "Metis", symbol: "METIS", decimals: 18 },
   rpcUrls: {
     default: { http: ["https://hyperion-testnet.metisdevops.link/"] },
   },
