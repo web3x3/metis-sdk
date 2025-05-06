@@ -1,0 +1,90 @@
+# On-chain LLM in Metis SDK and Hyperion
+
+## Introduction
+
+In today's rapidly evolving digital landscape, the cost of running an LLM locally or even on-chain is getting lower and lower, we can use smaller models and get better performance at a lower cost. Besides, the fusion of blockchain technology and AI is paving the way for innovative solutions across various industries.
+
+Within this context, [Alith](https://github.com/0xLazAI/alith) and Metis SDK emerge as pivotal components in the Web3 and Crypto ecosystem. Alith is a decentralized AI agent framework in the [LazAI](https://lazai.network) network meticulously designed to cater to the unique demands of the Web3 and Crypto space. It empowers developers to build, deploy, and manage on-chain AI agents by seamlessly integrating blockchain technology with advanced AI models and offering an array of developer-friendly tools.
+
+Hyperion is a next-generation Layer 2 Ethereum solution based on Metis SDK, designed to empower decentralized applications and businesses with scalability, low-cost transactions, and a user-centric ecosystem. By leveraging advanced technologies like Optimistic Rollups and Decentralized Sequencers, Metis aims to overcome the limitations of traditional blockchain networks while maintaining the core ethos of decentralization and security. Based on Alith and Metis SDK, we can easily implement on-chain LLM on Hyperion and develop more on-chain AI applications based on it.
+
+## Why Integrate Alith into Metis SDK
+
+Metis SDK leverages Alith to provide AI-related on-chain and off-chain tasks. This integration allows developers to harness the power of AI for various applications, including data processing, model inference, and fine-tuning. Alith's features, such as multiple model support, high extensibility, workflow support, cross-language support, high-performance inference, and Web3-friendly security, make it an ideal choice for enhancing the AI capabilities of Metis SDK.
+
+## Key Features and Benefits
+
+- AI-Driven On-Chain Tasks: Alith enables Metis SDK to execute AI-related tasks directly on-chain. This includes processing and analyzing blockchain data, generating insights, and automating decision-making processes.
+- High-Performance Inference: By leveraging Rust's performance advantages and quick model inference technologies, Alith ensures that AI tasks in Metis SDK are executed efficiently, even under high transaction volumes.
+- Security and Trust: Alith's Web3-friendly and secure architecture in TEE ensures that AI agents in Metis SDK operate within a trusted environment, protecting sensitive data and maintaining the integrity of blockchain operations.
+
+## How Alith is Integrated into Metis SDK and Its Implementation Process
+
+Here's an example that demonstrates how Alith can be integrated into Metis SDK to perform AI-driven tasks, providing developers with a practical reference for their own projects.
+
+```rust
+use metis_primitives::{Context, ExecuteEvm, MainBuilder, MainContext, SpecId, TxKind};
+use metis_vm::{INFERENCE_PRECOMPILE_ADDRESS, InferencePrecompiles};
+
+fn main() {
+    let mut evm = Context::mainnet()
+        .modify_cfg_chained(|cfg| {
+            cfg.spec = SpecId::PRAGUE;
+        })
+        .modify_tx_chained(|tx| {
+            tx.data = String::from("Who are you?").as_bytes().to_vec().into();
+            tx.gas_limit = 2_000_000;
+            tx.kind = TxKind::Call(INFERENCE_PRECOMPILE_ADDRESS);
+        })
+        .build_mainnet()
+        .with_precompiles(InferencePrecompiles::default());
+
+    let result = evm.replay().unwrap();
+    let result = result.result.output().unwrap_or_default();
+    println!("{}", String::from_utf8(result.0.to_vec()).unwrap());
+}
+```
+
+In the previous code example, we demonstrated how Alith can be integrated into Metis SDK to perform AI-driven tasks. Here's a detailed explanation of the code and the process behind it:
+
+### Code Explanation
+
+The code snippet provided is a Rust implementation that showcases the integration of Alith with Metis SDK. Let's break down the key components and their functions:
+
+1. **Imports**: The code begins by importing necessary modules from metis_primitives and metis_vm. These modules provide the essential functionalities for interacting with the Metis blockchain and executing smart contract operations.
+2. **EVM Context Setup**: The `Context::mainnet()` function initializes the EVM (Ethereum Virtual Machine) context for the mainnet. This sets up the environment in which the smart contract will be executed.
+3. **Configuration Modifications**: The `modify_cfg_chained` function is used to modify the EVM configuration. In this case, the specification is set to `SpecId::PRAGUE`, which defines the specific EVM rules and features to be used.
+4. **Transaction Configuration**: The `modify_tx_chained` function configures the transaction details. Here, the transaction data is set to the string "Who are you?" which will be passed as input to the AI agent. The gas limit is set to 2,000,000 to ensure sufficient computational resources for the task. The transaction kind is specified as a call to the `INFERENCE_PRECOMPILE_ADDRESS`, which is a precompiled contract address designated for AI inference tasks using Alith.
+5. **Building the EVM**: The build_mainnet function constructs the EVM instance with the specified configurations. The with_precompiles method adds the InferencePrecompiles to the EVM, enabling the execution of AI inference tasks.
+6. **Executing the Transaction**: The replay method executes the transaction within the EVM. The result of the execution is captured, and the output is extracted and printed.
+
+### Implementation Process
+
+The implementation process involves several key steps:
+
+1. **Setting Up the Development Environment**: Developers need to set up a Rust development environment and install the necessary dependencies, including metis_primitives and metis_vm.
+2. **Configuring the EVM**: The EVM context is configured to match the target network (mainnet in this case) and the specific EVM specification required for the task.
+3. **Defining the Transaction**: The transaction details are defined, including the input data, gas limit, and the target precompiled contract address for AI inference.
+4. **Building and Running the EVM**: The EVM instance is built with the necessary precompiles and configurations. The transaction is then executed, and the results are processed and displayed.
+
+This integration allows developers to leverage Alith's AI capabilities within the Metis SDK framework, enabling the execution of AI-driven tasks directly on-chain. By utilizing the high-performance inference capabilities of Alith and the robust infrastructure of Metis SDK, developers can create innovative and efficient decentralized applications that combine the strengths of AI and blockchain technologies.
+
+In the future, we may build the following use cases.
+
+## Use Cases
+
+The integration of Alith and Metis SDK opens up numerous exciting use cases in the Web3 ecosystem. In the DeFi space, developers can build intelligent trading bots. These bots leverage AI to analyze market trends, predict price movements, and execute trades automatically on Metis SDK, enhancing the efficiency and profitability of DeFi trading activities.
+
+For NFT enthusiasts, Alith can be utilized to analyze NFT metadata. It can predict market trends based on this analysis and automate pricing strategies within the Metis ecosystem. This helps NFT creators and traders make more informed decisions and optimize their pricing models.
+
+In the realm of DAOs, AI-powered governance tools can be developed using Alith and Metis SDK. These tools assist DAOs in making data-driven decisions by analyzing voting patterns and predicting outcomes. This enhances the governance efficiency and effectiveness of DAOs, enabling them to make more informed and strategic decisions.
+
+## Conclusion
+
+The integration of Alith into Metis SDK brings powerful AI capabilities to the Web3 ecosystem. By combining Alith's AI agent framework with Metis SDK's high-performance infrastructure, developers can build innovative applications that leverage both AI and blockchain technologies. This synergy not only enhances the functionality of decentralized applications but also ensures they operate securely and efficiently in a rapidly evolving ecosystem.
+
+## Resources
+
+- [Metis SDK](https://github.com/MetisProtocol/metis-sdk)
+- [Alith](https://alith.lazai.network/docs/get-started)
+- [LazAI Network](https://lazai.network/)
