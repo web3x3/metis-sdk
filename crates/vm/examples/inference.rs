@@ -1,6 +1,5 @@
-use metis_primitives::{SpecId, TxKind};
+use metis_primitives::{Context, ExecuteEvm, MainBuilder, MainContext, SpecId, TxKind};
 use metis_vm::{INFERENCE_PRECOMPILE_ADDRESS, InferencePrecompiles};
-use revm::{Context, ExecuteEvm, MainBuilder, MainContext};
 
 fn main() {
     let mut evm = Context::mainnet()

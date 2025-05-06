@@ -46,6 +46,7 @@ pub use revm::primitives::{
 pub use revm::state::{
     Account, AccountInfo, AccountStatus, EvmState, EvmStorageSlot as StorageSlot,
 };
+pub use revm::{Context, MainBuilder, MainContext, MainnetEvm};
 pub use revm::{ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 pub use rustc_hash::FxBuildHasher;
 
