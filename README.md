@@ -24,7 +24,7 @@ We welcome any contributions to Metis SDK! See the [contributing guide](CONTRIBU
 
 ## Documentation
 
-See [here](https://docs.metis.io/hyperion) for more documents.
+See [here](https://metis-sdk.vercel.app/) for more documents.
 
 ## Acknowledgements
 
