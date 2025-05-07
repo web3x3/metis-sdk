@@ -2,7 +2,7 @@
 title: Multi-Version Memory
 ---
 
-In [Scheduler](scheduler), we saw how the Scheduler acts like an air traffic controller, coordinating multiple worker threads executing transactions in parallel. We learned that the Scheduler needs to know if conflicts happen – situations where one transaction's actions invalidate another's. But how does the Scheduler *get* that information?
+In [Scheduler](scheduler), we saw how the Scheduler acts like an air traffic controller, coordinating multiple worker threads executing transactions in parallel. We learned that the Scheduler needs to know if conflicts happen – situations where one transaction's actions invalidate another's. But how does the Scheduler _get_ that information?
 
 This is where our next key component comes in: **MvMemory (Multi-Version Memory)**.
 
@@ -10,13 +10,14 @@ This is where our next key component comes in: **MvMemory (Multi-Version Memory)
 
 Imagine a busy shared kitchen where several chefs (parallel worker threads) are trying to cook different dishes (execute transactions) simultaneously. They all need to use shared ingredients from the pantry (blockchain state like account balances or contract data).
 
-*   **Challenge 1: Reading:** Chef A needs to know how much flour is left. Chef B also needs to know. They need to get the *current* correct amount.
-*   **Challenge 2: Writing:** Chef A uses some flour. Chef C also uses some flour. How do we track these changes without them overwriting each other's work instantly?
-*   **Challenge 3: Conflicts:** Chef B reads the flour amount (say, 1kg). While Chef B is preparing their dish, Chef A *uses* 0.5kg of flour and puts the bag back. Now Chef B's initial reading of 1kg is outdated! If Chef B tries to use 1kg based on their old reading, they'll run into trouble.
+- **Challenge 1: Reading:** Chef A needs to know how much flour is left. Chef B also needs to know. They need to get the _current_ correct amount.
+- **Challenge 2: Writing:** Chef A uses some flour. Chef C also uses some flour. How do we track these changes without them overwriting each other's work instantly?
+- **Challenge 3: Conflicts:** Chef B reads the flour amount (say, 1kg). While Chef B is preparing their dish, Chef A _uses_ 0.5kg of flour and puts the bag back. Now Chef B's initial reading of 1kg is outdated! If Chef B tries to use 1kg based on their old reading, they'll run into trouble.
 
 **The Goal:** We need a system for this shared pantry (blockchain state) that allows chefs (transactions) to:
-1.  Read the latest *stable* version of an ingredient's state.
-2.  Record their intended changes *without* immediately affecting others.
+
+1.  Read the latest _stable_ version of an ingredient's state.
+2.  Record their intended changes _without_ immediately affecting others.
 3.  Track who changed what and when, so we can detect if someone based their work on outdated information (like Chef B reading the flour amount before Chef A used some).
 
 **The Solution:** `MvMemory` is this specialized pantry management system.
@@ -49,33 +50,34 @@ graph TD
 `MvMemory` acts as an intermediary between the parallel transactions and the actual blockchain state. It keeps track of multiple "versions" of data items (like the amount of flour) as different transactions propose changes.
 
 Think of it like a collaborative document (like Google Docs):
-*   Multiple people can view the document (read state).
-*   Multiple people can type suggestions simultaneously (propose writes).
-*   The system tracks each person's changes (versions).
-*   If two people edit the *exact same sentence* at the same time, the system might flag it as a conflict that needs resolving.
+
+- Multiple people can view the document (read state).
+- Multiple people can type suggestions simultaneously (propose writes).
+- The system tracks each person's changes (versions).
+- If two people edit the _exact same sentence_ at the same time, the system might flag it as a conflict that needs resolving.
 
 ## How Does MvMemory Work?
 
 `MvMemory` manages shared data by keeping multiple versions:
 
-1.  **Reading Data:** When a transaction (Chef A) needs to read a piece of data (flour amount), `MvMemory` looks up the location (pantry shelf for flour). It finds the latest version written by a transaction that *comes before* Chef A in the original block order and has already been *successfully executed* (or the initial state if no one before A touched it). Chef A records *which version* they read.
-2.  **Writing Data:** When Chef A finishes and wants to update the flour amount, they don't directly change the main value. Instead, they tell `MvMemory`: "I, Chef A, propose a new version for flour amount: 0.5kg." `MvMemory` stores this as a *potential* update associated specifically with Chef A's transaction index.
+1.  **Reading Data:** When a transaction (Chef A) needs to read a piece of data (flour amount), `MvMemory` looks up the location (pantry shelf for flour). It finds the latest version written by a transaction that _comes before_ Chef A in the original block order and has already been _successfully executed_ (or the initial state if no one before A touched it). Chef A records _which version_ they read.
+2.  **Writing Data:** When Chef A finishes and wants to update the flour amount, they don't directly change the main value. Instead, they tell `MvMemory`: "I, Chef A, propose a new version for flour amount: 0.5kg." `MvMemory` stores this as a _potential_ update associated specifically with Chef A's transaction index.
 3.  **Tracking Versions:** `MvMemory` maintains a history for each data location. For "flour amount", it might look like:
-    *   Initial State: 1kg
-    *   Tx 5 proposes: 0.8kg (after using 0.2kg)
-    *   Tx 12 proposes: 0.7kg (after using 0.1kg based on Tx 5's version)
-    *   Tx 7 proposes: 0.5kg (after using 0.5kg based on the initial state)
-4.  **Detecting Conflicts (Validation):** This is crucial. Let's say Tx 7 read the "Initial State: 1kg" version of flour. Later, the [Scheduler](scheduler) asks `MvMemory` to validate Tx 7. `MvMemory` checks: "Did any transaction *before* Tx 7 (like Tx 5) write a new version of flour *after* Tx 7 read the initial state?" In our example, yes! Tx 5 wrote "0.8kg". This means Tx 7's read ("Initial State: 1kg") was stale by the time Tx 5 finished. `MvMemory` reports this conflict back to the [Scheduler](scheduler), which will likely tell Tx 7 to re-execute using the correct data.
+    - Initial State: 1kg
+    - Tx 5 proposes: 0.8kg (after using 0.2kg)
+    - Tx 12 proposes: 0.7kg (after using 0.1kg based on Tx 5's version)
+    - Tx 7 proposes: 0.5kg (after using 0.5kg based on the initial state)
+4.  **Detecting Conflicts (Validation):** This is crucial. Let's say Tx 7 read the "Initial State: 1kg" version of flour. Later, the [Scheduler](scheduler) asks `MvMemory` to validate Tx 7. `MvMemory` checks: "Did any transaction _before_ Tx 7 (like Tx 5) write a new version of flour _after_ Tx 7 read the initial state?" In our example, yes! Tx 5 wrote "0.8kg". This means Tx 7's read ("Initial State: 1kg") was stale by the time Tx 5 finished. `MvMemory` reports this conflict back to the [Scheduler](scheduler), which will likely tell Tx 7 to re-execute using the correct data.
 
 ## Interaction with Scheduler and Workers
 
 `MvMemory` doesn't work in isolation. It collaborates closely with worker threads and the [Scheduler](scheduler):
 
 1.  **Worker Executes:** A worker thread executes a transaction (e.g., Tx 7). During execution, it interacts with `MvMemory` for reads (using a special database wrapper we'll see in [VmDB](vmdb)). It keeps track of what locations it read and what versions it got (`Read-Set`). It also tracks the changes it wants to make (`Write-Set`).
-2.  **Worker Reports:** When the worker finishes executing Tx 7, it reports its `Read-Set` and `Write-Set` to `MvMemory` via the `record` function. `MvMemory` updates its internal version history. `MvMemory` also tells the worker which *later* transactions might now be affected because they might have read data that Tx 7 just changed.
+2.  **Worker Reports:** When the worker finishes executing Tx 7, it reports its `Read-Set` and `Write-Set` to `MvMemory` via the `record` function. `MvMemory` updates its internal version history. `MvMemory` also tells the worker which _later_ transactions might now be affected because they might have read data that Tx 7 just changed.
 3.  **Scheduler Validates:** The [Scheduler](scheduler) might later decide Tx 7 needs validation (if it read data that could have been changed by earlier transactions). It asks a worker to perform validation for Tx 7.
 4.  **Worker Validates via MvMemory:** The worker calls `MvMemory`'s `validate-read-locations` function for Tx 7.
-5.  **MvMemory Checks:** `MvMemory` compares Tx 7's original `Read-Set` (the versions it read initially) against the *current* state of its version history. It checks if any *earlier* transaction has committed a newer version for any location Tx 7 read.
+5.  **MvMemory Checks:** `MvMemory` compares Tx 7's original `Read-Set` (the versions it read initially) against the _current_ state of its version history. It checks if any _earlier_ transaction has committed a newer version for any location Tx 7 read.
 6.  **MvMemory Responds:** `MvMemory` tells the worker whether the validation passed (reads are still valid) or failed (conflict detected).
 7.  **Scheduler Acts:** The worker reports the validation result to the [Scheduler](scheduler), which then decides whether Tx 7 is truly finished or needs re-execution.
 
@@ -153,11 +155,11 @@ struct LastLocations {
 
 **Explanation:**
 
-*   `data`: This is the heart of `MvMemory`. It's a thread-safe map (`DashMap`). Each key represents a unique piece of blockchain state (an account's balance, a specific storage slot). The value associated with each key is another map (`BTreeMap`) sorted by the transaction index (`TxIdx`). This inner map stores the different versions (`MemoryEntry`) written by different transactions. This structure allows quickly finding the latest version written by a transaction *before* a given `TxIdx`.
-*   `location-reads`: Helps efficiently find which transactions might need re-validation when a location is updated.
-*   `last-locations`: Caches the read/write sets per transaction for validation/cleanup.
-*   `lazy-addresses`: Tracks accounts whose balances might be updated "lazily" (not strictly versioned on every small change) for performance.
-*   `new-bytecodes`: Stores bytecode for contracts deployed within the current block.
+- `data`: This is the heart of `MvMemory`. It's a thread-safe map (`DashMap`). Each key represents a unique piece of blockchain state (an account's balance, a specific storage slot). The value associated with each key is another map (`BTreeMap`) sorted by the transaction index (`TxIdx`). This inner map stores the different versions (`MemoryEntry`) written by different transactions. This structure allows quickly finding the latest version written by a transaction _before_ a given `TxIdx`.
+- `location-reads`: Helps efficiently find which transactions might need re-validation when a location is updated.
+- `last-locations`: Caches the read/write sets per transaction for validation/cleanup.
+- `lazy-addresses`: Tracks accounts whose balances might be updated "lazily" (not strictly versioned on every small change) for performance.
+- `new-bytecodes`: Stores bytecode for contracts deployed within the current block.
 
 **2. Memory Entries and Values (`MemoryEntry`, `MemoryValue`):**
 
@@ -203,8 +205,8 @@ pub type TxIncarnation = usize;
 
 **Explanation:**
 
-*   `MemoryEntry`: Stores either the actual `Data` (with its `TxIncarnation` number and `MemoryValue`) or an `Estimate` marker used during conflict resolution.
-*   `MemoryValue`: Represents the different kinds of data that can be stored in the blockchain state, including special types like `LazyRecipient`/`LazySender` for performance optimizations on frequent balance changes.
+- `MemoryEntry`: Stores either the actual `Data` (with its `TxIncarnation` number and `MemoryValue`) or an `Estimate` marker used during conflict resolution.
+- `MemoryValue`: Represents the different kinds of data that can be stored in the blockchain state, including special types like `LazyRecipient`/`LazySender` for performance optimizations on frequent balance changes.
 
 **3. Recording Writes (`record` method):**
 
@@ -273,11 +275,11 @@ fn find_readers_after(mv_memory: &MvMemory, loc_hash: MemoryLocationHash, writer
 
 **Explanation:**
 
-*   It updates internal caches like `location-reads` and `last-locations`.
-*   The core part iterates through the `write_set` provided by the worker.
-*   For each location and new value, it accesses the `BTreeMap` for that location within the main `data` `DashMap`.
-*   It inserts the `MemoryEntry::Data` containing the new value and the transaction's incarnation number, keyed by the transaction's index (`tx_version.tx_idx`). This effectively adds a new version to the history for that location.
-*   It figures out which *later* transactions might have read data that was just changed by this write. This information is crucial for the [Scheduler](scheduler) to potentially trigger re-execution or validation for those affected transactions.
+- It updates internal caches like `location-reads` and `last-locations`.
+- The core part iterates through the `write_set` provided by the worker.
+- For each location and new value, it accesses the `BTreeMap` for that location within the main `data` `DashMap`.
+- It inserts the `MemoryEntry::Data` containing the new value and the transaction's incarnation number, keyed by the transaction's index (`tx_version.tx_idx`). This effectively adds a new version to the history for that location.
+- It figures out which _later_ transactions might have read data that was just changed by this write. This information is crucial for the [Scheduler](scheduler) to potentially trigger re-execution or validation for those affected transactions.
 
 **4. Validating Reads (`validate-read-locations` method):**
 
@@ -346,21 +348,21 @@ impl MvMemory {
 
 **Explanation:**
 
-*   It retrieves the `Read-Set` that was recorded when `tx_idx` last executed.
-*   It iterates through each location that `tx_idx` read.
-*   For each location, it compares the `prior_read_origins` (what `tx_idx` saw during execution) with what is *currently* visible in the `data` structure for transactions before `tx_idx`.
-*   **Conflict Detection:** If it finds that a transaction *earlier* than `tx_idx` has written a *newer version* to a location *after* `tx_idx` read an older version (or read from storage), it means the read was stale. In this case, it immediately returns `false` (validation failed).
-*   If all reads are checked and found to be consistent with the current state, it returns `true` (validation passed).
+- It retrieves the `Read-Set` that was recorded when `tx_idx` last executed.
+- It iterates through each location that `tx_idx` read.
+- For each location, it compares the `prior_read_origins` (what `tx_idx` saw during execution) with what is _currently_ visible in the `data` structure for transactions before `tx_idx`.
+- **Conflict Detection:** If it finds that a transaction _earlier_ than `tx_idx` has written a _newer version_ to a location _after_ `tx_idx` read an older version (or read from storage), it means the read was stale. In this case, it immediately returns `false` (validation failed).
+- If all reads are checked and found to be consistent with the current state, it returns `true` (validation passed).
 
 ## Conclusion
 
 `MvMemory` is the specialized memory manager that makes parallel execution safe. By keeping track of multiple versions of data written by different transactions, it allows concurrent operations while providing the mechanism to detect conflicts.
 
-*   It acts as the **shared state manager** for parallel transactions.
-*   It records **writes as new versions** specific to each transaction.
-*   It provides **reads based on the latest committed version** from preceding transactions.
-*   It enables **conflict detection** by allowing the [Scheduler](scheduler) to validate if a transaction's reads have become stale due to concurrent writes by earlier transactions.
+- It acts as the **shared state manager** for parallel transactions.
+- It records **writes as new versions** specific to each transaction.
+- It provides **reads based on the latest committed version** from preceding transactions.
+- It enables **conflict detection** by allowing the [Scheduler](scheduler) to validate if a transaction's reads have become stale due to concurrent writes by earlier transactions.
 
 Think of it as the meticulous record-keeper ensuring that even though many chefs are working at once, the final state of the pantry is correct and consistent.
 
-Now that we understand how state changes are tracked and conflicts are detected, how does the actual transaction execution *logic* (the EVM - Ethereum Virtual Machine) interact with this multi-versioned state? That's where our next component comes in.
+Now that we understand how state changes are tracked and conflicts are detected, how does the actual transaction execution _logic_ (the EVM - Ethereum Virtual Machine) interact with this multi-versioned state? That's where our next component comes in.

@@ -9,7 +9,7 @@ interface GenerateProps {
 }
 
 export function generateOGImage(
-  options: GenerateProps & ImageResponseOptions
+  options: GenerateProps & ImageResponseOptions,
 ): ImageResponse {
   const { title, description, primaryTextColor, ...rest } = options;
 
@@ -23,7 +23,7 @@ export function generateOGImage(
       width: 1200,
       height: 630,
       ...rest,
-    }
+    },
   );
 }
 

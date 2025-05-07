@@ -5,7 +5,8 @@
   "scripts": {
     "build": "fumadocs-mdx && next build",
     "dev": "next dev",
-    "start": "next start"
+    "start": "next start",
+    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,md,mdx}\""
   },
   "dependencies": {
     "@apollo/client": "^3.12.11",
@@ -48,6 +49,7 @@
     "node-loader": "^2.1.0",
     "postcss": "^8.5.2",
     "tailwindcss": "^3.4.17",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "prettier": "^3"
   }
 }

@@ -32,9 +32,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             defaultTheme: "dark",
           }}
         >
-          <Banner>
-            Metis SDK supports Etherurum Pectra fork
-          </Banner>
+          <Banner>Metis SDK supports Etherurum Pectra fork</Banner>
 
           <DocsLayout tree={source.pageTree} {...baseOptions}>
             {children}
