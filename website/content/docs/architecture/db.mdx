@@ -7,14 +7,14 @@ MetisDB is a cutting-edge storage solution tailored for high-throughput, low-lat
 ## Core Design Principles
 
 - **State Commitment and Storage Separation**
-    - The State Commitment Layer manages active blockchain state, ensuring fast access and updates.
-    - The State Storage Layer focuses on historical data, optimized for archival and RPC nodes.
+  - The State Commitment Layer manages active blockchain state, ensuring fast access and updates.
+  - The State Storage Layer focuses on historical data, optimized for archival and RPC nodes.
 - **Flexible Merkle Tree Support**
-    - Supports multiple Merkle tree types (e.g., Sparse Merkle Trees, IAVL Trees) to meet diverse blockchain needs.
+  - Supports multiple Merkle tree types (e.g., Sparse Merkle Trees, IAVL Trees) to meet diverse blockchain needs.
 - **Multi-Version Concurrency Control (MVCC)**
-    - Enables concurrent state access and efficient rollbacks in parallel execution environments.
+  - Enables concurrent state access and efficient rollbacks in parallel execution environments.
 - **Asynchronous I/O**
-    - Reduces latency by asynchronously committing state updates, ensuring high throughput without delays.
+  - Reduces latency by asynchronously committing state updates, ensuring high throughput without delays.
 
 ## Key Components
 
@@ -25,7 +25,7 @@ Handles the active blockchain state for fast transaction validation and executio
 - **Memory-Mapped Merkle Tree**: Provides nanosecond-level state access for high-speed operations.
 - **Transaction Delta Processing**: Applies state changes efficiently, generating block hashes from updated Merkle roots.
 - **Write-Ahead Log (WAL)**: Ensures durability by recording changesets asynchronously, enabling quick recovery.
-Snapshot Management: Periodic snapshots minimize WAL size and accelerate recovery times.
+  Snapshot Management: Periodic snapshots minimize WAL size and accelerate recovery times.
 
 ### State Storage Layer
 
@@ -45,18 +45,18 @@ Optimized for historical data storage and retrieval:
 ### Key Innovations
 
 - **Decoupled State Layers**
-    - Faster state access for active processes.
-    - Reduced overhead for historical queries.
+  - Faster state access for active processes.
+  - Reduced overhead for historical queries.
 - **MVCC**
-    - Enhances concurrent state access and rollback efficiency.
+  - Enhances concurrent state access and rollback efficiency.
 - **Optimized Asynchronous I/O**
-    - Allows continuous transaction processing by deferring disk writes.
+  - Allows continuous transaction processing by deferring disk writes.
 
 ### Performance Highlights
 
 - **State Synchronization**
-    - Up to 10x faster sync times with optimized WAL replay and memory-mapped access.
+  - Up to 10x faster sync times with optimized WAL replay and memory-mapped access.
 - **Transaction Throughput**
-    - Handles tens of thousands of transactions per second with parallel execution and efficient I/O.
+  - Handles tens of thousands of transactions per second with parallel execution and efficient I/O.
 - **Storage Efficiency**
-    - Reduces storage size by up to 50% through pruning and schema optimizations.
+  - Reduces storage size by up to 50% through pruning and schema optimizations.
