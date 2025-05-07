@@ -1,0 +1,46 @@
+---
+title: "Metis SDK"
+---
+
+The Metis SDK provides a **parallel execution engine** for the _Reth_ blockchain node.
+Instead of processing transactions one by one, it uses multiple CPU cores to execute them _concurrently_, aiming to significantly **speed up block processing**.
+It manages shared data carefully using a _multi-version memory system_ and coordinates tasks with a _scheduler_.
+It can optionally use _JIT/AOT compilation_ to further accelerate smart contract execution and allows integrating custom extensions like an _AI service_.
+
+**Source Repository:** [https://github.com/MetisProtocol/metis-sdk](https://github.com/MetisProtocol/metis-sdk)
+
+```mermaid
+flowchart TD
+    A0["ParallelExecutor
+"]
+    A1["MvMemory (Multi-Version Memory)
+"]
+    A2["Scheduler
+"]
+    A3["BlockParallelExecutorProvider / ParallelExecutorBuilder
+"]
+    A4["VmDB
+"]
+    A5["Compiler Handler
+"]
+    A6["AI Execution Extension
+"]
+    A3 -- "Builds/Provides" --> A0
+    A0 -- "Uses for Task Coordination" --> A2
+    A0 -- "Uses for State Versioning" --> A1
+    A0 -- "Uses for State Access" --> A4
+    A4 -- "Reads Cached State From" --> A1
+    A2 -- "Provides Tasks To" --> A0
+    A0 -- "Uses for EVM Compilation" --> A5
+    A3 -- "Configured Alongside" --> A6
+```
+
+## Key Features of Metis SDK
+
+- **Modular Architecture**: Metis SDK is an open-source modular framework designed to provide Web3 developers with a powerful foundation for innovation. It provides plugin features, you can choose according to your needs.
+- **High Performance**: Leverages MetisVM, MetisDB and parallel execution technologies to deliver low-latency, high-throughput on-chain operations.
+- **Strong Compatibility**: Seamlessly integrates with the Ethereum ecosystem, supporting Solidity smart contracts while simplifying DApp migration.
+- **Scalable Consensus Engine**: Supports customizable Sequencer networks, which can be either decentralized or centralized, depending on the specific use case.
+- **Decentralized Sequencer**: For Layer 2, the Metis Sequencer Network consists of multiple decentralized sequencers, each responsible for transaction ordering, validation, and state commitment.
+- **Flexible Deployment**: Supports Layer 1, Layer 2, and Layer 3 network configurations, tailored to diverse application needs.
+- **AI Features Support**: Use [LazAI](https://lazai.network) and [Alith](https://github.com/0xLazAI/alith) to provide AI related on-chain or off-chain tasks including data processing, model inference, fine tuning, etc.
