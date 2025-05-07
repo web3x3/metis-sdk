@@ -47,8 +47,7 @@ export const baseOptions: BaseLayoutProps = {
     {
       icon: <Droplet />,
       text: "Faucet",
-      // TODO: update the faucet URL.
-      url: "https://faucet.metis.io/",
+      url: "https://hype-faucet.metis.io",
     },
   ],
 };
