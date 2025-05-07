@@ -7,12 +7,12 @@ Metis SDK is redefining the landscape of blockchain scalability, performance, an
 ## Features
 
 - **Modular Architecture**: Metis SDK is an open-source modular framework designed to provide Web3 developers with a powerful foundation for innovation. It provides plugin features, you can choose according to your needs.
-- **High Performance**: Leverages [MetisVM](crates/vm/README.md), [MetisDB](crates/db/README.md) and [parallel execution](crates/pe/README.md) technologies to deliver low-latency, high-throughput on-chain operations.
+- **High Performance**: Leverages [MetisVM](crates/vm/README.md), [MetisDB](crates/db/README.md) and [Parallel Execution](crates/pe/README.md) technologies to deliver low-latency, high-throughput on-chain operations.
 - **Strong Compatibility**: Seamlessly integrates with the Ethereum ecosystem, supporting Solidity smart contracts while simplifying DApp migration.
 - **Scalable Consensus Engine**: Supports customizable Sequencer networks, which can be either decentralized or centralized, depending on the specific use case.
 - **Decentralized Sequencer**: For Layer 2, the Metis Sequencer Network consists of multiple decentralized sequencers, each responsible for transaction ordering, validation, and state commitment.
 - **Flexible Deployment**: Supports Layer 1, Layer 2, and Layer 3 network configurations, tailored to diverse application needs.
-- **AI Features Support**: Use [LazAI](https://lazai.network) and [Alith](https://github.com/0xLazAI/alith) to provide AI related on-chain or off-chain tasks including data processing, model inference, fine tuning, etc.
+- **AI Features Support**: Use [Alith](https://github.com/0xLazAI/alith) AI agent framework to provide AI related on-chain or off-chain tasks including data processing, model inference, fine tuning, etc.
 
 ## Quick Start
 
@@ -25,6 +25,13 @@ We welcome any contributions to Metis SDK! See the [contributing guide](CONTRIBU
 ## Documentation
 
 See [here](https://metis-sdk.vercel.app/) for more documents.
+
+## Metis SDK Based Blockchains
+
+The Metis SDK has given rise to a new generation of blockchains, each tailored to address specific needs within the Web3 ecosystem.
+
+- [Hyperion](https://docs.metis.io/hyperion)
+- [LazAI](https://lazai.network).
 
 ## Acknowledgements
 
