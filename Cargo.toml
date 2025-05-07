@@ -109,7 +109,7 @@ crossbeam = "0.8.4"
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.85"
+rust-version = "1.86"
 exclude = [".github/"]
 license = "Apache-2.0"
 readme = "README.md"
