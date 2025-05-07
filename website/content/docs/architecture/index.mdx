@@ -2,16 +2,21 @@
 title: Architecture Overview
 ---
 
-Metis SDK has established a robust and innovative architecture to ensure high performance, scalability and compatibility in its Layer 1, Layer 2, and Layer 3 network. The following provides an expanded overview of its core components:
+Metis SDK has established a robust and innovative architecture to ensure high performance, scalability and compatibility in its Layer 1, Layer 2, and Layer 3 network.
+
+Specifically, Metis SDK provides a **parallel execution engine**.
+Instead of processing transactions one by one, it uses multiple CPU cores to execute them _concurrently_, aiming to significantly **speed up block processing**.
+It manages shared data carefully using a _multi-version memory system_ and coordinates tasks with a _scheduler_.
+It can optionally use _JIT/AOT compilation_ to further accelerate smart contract execution and allows integrating custom extensions like an _AI service_.
 
 ## Core Components
 
-- [**Parallel Execution**](/sequencer/architecture/pe):
-  - The Metis Executor is a high-performance executor that processes transactions in parallel, significantly increasing throughput and reducing latency.
-- [**Metis VM**](/sequencer/architecture/vm)
+- [**Metis VM**](/architecture/vm)
   - A custom-built virtual machine that executes smart contracts and transactions on the Metis Layer 2 network.
   - It is optimized for performance and compatibility with Ethereum smart contracts, enabling developers to deploy their applications easily.
-- [**Metis DB**](/sequencer/architecture/db)
+- [**Metis DB**](/architecture/db)
   - A high-performance database optimized for storing and retrieving transaction data, state roots, and other relevant information.
-- [**AI Execution Extension (AI ExEx)**](/sequencer/architecture/ai_exex)
+- [**Parallel Execution**](/architecture/pe):
+  - The Metis Executor is a high-performance executor that processes transactions in parallel, significantly increasing throughput and reducing latency.
+- [**AI Execution Extension (AI ExEx)**](/architecture/ai_exex)
   - Provides foundational support for on-chain AI applications through a set of innovative technologies designed to make AI-driven decentralized applications feasible and efficient.
