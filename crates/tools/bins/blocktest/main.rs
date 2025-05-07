@@ -42,9 +42,12 @@ pub struct Suite {
     env: TestEnv,
     // The key denotes the tx index + 1
     transactions: HashMap<String, Transaction>,
+    // The key denotes the address
     pre: HashMap<Address, Account>,
     // The key denotes the tx index
     logs: HashMap<String, HashMap<String, ExpectLog>>,
+    /// Predefined block hashes
+    block_hashes: Option<HashMap<String, B256>>,
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
@@ -56,6 +59,7 @@ struct TestEnv {
     pub current_timestamp: U256,
     pub previous_hash: B256,
     pub base_fee_per_gas: Option<U256>,
+    pub mix_hash: Option<B256>,
 }
 
 #[derive(Debug, Default, PartialEq, Eq, Deserialize, Clone)]
@@ -149,6 +153,7 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
         env.block_env.gas_limit = as_u64_saturated!(suite.env.current_gas_limit);
         env.block_env.timestamp = as_u64_saturated!(suite.env.current_timestamp);
         env.block_env.difficulty = suite.env.current_difficulty;
+        env.block_env.prevrandao = Some(suite.env.mix_hash.unwrap_or_default());
         env.block_env.basefee = suite
             .env
             .base_fee_per_gas
@@ -196,6 +201,15 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
         let mut state = State::builder()
             .with_cached_prestate(cache)
             .with_bundle_update()
+            .with_block_hashes(
+                suite
+                    .block_hashes
+                    .clone()
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|(k, v)| (k.parse().unwrap(), *v))
+                    .collect(),
+            )
             .build();
         // Check sequential execute results
         let sequential_results = execute_sequential(
@@ -213,6 +227,15 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
         let mut state = State::builder()
             .with_cached_prestate(cache)
             .with_bundle_update()
+            .with_block_hashes(
+                suite
+                    .block_hashes
+                    .clone()
+                    .unwrap_or_default()
+                    .iter()
+                    .map(|(k, v)| (k.parse().unwrap(), *v))
+                    .collect(),
+            )
             .build();
         // Check parallel execute results
         let concurrency_level =
