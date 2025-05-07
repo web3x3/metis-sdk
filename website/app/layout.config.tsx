@@ -1,5 +1,4 @@
 import type { BaseLayoutProps } from "fumadocs-ui/layouts/shared";
-import { Droplet } from "lucide-react";
 
 /**
  * Shared layout configurations
