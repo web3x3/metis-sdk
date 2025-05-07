@@ -7,7 +7,7 @@ This documentation is _NOT_ intended to be comprehensive; it is meant to be a qu
 #### macOS and OS X
 
 - `git`
-- `Rust 1.85+`
+- `Rust 1.86+`
 - `LLVM 18`
 
 You'll need LLVM installed and `llvm-config` in your `PATH`. Just download `llvm@18` using `brew`.
@@ -27,7 +27,7 @@ export LLVM_SYS_180_PREFIX="$(brew --prefix llvm@18)"
 #### Linux
 
 - `git`
-- `Rust 1.85+`
+- `Rust 1.86+`
 - `LLVM 18`
 
 If you are on Debian/Ubuntu, check out the repository [https://apt.llvm.org/](https://apt.llvm.org/) Then you can install with:
