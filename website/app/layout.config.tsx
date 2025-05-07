@@ -10,22 +10,12 @@ import { Droplet } from "lucide-react";
  */
 export const baseOptions: BaseLayoutProps = {
   nav: {
-    title: "Metis Hyperion Docs",
+    title: "Metis SDK",
     url: "/",
     enableSearch: true,
   },
   githubUrl: "https://github.com/MetisProtocol/metis-sdk",
   links: [
-    {
-      type: "menu",
-      text: "Explorers",
-      items: [
-        {
-          text: "Testnet",
-          url: "https://hyperion-testnet-explorer.metisdevops.link/",
-        }
-      ],
-    },
     {
       type: "menu",
       text: "Developer Channels",
@@ -43,11 +33,6 @@ export const baseOptions: BaseLayoutProps = {
           url: "https://www.youtube.com/playlist?list=PLpYi1DzeXBB9dzWw3xk4UMbUHWlRs-i9s",
         },
       ],
-    },
-    {
-      icon: <Droplet />,
-      text: "Faucet",
-      url: "https://hype-faucet.metis.io",
     },
   ],
 };

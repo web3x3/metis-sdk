@@ -1,0 +1,182 @@
+---
+title: Quick Start
+icon: "Atom"
+---
+
+Welcome to the Metis SDK! This guide will help you quickly launch a Metis dev node.
+
+## Pre-Built Binaries
+
+[Archives of precompiled binaries](https://github.com/MetisProtocol/metis-sdk/releases/) of metis are available for macOS and Linux. They are static executables. Users of platforms not explicitly listed below should download one of these archives.
+
+## Docker
+
+Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion
+```
+
+Or a specific version (e.g. v0.1.0) with:
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion:v0.1.0
+```
+
+You can test the image with:
+
+```shell
+docker run --rm ghcr.io/metisprotocol/hyperion --version
+```
+
+## Build from Source
+
+### Dependencies
+
+First, install Rust using [rustup](https://rustup.rs/):
+
+```shell
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
+```
+
+With Rust installed, follow the [instructions](https://github.com/MetisProtocol/metis-sdk/blob/main/CONTRIBUTING.md) below to install dependencies relevant to your operating system:
+
+### Build Metis
+
+With Rust and the dependencies installed, clone the repository:
+
+```shell
+git clone https://github.com/MetisProtocol/metis-sdk
+cd metis-sdk
+```
+
+Then, install metis into your `PATH` via:
+
+```shell
+make install
+```
+
+Alternatively, you can build yourself with:
+
+```shell
+cargo build --release
+```
+
+This will place the reth binary under `./target/release/metis`, and you can copy it to your directory of preference after that.
+
+## Run a Node
+
+### From Binary
+
+Execute the following command to launch a Metis devnet:
+
+```shell
+metis --dev --dev.block-time 2s --http --ws
+```
+
+Execute the following command to launch a Metis devnet with the genesis config file:
+
+```shell
+metis --dev --dev.block-time 2s --http --ws --chain genesis.json
+```
+
+A `genesis.json` example is
+
+```json
+{
+    "nonce": "0x42",
+    "timestamp": "0x0",
+    "extraData": "0x5343",
+    "gasLimit": "0x989680",
+    "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "alloc": {
+        "0xf47559c312c063ab186fa9cbada4a8d3411e7bef": {
+            "balance": "0x4a47e3c12448f4ad000000"
+        },
+        "0x9c82df3861e1c1e9bb3a5c5eb0a8dd2f69e755a7": {
+            "balance": "0x4a0"
+        }
+    },
+    "number": "0x0",
+    "gasUsed": "0x0",
+    "parentHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+    "difficulty": "0x1",
+    "coinbase": "0xf47559c312c063ab186fa9cbada4a8d3411e7bef",
+    "config": {
+        "ethash": {
+            "fixedDifficulty": 1,
+            "minimumDifficulty": 1
+        },
+        "chainId": 133717,
+        "homesteadBlock": 0,
+        "eip150Block": 0,
+        "eip155Block": 0,
+        "eip158Block": 0,
+        "byzantiumBlock": 0,
+        "constantinopleBlock": 0,
+        "petersburgBlock": 0,
+        "istanbulBlock": 0,
+        "berlinBlock": 0,
+        "londonBlock": 0,
+        "terminalTotalDifficulty": 0,
+        "terminalTotalDifficultyPassed": true,
+        "shanghaiTime": 0
+    }
+}
+```
+
+> Note that these commands will not open any HTTP/WS ports by default. You can change this by adding the --http, --ws flags, respectively and using the --http.api and --ws.api flags to enable various ETH compatible JSON-RPC APIs.
+
+### From Docker
+
+To run the dev node with Docker, run:
+
+```shell
+docker run \
+    -v data:/root/.local/share/reth/ \
+    -d \
+    -p 8545 \
+    -p 8546 \
+    -p 9001:9001 \
+    -p 30303:30303 \
+    -p 30303:30303/udp \
+    --name hyperion \
+    ghcr.io/metisprotocol/hyperion \
+    node \
+    --datadir=data \
+    --metrics 0.0.0.0:9001 \
+    --dev \
+    --dev.block-time 2s --chain genesis.json \
+    --http --http.api=all --http.addr=0.0.0.0 --http.port=8545 \
+    --ws --ws.api=all --ws.addr=0.0.0.0 --ws.port=8546
+```
+
+### Observability with Prometheus & Grafana
+
+Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
+
+```shell
+metis --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
+```
+
+When you use metis chain for deployment, you can expose this ports
+
+```text
+# Expose the HTTP RPC Port 8545.
+8545
+# Expose the WS RPC Port 8546.
+8546
+# Expose the 9001 for metric.
+9001
+# Expose the 30303 port (TCP and UDP) for peering with other nodes.
+30303
+30303/udp
+```
+
+## CLI Reference
+
+Metis chain is built on reth, they use almost the same CLI parameters, you can find more CLI information [here](https://reth.rs/cli/reth.html).
+
+## Interacting with Metis Chain over JSON-RPC
+
+Metis chain is built on reth, they both have the same ETH compatible JSON-RPC, you can find more JSON-RPC information [here](https://reth.rs/jsonrpc/intro.html).

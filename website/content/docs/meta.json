@@ -1,12 +1,9 @@
 {
-  "title": "Metis Hyperion Docs",
+  "title": "Metis SDK",
   "pages": [
     "index",
-    "---DApp---",
-    "...dapp",
-    "---Sequencer---",
-    "...sequencer",
-    "---Network---",
-    "...network"
+    "start",
+    "architecture",
+    "faq"
   ]
 }

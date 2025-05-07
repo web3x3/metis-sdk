@@ -31,7 +31,7 @@ See [here](https://metis-sdk.vercel.app/) for more documents.
 The Metis SDK has given rise to a new generation of blockchains, each tailored to address specific needs within the Web3 ecosystem.
 
 - [Hyperion](https://docs.metis.io/hyperion)
-- [LazAI](https://lazai.network).
+- [LazAI](https://lazai.network)
 
 ## Acknowledgements
 
