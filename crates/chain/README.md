@@ -71,7 +71,6 @@ A `genesis.json` example is
 
 > Note that these commands will not open any HTTP/WS ports by default. You can change this by adding the --http, --ws flags, respectively and using the --http.api and --ws.api flags to enable various ETH compatible JSON-RPC APIs.
 
-
 ### Docker
 
 Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.

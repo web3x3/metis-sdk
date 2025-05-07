@@ -1,6 +1,6 @@
 {
-  "name": "Metis Hyperion Docs",
-  "short_name": "Metis Hyperion Docs",
+  "name": "Metis SDK",
+  "short_name": "Metis SDK",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

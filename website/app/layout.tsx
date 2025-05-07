@@ -16,10 +16,10 @@ const inter = Inter({
 
 export const metadata = createMetadata({
   title: {
-    template: "%s | Metis Hyperion Docs",
-    default: "Metis Hyperion Docs",
+    template: "%s | Metis SDK",
+    default: "Metis SDK",
   },
-  description: "The documentation for Metis L2",
+  description: "The documentation for Metis SDK",
   metadataBase: baseUrl,
 });
 
@@ -33,7 +33,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           }}
         >
           <Banner>
-            Metis Hyperion supports Etherurum Pectra fork
+            Metis SDK supports Etherurum Pectra fork
           </Banner>
 
           <DocsLayout tree={source.pageTree} {...baseOptions}>
