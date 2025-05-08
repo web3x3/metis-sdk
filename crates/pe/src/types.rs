@@ -1,8 +1,6 @@
 //! Reference: https://github.com/risechain/pevm
 
-use alloy_primitives::{Address, B256, U256};
-use hashbrown::HashMap;
-use metis_primitives::BuildIdentityHasher;
+use metis_primitives::{Address, B256, BuildIdentityHasher, HashMap, U256};
 use revm::state::AccountInfo;
 use smallvec::SmallVec;
 use std::fmt;

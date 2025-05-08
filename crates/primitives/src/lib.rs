@@ -3,8 +3,8 @@ use std::ops::{Add, AddAssign, Sub, SubAssign};
 
 pub use alloy_primitives::{
     Signature, SignatureError, Signed, TxHash, TxIndex, TxKind, TxNonce, TxNumber, Uint,
+    map::DefaultHashBuilder,
 };
-pub use hashbrown::HashMap;
 pub use revm::bytecode::{
     Bytecode,
     eip7702::Eip7702Bytecode,
@@ -29,12 +29,12 @@ pub use revm::context_interface::{
     },
 };
 pub use revm::database::{
-    CacheDB, DBErrorMarker, Database, DatabaseCommit, DatabaseRef, PlainAccount,
+    CacheDB, DBErrorMarker, Database, DatabaseCommit, DatabaseRef, EmptyDB, PlainAccount,
 };
 pub use revm::precompile::{PrecompileError, PrecompileOutput, PrecompileSpecId, Precompiles};
 pub use revm::primitives::{
-    Address, B256, BLOCK_HASH_HISTORY, Bytes, FixedBytes, I256, KECCAK_EMPTY, Log, LogData, U256,
-    address, alloy_primitives, b256,
+    Address, B256, BLOCK_HASH_HISTORY, Bytes, FixedBytes, HashMap, I256, KECCAK_EMPTY, Log,
+    LogData, U256, address, alloy_primitives, b256,
     eip4844::{self, GAS_PER_BLOB},
     eip7702::{self, PER_AUTH_BASE_COST, PER_EMPTY_ACCOUNT_COST},
     fixed_bytes,
@@ -51,13 +51,13 @@ pub use revm::{ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 pub use rustc_hash::FxBuildHasher;
 
 /// Mapping from address to [`Account`].
-pub type AccountState = HashMap<Address, Account, BuildSuffixHasher>;
+pub type AccountState = HashMap<Address, Account>;
 
 /// Mapping from code hashes to [`Bytecode`]s.
-pub type Bytecodes = HashMap<B256, Bytecode, BuildSuffixHasher>;
+pub type Bytecodes = HashMap<B256, Bytecode>;
 
 /// Mapping from block numbers to block hashes.
-pub type BlockHashes = HashMap<u64, B256, BuildIdentityHasher>;
+pub type BlockHashes = HashMap<u64, B256>;
 
 /// Use the last 8 bytes of an existing hash like address
 /// or code hash instead of rehashing it.

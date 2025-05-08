@@ -5,7 +5,7 @@ use crate::{
 };
 use libloading::{Library, Symbol};
 use lru::LruCache;
-use metis_primitives::{B256, Bytes, SpecId};
+use metis_primitives::{B256, Bytes, FxBuildHasher, HashMap, SpecId};
 use revm::{
     Database,
     context::{
@@ -21,8 +21,6 @@ use revm::{
 };
 use revmc::EvmCompilerFn;
 use revmc::{EvmCompiler, EvmLlvmBackend, OptimizationLevel, llvm::Context};
-use rustc_hash::FxBuildHasher;
-use rustc_hash::FxHashMap as HashMap;
 use std::{fmt::Debug, fs, path::PathBuf};
 use std::{
     mem::transmute,

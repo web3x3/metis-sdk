@@ -1,7 +1,6 @@
 use crate::{compiler::CompileCache, error::Error};
 use lru::LruCache;
-use metis_primitives::B256;
-use rustc_hash::FxBuildHasher;
+use metis_primitives::{B256, FxBuildHasher};
 
 use super::{
     compiler::{CompileOptions, Compiler, CompilerContext},

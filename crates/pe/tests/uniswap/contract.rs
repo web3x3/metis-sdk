@@ -1,15 +1,14 @@
 use crate::common::storage::{
     StorageBuilder, from_address, from_indices, from_short_string, from_tick,
 };
-use hashbrown::HashMap;
 use metis_pe::{Account, AccountInfo};
+use metis_primitives::HashMap;
 use revm::bytecode::Bytecode;
 use revm::primitives::{
     Address, B256, Bytes, FixedBytes, U256, fixed_bytes,
     hex::{FromHex, ToHexExt},
     keccak256, uint,
 };
-use rustc_hash::FxBuildHasher;
 
 const POOL_FEE: u32 = 3000;
 const TICK_SPACING: i32 = 60;
@@ -70,7 +69,7 @@ impl WETH9 {
 #[derive(Debug, Default)]
 pub struct UniswapV3Factory {
     owner: Address,
-    pools: HashMap<(Address, Address, U256), Address, FxBuildHasher>,
+    pools: HashMap<(Address, Address, U256), Address>,
 }
 
 impl UniswapV3Factory {
@@ -155,9 +154,9 @@ pub struct UniswapV3Pool {
     token_0: Address,
     token_1: Address,
     factory: Address,
-    positions: HashMap<U256, [U256; 4], FxBuildHasher>,
-    ticks: HashMap<U256, [U256; 4], FxBuildHasher>,
-    tick_bitmap: HashMap<U256, U256, FxBuildHasher>,
+    positions: HashMap<U256, [U256; 4]>,
+    ticks: HashMap<U256, [U256; 4]>,
+    tick_bitmap: HashMap<U256, U256>,
 }
 
 impl UniswapV3Pool {

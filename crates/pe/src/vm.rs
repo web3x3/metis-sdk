@@ -5,10 +5,9 @@ use crate::{
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use hashbrown::HashMap;
 #[cfg(feature = "optimism")]
 use metis_primitives::Transaction;
-use metis_primitives::{BuildIdentityHasher, EvmState, I257, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, EvmState, HashMap, I257, hash_deterministic};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 #[cfg(feature = "optimism")]

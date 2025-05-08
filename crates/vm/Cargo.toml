@@ -8,7 +8,6 @@ metis-primitives.workspace = true
 alloy-sol-types.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
-rustc-hash.workspace = true
 tokio.workspace = true
 revm.workspace = true
 

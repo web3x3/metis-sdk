@@ -5,9 +5,8 @@ use alloy_provider::{Provider, ProviderBuilder, network::primitives::BlockTransa
 use alloy_rpc_types_eth::{BlockId, transaction::Transaction};
 use anyhow::{Context as _, Result, anyhow};
 use clap::Parser;
-use hashbrown::HashMap;
 use indicatif::ProgressBar;
-use metis_primitives::{Address, B256, Bytes, SpecId, TxEnv, TxKind, U256};
+use metis_primitives::{Address, B256, Bytes, HashMap, SpecId, TxEnv, TxKind, U256};
 use metis_tools::get_block_spec;
 use reqwest::Url;
 use revm::{

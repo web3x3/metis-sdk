@@ -6650,7 +6650,6 @@ dependencies = [
  "eyre",
  "futures",
  "futures-util",
- "hashbrown 0.15.3",
  "jsonrpsee",
  "metis-pe",
  "metis-primitives",
@@ -6705,7 +6704,6 @@ dependencies = [
  "crossbeam",
  "dashmap 6.1.0",
  "flate2",
- "hashbrown 0.15.3",
  "metis-primitives",
  "metis-vm",
  "op-alloy-consensus 0.15.2",
@@ -6719,7 +6717,6 @@ dependencies = [
  "reth-primitives",
  "revm",
  "revmc-build",
- "rustc-hash 2.1.1",
  "serde",
  "serde_json",
  "smallvec",
@@ -6733,7 +6730,6 @@ dependencies = [
 name = "metis-primitives"
 version = "0.1.0"
 dependencies = [
- "hashbrown 0.15.3",
  "revm",
  "rustc-hash 2.1.1",
  "serde",
@@ -6751,7 +6747,6 @@ dependencies = [
  "anyhow",
  "clap",
  "hash-db",
- "hashbrown 0.15.3",
  "hex",
  "indicatif",
  "k256",
@@ -6785,7 +6780,6 @@ dependencies = [
  "revm",
  "revmc",
  "revmc-build",
- "rustc-hash 2.1.1",
  "smallvec",
  "thiserror 2.0.12",
  "tokio",
