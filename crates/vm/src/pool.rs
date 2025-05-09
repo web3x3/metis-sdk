@@ -1,17 +1,11 @@
-use crate::{compiler::CompileCache, error::Error};
-use lru::LruCache;
-use metis_primitives::{B256, FxBuildHasher};
-
 use super::{
     compiler::{CompileOptions, Compiler, CompilerContext},
     runtime::get_runtime,
 };
-use metis_primitives::{Bytes, SpecId};
-use std::{
-    num::NonZeroUsize,
-    ops::DerefMut,
-    sync::{Arc, RwLock},
-};
+use crate::{compiler::CompileCache, error::Error};
+use metis_primitives::{B256, Bytes, FxBuildHasher, SpecId};
+use moka::sync::Cache;
+use std::sync::Arc;
 use tokio::{
     sync::{Mutex, Semaphore},
     task::JoinHandle,
@@ -21,7 +15,7 @@ use tokio::{
 /// compile cache.
 pub struct CompilePool {
     pub threshold: u64,
-    pub cache: Arc<RwLock<CompileCache>>,
+    pub cache: CompileCache,
     semaphore: Arc<Semaphore>,
     inner: Arc<PoolInner>,
 }
@@ -74,14 +68,19 @@ impl CompilePool {
             inner: Arc::new(PoolInner {
                 compiler: Mutex::new(Compiler::new(context, opts)?),
             }),
-            cache: Arc::new(RwLock::new(if is_aot {
-                CompileCache::AOT(LruCache::with_hasher(
-                    NonZeroUsize::new(cache_size).ok_or(Error::Internal("".to_string()))?,
-                    FxBuildHasher,
-                ))
+            cache: if is_aot {
+                CompileCache::AOT(
+                    Cache::builder()
+                        .max_capacity(cache_size as u64)
+                        .build_with_hasher(FxBuildHasher),
+                )
             } else {
-                CompileCache::JIT(Default::default())
-            })),
+                CompileCache::JIT(
+                    Cache::builder()
+                        .max_capacity(cache_size as u64)
+                        .build_with_hasher(FxBuildHasher),
+                )
+            },
         })
     }
 
@@ -105,6 +104,8 @@ impl CompilePool {
     ) -> Result<JoinHandle<Result<(), Error>>, Error> {
         let semaphore = self.semaphore.clone();
         let inner = self.inner.clone();
+        // To share the same cache across the async tasks, clone it.
+        // This is a cheap operation.
         let cache = self.cache.clone();
         let runtime = get_runtime();
         let handle = runtime.spawn(async move {
@@ -118,10 +119,7 @@ impl CompilePool {
                 compiler.aot_compile(code_hash, bytecode, spec_id).await?;
             } else {
                 let jit = compiler.jit_compile(bytecode, spec_id)?;
-                let mut cache = cache
-                    .write()
-                    .map_err(|err| Error::LockPoison(err.to_string()))?;
-                if let CompileCache::JIT(jit_cache) = cache.deref_mut() {
+                if let CompileCache::JIT(jit_cache) = cache {
                     jit_cache.insert(code_hash, jit);
                 }
             }

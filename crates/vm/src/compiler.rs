@@ -4,8 +4,8 @@ use crate::{
     pool::CompilePool,
 };
 use libloading::{Library, Symbol};
-use lru::LruCache;
-use metis_primitives::{B256, Bytes, FxBuildHasher, HashMap, SpecId};
+use metis_primitives::{B256, Bytes, FxBuildHasher, SpecId};
+use moka::sync::Cache;
 use revm::{
     Database,
     context::{
@@ -22,10 +22,7 @@ use revm::{
 use revmc::EvmCompilerFn;
 use revmc::{EvmCompiler, EvmLlvmBackend, OptimizationLevel, llvm::Context};
 use std::{fmt::Debug, fs, path::PathBuf};
-use std::{
-    mem::transmute,
-    sync::{Arc, TryLockError},
-};
+use std::{mem::transmute, sync::Arc};
 
 pub use revmc::llvm::Context as InnerContext;
 
@@ -155,9 +152,10 @@ pub enum FetchedFnResult {
     NotFound,
 }
 
+#[derive(Clone)]
 pub enum CompileCache {
-    JIT(HashMap<B256, EvmCompilerFn>),
-    AOT(LruCache<B256, (EvmCompilerFn, Arc<Library>), FxBuildHasher>),
+    JIT(Cache<B256, EvmCompilerFn, FxBuildHasher>),
+    AOT(Cache<B256, (EvmCompilerFn, Arc<Library>), FxBuildHasher>),
 }
 
 impl CompileCache {
@@ -167,10 +165,10 @@ impl CompileCache {
     }
 
     #[inline]
-    pub fn get(&mut self, code_hash: &B256) -> Option<&EvmCompilerFn> {
+    pub fn get(&self, code_hash: &B256) -> Option<EvmCompilerFn> {
         match self {
             CompileCache::JIT(jit_cache) => jit_cache.get(code_hash),
-            CompileCache::AOT(aot_cache) => aot_cache.get(code_hash).map(|r| &r.0),
+            CompileCache::AOT(aot_cache) => aot_cache.get(code_hash).map(|r| r.0),
         }
     }
 }
@@ -244,37 +242,21 @@ impl ExtCompileWorker {
         if code_hash.is_zero() {
             return Ok(FetchedFnResult::NotFound);
         }
-        // Write locks are required for reading from LRU Cache
-        {
-            let mut cache = match pool.cache.try_write() {
-                Ok(c) => Some(c),
-                Err(err) => match err {
-                    /* in this case, read from file instead of cache */
-                    TryLockError::WouldBlock => None,
-                    TryLockError::Poisoned(err) => Some(err.into_inner()),
-                },
-            };
-            if let Some(cache) = cache.as_deref_mut() {
-                // Read lib from the memory cache
-                if let Some(t) = cache.get(code_hash) {
-                    return Ok(FetchedFnResult::Found(*t));
+        // Read lib from the memory cache
+        if let Some(t) = pool.cache.get(code_hash) {
+            return Ok(FetchedFnResult::Found(t));
+        }
+        // Read lib from the store path if is the AOT mode
+        else if let CompileCache::AOT(aot_cache) = &pool.cache {
+            let so = self.store_path.join(code_hash.to_string()).join("a.so");
+            if so.try_exists().unwrap_or(false) {
+                {
+                    let lib = Arc::new((unsafe { Library::new(so) })?);
+                    let f: Symbol<'_, revmc::EvmCompilerFn> =
+                        unsafe { lib.get(self.module_name.as_bytes())? };
+                    aot_cache.insert(*code_hash, (*f, lib.clone()));
+                    return Ok(FetchedFnResult::Found(*f));
                 }
-                // Read lib from the store path if is the AOT mode
-                else if let CompileCache::AOT(aot_cache) = cache {
-                    let so = self.store_path.join(code_hash.to_string()).join("a.so");
-                    if so.try_exists().unwrap_or(false) {
-                        {
-                            let lib = Arc::new((unsafe { Library::new(so) })?);
-                            let f: Symbol<'_, revmc::EvmCompilerFn> =
-                                unsafe { lib.get(self.module_name.as_bytes())? };
-                            aot_cache.put(*code_hash, (*f, lib.clone()));
-                            return Ok(FetchedFnResult::Found(*f));
-                        }
-                    }
-                }
-            } else {
-                // Use the interpreter to run the code.
-                return Err(Error::DisableCompiler);
             }
         }
         Ok(FetchedFnResult::NotFound)
