@@ -2,8 +2,7 @@ use std::{collections::BTreeMap, sync::Mutex};
 
 use alloy_primitives::{Address, B256};
 use dashmap::{DashMap, DashSet};
-use hashbrown::HashMap;
-use metis_primitives::{BuildIdentityHasher, BuildSuffixHasher, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, BuildSuffixHasher, HashMap, hash_deterministic};
 use revm::bytecode::Bytecode;
 use revm::context::{BlockEnv, TxEnv};
 use std::fmt::Debug;

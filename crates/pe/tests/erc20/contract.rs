@@ -1,11 +1,8 @@
 use crate::common::storage::{StorageBuilder, from_address, from_indices, from_short_string};
 use metis_pe::AccountInfo;
-use metis_primitives::{Account, BuildSuffixHasher};
+use metis_primitives::{Account, HashMap};
 use revm::bytecode::Bytecode;
-use revm::primitives::{
-    Address, B256, Bytes, HashMap, U256, fixed_bytes, hex::FromHex, ruint::UintTryFrom,
-};
-use rustc_hash::FxBuildHasher;
+use revm::primitives::{Address, B256, Bytes, U256, fixed_bytes, hex::FromHex, ruint::UintTryFrom};
 
 /// `ERC20Token` contract bytecode
 const ERC20_TOKEN: &str = include_str!("./assets/ERC20Token.hex");
@@ -16,8 +13,8 @@ pub struct ERC20Token {
     symbol: String,
     decimals: U256,
     initial_supply: U256,
-    balances: HashMap<Address, U256, BuildSuffixHasher>,
-    allowances: HashMap<(Address, Address), U256, FxBuildHasher>,
+    balances: HashMap<Address, U256>,
+    allowances: HashMap<(Address, Address), U256>,
 }
 
 impl ERC20Token {
