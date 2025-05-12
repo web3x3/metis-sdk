@@ -26,7 +26,7 @@ hex = "0.4.3"
 num_cpus = "1.16.0"
 indicatif = "0.17"
 walkdir = "2.5"
-clap = { version = "4.5.36", features = ["derive"] }
+clap = { version = "4.5.38", features = ["derive"] }
 
 hash-db = "0.15"
 plain_hasher = "0.2"
