@@ -1,0 +1,73 @@
+# Reference: https://github.com/paradigmxyz/flood/
+
+name: RPC Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+    types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
+
+env:
+  RUST_VERSION: 1.86
+  METIS_SEPOLIA_NODE: https://metis-sepolia-rpc.publicnode.com
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: RPC Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ env.RUST_VERSION }}
+          override: true
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Set up python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.24
+
+      - name: Start the metis dev node
+        run: |
+          make install
+          metis node --dev --dev.block-time 2s --http --http.api=all &
+          sleep 5
+
+      - name: Setup flood tools and run RPC test with the flood tool
+        run: |
+          # Install vegeta
+          go install github.com/tsenart/vegeta/v12@v12.8.4
+          python3 -m pip install paradigm-flood
+          # Install flood python dependencies: https://github.com/paradigmxyz/flood/issues/60
+          python3 -m pip install lxml[html_clean] lxml_html_clean toolstr==0.9.7
+          # Set Go env PATH into PATH
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+          # Run flood tests
+          python3 -m flood eth_getBlockByNumber localhost:8545 $METIS_SEPOLIA_NODE --output eth_getBlockByNumber
+          python3 -m flood eth_getLogs localhost:8545 $METIS_SEPOLIA_NODE --output eth_getLogs
+          flood all metis=localhost:8545 metis-sepolia=$METIS_SEPOLIA_NODE --equality
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RPC test results
+          if-no-files-found: error
+          path: |
+            eth_getBlockByNumber
+            eth_getLogs
