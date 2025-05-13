@@ -71,13 +71,13 @@ This will place the reth binary under `./target/release/metis`, and you can copy
 Execute the following command to launch a Metis devnet:
 
 ```shell
-metis --dev --dev.block-time 2s --http --ws
+metis node --dev --dev.block-time 2s --http --ws
 ```
 
 Execute the following command to launch a Metis devnet with the genesis config file:
 
 ```shell
-metis --dev --dev.block-time 2s --http --ws --chain genesis.json
+metis node --dev --dev.block-time 2s --http --ws --chain genesis.json
 ```
 
 A `genesis.json` example is
@@ -156,7 +156,7 @@ docker run \
 Metis chain exposes a number of metrics which can be enabled by adding the `--metrics` flag:
 
 ```shell
-metis --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
+metis node --dev --dev.block-time 2s --http --ws --chain genesis.json --metrics 127.0.0.1:9001
 ```
 
 When you use metis chain for deployment, you can expose this ports
