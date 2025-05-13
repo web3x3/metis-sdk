@@ -15,7 +15,7 @@ revmc = { git = "https://github.com/paradigmxyz/revmc", features = [
     "llvm-prefer-dynamic",
 ], optional = true }
 smallvec = "1.14.0"
-libloading = "0.8.6"
+libloading = "0.8.7"
 alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.5.1", features = [
     "llamacpp",
 ], optional = true }
