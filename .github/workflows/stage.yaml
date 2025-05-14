@@ -1,0 +1,70 @@
+name: Stage test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+    types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
+
+env:
+  CARGO_TERM_COLOR: always
+  BIN_NAME: metis
+  FROM_BLOCK: 0
+  TO_BLOCK: 50000
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  stage:
+    name: stage-run-test
+    runs-on: ubuntu-latest
+    env:
+      RUST_LOG: info,sync=error
+      RUST_BACKTRACE: 1
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: rui314/setup-mold@v1
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Build Metis
+        run: |
+          make install
+      - name: Run headers stage
+        run: |
+          ${{ env.BIN_NAME }} stage run headers --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run bodies stage
+        run: |
+          ${{ env.BIN_NAME }} stage run bodies --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run senders stage
+        run: |
+          ${{ env.BIN_NAME }} stage run senders --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run execution stage
+        run: |
+          ${{ env.BIN_NAME }} stage run execution --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run account-hashing stage
+        run: |
+          ${{ env.BIN_NAME }} stage run account-hashing --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run storage hashing stage
+        run: |
+          ${{ env.BIN_NAME }} stage run storage-hashing --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run hashing stage
+        run: |
+          ${{ env.BIN_NAME }} stage run hashing --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run merkle stage
+        run: |
+          ${{ env.BIN_NAME }} stage run merkle --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run transaction lookup stage
+        run: |
+          ${{ env.BIN_NAME }} stage run tx-lookup --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run account history stage
+        run: |
+          ${{ env.BIN_NAME }} stage run account-history --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
+      - name: Run storage history stage
+        run: |
+          ${{ env.BIN_NAME }} stage run storage-history --from ${{ env.FROM_BLOCK }} --to ${{ env.TO_BLOCK }} --commit --checkpoints
