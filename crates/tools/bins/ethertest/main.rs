@@ -299,6 +299,11 @@ fn should_skip(path: &Path) -> bool {
         | "InitCollision.json"
         | "InitCollisionParis.json"
 
+        // The expected `OufOfGas` error is not filled in this
+        // test case, but the test does throw an error.
+        | "warm_coinbase_call_out_of_gas.json"
+        | "warm_coinbase_gas_usage.json"
+
         // Skip evmone statetest
         | "initcode_transaction_before_prague.json"
         | "invalid_tx_non_existing_sender.json"

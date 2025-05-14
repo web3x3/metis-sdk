@@ -13,6 +13,17 @@ alloy-evm.workspace = true
 alloy-rpc-types-eth.workspace = true
 alloy-provider.workspace = true
 alloy-consensus.workspace = true
+alloy-eips.workspace = true
+alloy-primitives.workspace = true
+reth-chainspec.workspace = true
+reth-db.workspace = true
+reth-db-api.workspace = true
+reth-primitives.workspace = true
+reth-provider.workspace = true
+reth-ethereum-consensus.workspace = true
+reth-stages.workspace = true
+reth-evm-ethereum.workspace = true
+
 rayon.workspace = true
 anyhow.workspace = true
 alloy-rlp.workspace = true
@@ -49,6 +60,11 @@ doc = false
 [[bin]]
 name = "metis-blockfetch"
 path = "bins/blockfetch/main.rs"
+doc = false
+
+[[bin]]
+name = "metis-eelstest"
+path = "bins/eelstest/main.rs"
 doc = false
 
 [features]

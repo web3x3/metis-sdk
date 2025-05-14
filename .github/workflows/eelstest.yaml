@@ -1,4 +1,4 @@
-name: Ethertest
+name: Ethereum Execution Layer Specification (EELS) Test
 
 on:
   push:
@@ -18,7 +18,7 @@ concurrency:
 
 jobs:
   test:
-    name: Ethertest
+    name: EELS Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout sources
@@ -34,15 +34,9 @@ jobs:
         with:
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
-      - name: Run ethertest state suites
+      - name: Run EELS suites
         run: |
           cd crates/tools
-          # Download ethereum state test suites
-          git clone https://github.com/ethereum/tests
-          TEST_DIR=tests/GeneralStateTests
-          cargo run -r --bin metis-ethertest run $TEST_DIR
-
           # Download EELS fixtures released at Cancun
           curl -LO https://github.com/ethereum/execution-spec-tests/releases/download/v2.1.1/fixtures.tar.gz && tar -xzf fixtures.tar.gz
-          TEST_DIR=fixtures/state_tests
-          cargo run -r --bin metis-ethertest run $TEST_DIR
+          cargo run -r --bin metis-eelstest run fixtures/blockchain_tests
