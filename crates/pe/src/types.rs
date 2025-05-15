@@ -58,10 +58,28 @@ impl<T: Into<usize> + From<usize> + fmt::Debug> fmt::Debug for AtomicWrapper<T> 
     }
 }
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AccountMeta {
-    CA(U256),
-    EOA(U256),
+    CA((U256, u64)),
+    EOA((U256, u64)),
+}
+
+impl AccountMeta {
+    #[inline]
+    pub fn balance(&self) -> &U256 {
+        match self {
+            AccountMeta::CA(a) => &a.0,
+            AccountMeta::EOA(a) => &a.0,
+        }
+    }
+
+    #[inline]
+    pub fn nonce(&self) -> &u64 {
+        match self {
+            AccountMeta::CA(a) => &a.1,
+            AccountMeta::EOA(a) => &a.1,
+        }
+    }
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, Hash)]

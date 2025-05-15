@@ -11,7 +11,7 @@ use metis_chain::provider::BlockParallelExecutorProvider;
 use metis_tools::find_all_json_tests;
 use pretty_assertions::assert_eq;
 use rayon::iter::{ParallelBridge, ParallelIterator};
-use reth_chainspec::{ChainSpec, ChainSpecBuilder, MAINNET};
+use reth_chainspec::{ChainSpec, ChainSpecBuilder};
 use reth_db::{DatabaseError, tables};
 use reth_db_api::{
     cursor::DbDupCursorRO,
@@ -534,8 +534,6 @@ fn should_skip(name: &str) -> bool {
         || name.contains("test_multiple_withdrawals_same_address")
         || name.contains("test_withdrawing_to_precompiles")
         || name.contains("fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas")
-        // TODO: fix create2_selfdestruct_collision test suites for the parallel executor
-        || name.contains("test_dynamic_create2_selfdestruct_collision")
 }
 
 fn execute_test(path: &Path) -> Result<(), TestError> {
@@ -566,22 +564,13 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
         })
         .par_bridge()
         .try_for_each(|(name, case)| {
-            let original_chain_spec = Arc::new(
-                ChainSpecBuilder::from(&*MAINNET)
-                    .shanghai_activated()
-                    .cancun_activated()
-                    .prague_activated()
-                    .build(),
-            );
             if should_skip(name) {
                 dbg!("skip {}", name);
                 return Ok(());
             }
             dbg!("testing {}", name);
             // Create a new test database and initialize a provider for the test case.
-            let mut chain_spec: ChainSpec = case.network.clone().into();
-            chain_spec.deposit_contract = original_chain_spec.deposit_contract;
-            let chain_spec: Arc<ChainSpec> = Arc::new(chain_spec);
+            let chain_spec: Arc<ChainSpec> = Arc::new(case.network.clone().into());
             let provider = create_test_provider_factory_with_chain_spec(chain_spec.clone());
 
             let provider = provider.database_provider_rw().unwrap();
