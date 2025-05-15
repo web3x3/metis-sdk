@@ -57,6 +57,10 @@ accept: ## Accept all insta snapshots
 fmt: ## Format all code
 	cargo fmt --all
 
+.PHONY: fmt-check
+fmt-check: ## Format all code and check
+	cargo fmt --all -- --check
+
 .PHONY: clippy-all
 clippy-all: ## Lint code with all features
 	cargo clippy --workspace --all-features --benches --examples --tests -- -D warnings
