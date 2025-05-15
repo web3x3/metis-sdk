@@ -417,9 +417,9 @@ impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
                 Bytecode::default()
             };
             let account_meta = if code_hash.is_none() {
-                AccountMeta::EOA(account.balance)
+                AccountMeta::EOA((account.balance, account.nonce))
             } else {
-                AccountMeta::CA(account.balance)
+                AccountMeta::CA((account.balance, account.nonce))
             };
             self.read_accounts.insert(location_hash, account_meta);
 
@@ -586,9 +586,15 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                         let account_location_hash = hash_deterministic(Location::Basic(*address));
 
                         #[cfg(not(feature = "optimism"))]
-                        let read_account = evm.db().read_accounts.get(&account_location_hash);
+                        let read_account =
+                            evm.db().read_accounts.get(&account_location_hash).cloned();
                         #[cfg(feature = "optimism")]
-                        let read_account = evm.0.db().read_accounts.get(&account_location_hash);
+                        let read_account = evm
+                            .0
+                            .db()
+                            .read_accounts
+                            .get(&account_location_hash)
+                            .cloned();
 
                         let has_code = !account.info.is_empty_code_hash();
                         let is_new_code = has_code
@@ -596,10 +602,11 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
 
                         // Write new account changes
                         if is_new_code
+                            || account_location_hash == from_hash
                             || read_account.is_none()
-                            || account_location_hash == from_hash // nonce is changed
+                            // Nonce is changed or balance is changed.
                             || read_account.is_some_and(|meta| {
-                                meta != &AccountMeta::CA(account.info.balance) && meta != &AccountMeta::EOA(account.info.balance)
+                                meta != AccountMeta::CA((account.info.balance, account.info.nonce)) && meta != AccountMeta::EOA((account.info.balance, account.info.nonce))
                             })
                         {
                             #[cfg(not(feature = "optimism"))]

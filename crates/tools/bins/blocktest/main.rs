@@ -44,6 +44,8 @@ pub struct Suite {
     transactions: HashMap<String, Transaction>,
     // The key denotes the address
     pre: HashMap<Address, Account>,
+    // The key denotes the address
+    post: Option<HashMap<Address, Account>>,
     // The key denotes the tx index
     logs: HashMap<String, HashMap<String, ExpectLog>>,
     /// Predefined block hashes
@@ -94,6 +96,15 @@ pub struct Account {
 pub struct TestError {
     pub name: String,
     pub suite_name: Option<String>,
+}
+
+#[derive(Debug, Error)]
+pub enum TestErrorKind {
+    #[error("account state mismatch: got {got:?}, expected {expected:?}")]
+    AccountMismatch {
+        got: (Address, U256, u64),
+        expected: (Address, U256, u64),
+    },
 }
 
 #[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
@@ -288,6 +299,22 @@ fn check_execute_results(results: &[TxExecutionResult], name: &str, suite: &Suit
                 "name: {} tx idx {} log idx {}",
                 name, idx, i
             );
+        }
+    }
+    // Check the post state account nonce.
+    if let Some(post_state) = &suite.post {
+        if let Some(result) = results.last() {
+            let db_state = &result.state;
+            for (address, expect_account) in post_state {
+                let db_account = db_state.get(address).cloned().unwrap_or_default();
+                if expect_account.nonce != db_account.info.nonce {
+                    let kind = TestErrorKind::AccountMismatch {
+                        got: (*address, db_account.info.balance, db_account.info.nonce),
+                        expected: (*address, expect_account.balance, expect_account.nonce),
+                    };
+                    panic!("{kind:?}");
+                }
+            }
         }
     }
 }
