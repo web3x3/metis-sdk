@@ -190,16 +190,7 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
                     None => TxKind::Create,
                 },
                 access_list: tx.access_list.clone().unwrap_or_default().into(),
-                gas_priority_fee: if spec_id.is_enabled_in(SpecId::LONDON) {
-                    Some(
-                        tx.max_priority_fee_per_gas
-                            .unwrap_or_default()
-                            .try_into()
-                            .unwrap_or(u128::MAX),
-                    )
-                } else {
-                    None
-                },
+                gas_priority_fee: None,
                 ..Default::default()
             };
             let _ = tx.derive_tx_type();
