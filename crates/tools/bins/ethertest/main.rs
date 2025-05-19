@@ -403,7 +403,7 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
                         .transaction
                         .max_fee_per_blob_gas
                         .map(|b| u128::try_from(b).expect("max fee less than u128::MAX"))
-                        .unwrap_or(u128::MAX),
+                        .unwrap_or(0),
                     kind: match suite.transaction.to {
                         Some(to) => TxKind::Call(to),
                         None => TxKind::Create,

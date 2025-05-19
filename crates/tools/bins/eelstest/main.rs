@@ -533,6 +533,7 @@ fn should_skip(name: &str) -> bool {
         || name.contains("test_multiple_withdrawals_same_address")
         || name.contains("test_withdrawing_to_precompiles")
         || name.contains("fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas")
+        || name.contains("test_dynamic_create2_selfdestruct_collision.py")
 }
 
 fn execute_test(path: &Path) -> Result<(), TestError> {

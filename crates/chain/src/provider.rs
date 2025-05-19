@@ -24,7 +24,8 @@ use reth_evm::{ConfigureEvm, OnStateHook, execute::BlockExecutor};
 use reth_evm::{
     EthEvmFactory, Evm, EvmEnv, EvmFactory, EvmFor, InspectorFor, NextBlockEnvAttributes,
 };
-use reth_evm_ethereum::{EthBlockAssembler, EthEvmConfig, RethReceiptBuilder};
+pub use reth_evm_ethereum::EthEvmConfig;
+use reth_evm_ethereum::{EthBlockAssembler, RethReceiptBuilder};
 use reth_primitives_traits::{SealedBlock, SealedHeader};
 use revm::DatabaseCommit;
 use std::convert::Infallible;
