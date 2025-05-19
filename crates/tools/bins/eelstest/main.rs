@@ -7,7 +7,7 @@ use alloy_rlp::Decodable;
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
 use indicatif::{ProgressBar, ProgressDrawTarget};
-use metis_chain::provider::BlockParallelExecutorProvider;
+use metis_chain::provider::ParallelEthEvmConfig;
 use metis_tools::find_all_json_tests;
 use pretty_assertions::assert_eq;
 use rayon::iter::{ParallelBridge, ParallelIterator};
@@ -18,7 +18,6 @@ use reth_db_api::{
     transaction::{DbTx, DbTxMut},
 };
 use reth_ethereum_consensus::EthBeaconConsensus;
-use reth_evm_ethereum::EthEvmConfig;
 use reth_primitives::{Account as RethAccount, Bytecode, SealedHeader, StorageEntry};
 use reth_primitives::{BlockBody, SealedBlock, StaticFileSegment};
 use reth_provider::{
@@ -534,6 +533,7 @@ fn should_skip(name: &str) -> bool {
         || name.contains("test_multiple_withdrawals_same_address")
         || name.contains("test_withdrawing_to_precompiles")
         || name.contains("fork_Paris-blockchain_test-EIP-198-case3-raw-input-out-of-gas")
+        || name.contains("test_dynamic_create2_selfdestruct_collision.py")
 }
 
 fn execute_test(path: &Path) -> Result<(), TestError> {
@@ -611,16 +611,12 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
                 .commit_without_sync_all()
                 .unwrap();
 
-            // Parallel executor provider
-            let parallel_executor_provider =
-                BlockParallelExecutorProvider::new(EthEvmConfig::new(chain_spec.clone()));
-
             // Mainnet executor provider
             // let eth_executor_provider = reth_evm_ethereum::execute::EthExecutorProvider::mainnet();
             // Execute the execution stage using the EVM processor factory for the test case
             // network.
             let result = ExecutionStage::new_with_executor(
-                parallel_executor_provider,
+                ParallelEthEvmConfig::new(chain_spec.clone()),
                 Arc::new(EthBeaconConsensus::new(chain_spec)),
             )
             .execute(

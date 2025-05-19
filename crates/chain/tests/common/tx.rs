@@ -5,6 +5,7 @@ use alloy_eips::eip7002::{
 use alloy_primitives::{Address, b256};
 use alloy_primitives::{Bytes, TxKind};
 use alloy_primitives::{U256, fixed_bytes, keccak256};
+use reth::revm::State;
 use reth::revm::database_interface::EmptyDB;
 use reth_chainspec::{ChainSpecBuilder, MAINNET};
 use reth_ethereum::chainspec::ChainSpec;
@@ -20,7 +21,11 @@ use std::sync::Arc;
 pub fn get_test_withdraw_config(
     sender: Address,
     keypair: Keypair,
-) -> (Arc<ChainSpec>, CacheDB<EmptyDB>, RecoveredBlock<Block>) {
+) -> (
+    Arc<ChainSpec>,
+    State<CacheDB<EmptyDB>>,
+    RecoveredBlock<Block>,
+) {
     // crate eip 7002 chain spec
     let chain_spec = Arc::new(
         ChainSpecBuilder::from(&*MAINNET)
@@ -53,7 +58,12 @@ pub fn get_test_withdraw_config(
     );
 
     let block = get_test_block_with_single_withdraw_tx(&chain_spec, &keypair);
-    (chain_spec, db, block)
+    let state_db = State::builder()
+        .with_database(db)
+        .with_bundle_update()
+        .without_state_clear()
+        .build();
+    (chain_spec, state_db, block)
 }
 
 pub fn get_test_block_with_single_withdraw_tx(

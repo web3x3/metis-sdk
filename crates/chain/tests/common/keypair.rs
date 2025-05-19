@@ -8,7 +8,7 @@ use secp256k1::Secp256k1;
 
 pub fn get_random_keypair() -> (Keypair, Address) {
     let secp = Secp256k1::new();
-    let sender_key_pair = Keypair::new(&secp, &mut rand::thread_rng());
+    let sender_key_pair = Keypair::new(&secp, &mut rand_08::thread_rng());
     let sender_address = public_key_to_address(sender_key_pair.public_key());
 
     (sender_key_pair, sender_address)

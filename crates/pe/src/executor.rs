@@ -40,7 +40,7 @@ pub enum ParallelExecutorError {
     },
     #[error("Storage error: {0}")]
     StorageError(String),
-    #[error("Execution error")]
+    #[error("Execution error: {0}")]
     ExecutionError(
         #[source]
         #[from]
