@@ -33,19 +33,19 @@ thiserror.workspace = true
 reqwest.workspace = true
 tokio.workspace = true
 
-hex = "0.4.3"
-num_cpus = "1.16.0"
-indicatif = "0.17"
-walkdir = "2.5"
-clap = { version = "4.5.38", features = ["derive"] }
+hex.workspace = true
+num_cpus.workspace = true
+indicatif.workspace = true
+walkdir.workspace = true
+clap.workspace = true
 
-hash-db = "0.15"
-plain_hasher = "0.2"
-triehash = "0.8"
-k256 = { version = "0.13.3", features = ["ecdsa"] }
+hash-db.workspace = true
+plain_hasher.workspace = true
+triehash.workspace = true
+k256.workspace = true
 
 # Testing
-pretty_assertions = "1"
+pretty_assertions.workspace = true
 
 [[bin]]
 name = "metis-ethertest"
