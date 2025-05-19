@@ -44,10 +44,10 @@ thiserror.workspace = true
 crossbeam.workspace = true
 
 # OP Alloy and OP Revm dependencies
-op-alloy-consensus = { version = "0.15.5", optional = true }
-op-alloy-network = { version = "0.14.1", optional = true }
-op-alloy-rpc-types = { version = "0.15.2", optional = true }
-op-revm = { version = "3.0.2", optional = true }
+op-alloy-consensus = { workspace = true, optional = true }
+op-alloy-network = { workspace = true, optional = true }
+op-alloy-rpc-types = { workspace = true, optional = true }
+op-revm = { workspace = true, optional = true }
 
 # Reth dependencies
 reth-primitives.workspace = true
@@ -59,20 +59,20 @@ tikv-jemallocator = { workspace = true, optional = true }
 tokio.workspace = true
 
 # Testing
-pretty_assertions = "1"
+pretty_assertions.workspace = true
 
 [dev-dependencies]
 bincode.workspace = true
 criterion.workspace = true
 flate2.workspace = true
-rand.workspace = true
+rand = "0.9.0"
 rayon.workspace = true
 reqwest.workspace = true
 serde_json.workspace = true
 walkdir.workspace = true
 
 [build-dependencies]
-revmc-build = { git = "https://github.com/paradigmxyz/revmc", optional = true }
+revmc-build = { workspace = true, optional = true }
 
 [[bench]]
 harness = false
