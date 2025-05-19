@@ -1,7 +1,7 @@
 use alloy_evm::block::BlockExecutionResult;
-use metis_chain::provider::BlockParallelExecutorProvider;
-use reth_evm::execute::{BlockExecutorProvider, Executor};
-use reth_evm_ethereum::EthEvmConfig;
+use metis_chain::provider::ParallelEthEvmConfig;
+use reth_evm::execute::BasicBlockExecutor;
+use reth_evm::execute::Executor;
 use std::error::Error;
 
 pub mod common;
@@ -10,9 +10,7 @@ pub mod common;
 async fn test_withdraw() -> Result<(), Box<dyn Error>> {
     let (keypair, sender) = common::keypair::get_random_keypair();
     let (chain_spec, db, recovered_block) = common::tx::get_test_withdraw_config(sender, keypair);
-    let config = EthEvmConfig::new(chain_spec);
-    let provider = BlockParallelExecutorProvider::new(config);
-    let mut executor = provider.executor(db);
+    let mut executor = BasicBlockExecutor::new(ParallelEthEvmConfig::new(chain_spec), db);
 
     let BlockExecutionResult {
         receipts, requests, ..

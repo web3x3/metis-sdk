@@ -2,6 +2,7 @@ use alloy_evm::EvmEnv;
 use alloy_rlp::{RlpEncodable, RlpMaxEncodedLen};
 use anyhow::Result;
 use clap::{Args, Parser, Subcommand};
+use either::Either;
 use hash_db::Hasher;
 use indicatif::{ProgressBar, ProgressDrawTarget};
 use metis_chain::state::StateStorageAdapter;
@@ -419,7 +420,12 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
                         .transaction
                         .authorization_list
                         .clone()
-                        .map(|auth_list| auth_list.into_iter().map(Into::into).collect::<Vec<_>>())
+                        .map(|auth_list| {
+                            auth_list
+                                .into_iter()
+                                .map(|i| Either::Left(i.into()))
+                                .collect::<Vec<_>>()
+                        })
                         .unwrap_or_default(),
 
                     caller: if let Some(address) = suite.transaction.sender {
