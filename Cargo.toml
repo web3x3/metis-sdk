@@ -33,30 +33,30 @@ metis-chain = { path = "crates/chain" }
 anyhow = "1.0.97"
 
 # Alloy and Revm dependencies
-alloy-consensus = "1.0.3"
-alloy-primitives = { version = "1.1.0", features = [
+alloy-consensus = "1.0.5"
+alloy-primitives = { version = "1.1.0", default-features = false, features = [
   "asm-keccak",
   "map-foldhash",
 ] }
 alloy-sol-types = { version = "1.1.0", default-features = false, features = [
   "std",
 ] }
-alloy-eips = { version = "1.0.3", default-features = false }
-alloy-provider = { version = "1.0.3", features = [
+alloy-eips = { version = "1.0.5", default-features = false }
+alloy-provider = { version = "1.0.5", features = [
   "reqwest",
 ], default-features = false }
 alloy-rlp = { version = "0.3.10", features = ["core-net"] }
-alloy-rpc-types-eth = "1.0.3"
-alloy-transport = "1.0.3"
-alloy-transport-http = { version = "1.0.3", features = [
+alloy-rpc-types-eth = "1.0.5"
+alloy-transport = "1.0.5"
+alloy-transport-http = { version = "1.0.5", features = [
   "reqwest-rustls-tls",
 ], default-features = false }
 alloy-hardforks = "0.2.0"
 alloy-trie = { version = "0.8.1", default-features = false }
-alloy-signer = { version = "1.0.3", default-features = false }
-alloy-signer-local = { version = "1.0.3", default-features = false }
-alloy-evm = { version = "0.8.0", default-features = false }
-alloy-genesis = { version = "1.0.3", default-features = false }
+alloy-signer = { version = "1.0.5", default-features = false }
+alloy-signer-local = { version = "1.0.5", default-features = false }
+alloy-evm = { version = "0.8.1", default-features = false }
+alloy-genesis = { version = "1.0.5", default-features = false }
 revm = { version = "23.1.0", default-features = false }
 
 # OP Alloy and OP Revm dependencies
@@ -66,34 +66,34 @@ op-alloy-rpc-types = { version = "0.16.0" }
 op-revm = { version = "4.0.2" }
 
 # Reth dependencies
-reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1", default-features = false }
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-node-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1", features = [
+reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-node-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", features = [
   "full",
 ] }
-reth-cli-util = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-chain-state = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-ethereum-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1", features = [
+reth-cli-util = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-chain-state = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-ethereum-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", features = [
   "test-utils",
 ] }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
 
 # Reth test dependencies
-reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
-reth-testing-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.1" }
+reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-testing-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
 
 # Revmc dependencies
 revmc = { git = "https://github.com/paradigmxyz/revmc", features = [
@@ -105,7 +105,7 @@ revmc-build = { git = "https://github.com/paradigmxyz/revmc" }
 tikv-jemallocator = "0.6.0"
 
 # AI Inference dependencies
-alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.5.1", features = [
+alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.6.0", features = [
   "llamacpp",
 ] }
 
@@ -159,7 +159,7 @@ moka = { version = "0.12.10", features = ["sync"] }
 either = "1.15.0"
 
 [workspace.package]
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.86"
 exclude = [".github/"]

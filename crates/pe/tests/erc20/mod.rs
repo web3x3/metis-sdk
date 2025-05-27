@@ -15,7 +15,6 @@ pub const GAS_LIMIT: u64 = 35_000;
 /// An estimated amount of gas that is expected to be consumed by typical transactions.
 pub const ESTIMATED_GAS_USED: u64 = 29_738;
 
-// TODO: Better randomness control.
 /// Sometimes we want duplicates to test
 /// dependent transactions, sometimes we want to guarantee non-duplicates
 /// for independent benchmarks.

@@ -34,7 +34,7 @@ fn mixed_block() {
                     final_state.insert(address, account);
                     final_txs.push(TxEnv {
                         caller: address,
-                        kind: TransactTo::Call(address), // TODO: Randomize for tighter test
+                        kind: TransactTo::Call(address),
                         value: U256::from(1),
                         gas_limit: common::RAW_TRANSFER_GAS_LIMIT,
                         gas_price: 1_u128,
@@ -64,8 +64,6 @@ fn mixed_block() {
     }
     common::test_execute(
         InMemoryDB::new(final_state, Arc::new(final_bytecodes), Default::default()),
-        // TODO: Shuffle transactions to scatter dependencies around the block.
-        // Note that we'll need to guarantee that the nonces are increasing.
         final_txs,
     );
 }
