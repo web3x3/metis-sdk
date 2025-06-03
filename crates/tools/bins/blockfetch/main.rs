@@ -36,7 +36,7 @@ struct Cli {
 #[tokio::main]
 async fn main() -> Result<()> {
     let Cli { rpc_url, block_id } = Cli::parse();
-    let provider = ProviderBuilder::new().on_http(rpc_url);
+    let provider = ProviderBuilder::new().connect_http(rpc_url);
     let block = provider
         .get_block(block_id)
         .await

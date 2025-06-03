@@ -60,11 +60,10 @@ name = "metis-blocktest"
 path = "bins/blocktest/main.rs"
 doc = false
 
-# TODO: bump revm version to deal revm alloy-provider 0.14 and 1.0 deps confict
-# [[bin]]
-# name = "metis-blockfetch"
-# path = "bins/blockfetch/main.rs"
-# doc = false
+[[bin]]
+name = "metis-blockfetch"
+path = "bins/blockfetch/main.rs"
+doc = false
 
 [[bin]]
 name = "metis-eelstest"

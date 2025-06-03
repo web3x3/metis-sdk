@@ -2,12 +2,14 @@ use crate::state::StateStorageAdapter;
 use alloy_consensus::Header;
 use alloy_eips::eip7685::Requests;
 use alloy_evm::Database;
-use alloy_evm::block::state_changes::post_block_balance_increments;
-use alloy_evm::block::{BlockExecutionError, BlockValidationError, SystemCaller};
+use alloy_evm::block::{
+    BlockExecutionError, BlockValidationError, CommitChanges, SystemCaller,
+    state_changes::post_block_balance_increments,
+};
 use alloy_evm::eth::dao_fork::DAO_HARDFORK_BENEFICIARY;
 use alloy_evm::eth::{dao_fork, eip6110};
 use alloy_hardforks::EthereumHardfork;
-use metis_primitives::{CfgEnv, SpecId, TxEnv};
+use metis_primitives::{CfgEnv, ExecutionResult, SpecId, TxEnv};
 use reth::api::{FullNodeTypes, NodeTypes};
 use reth::builder::BuilderContext;
 use reth::builder::components::ExecutorBuilder;
@@ -142,9 +144,18 @@ where
     fn execute_transaction_with_result_closure(
         &mut self,
         tx: impl reth_evm::block::ExecutableTx<Self>,
-        f: impl FnOnce(&metis_primitives::ExecutionResult<<Self::Evm as reth_evm::Evm>::HaltReason>),
+        f: impl FnOnce(&ExecutionResult<<Self::Evm as reth_evm::Evm>::HaltReason>),
     ) -> Result<u64, BlockExecutionError> {
         self.executor.execute_transaction_with_result_closure(tx, f)
+    }
+
+    fn execute_transaction_with_commit_condition(
+        &mut self,
+        tx: impl ExecutableTx<Self>,
+        f: impl FnOnce(&ExecutionResult<<Self::Evm as Evm>::HaltReason>) -> CommitChanges,
+    ) -> Result<Option<u64>, BlockExecutionError> {
+        self.executor
+            .execute_transaction_with_commit_condition(tx, f)
     }
 
     fn finish(
