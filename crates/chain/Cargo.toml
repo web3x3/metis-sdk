@@ -62,7 +62,7 @@ revmc-build = { workspace = true, optional = true }
 
 [[bin]]
 name = "metis"
-path = "bin/main.rs"
+path = "bin/metis.rs"
 doc = false
 
 [features]

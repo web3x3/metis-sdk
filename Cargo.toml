@@ -41,59 +41,59 @@ alloy-primitives = { version = "1.1.0", default-features = false, features = [
 alloy-sol-types = { version = "1.1.0", default-features = false, features = [
   "std",
 ] }
-alloy-eips = { version = "1.0.5", default-features = false }
-alloy-provider = { version = "1.0.5", features = [
+alloy-eips = { version = "1.0.9", default-features = false }
+alloy-provider = { version = "1.0.9", features = [
   "reqwest",
 ], default-features = false }
 alloy-rlp = { version = "0.3.10", features = ["core-net"] }
-alloy-rpc-types-eth = "1.0.5"
-alloy-transport = "1.0.5"
-alloy-transport-http = { version = "1.0.5", features = [
+alloy-rpc-types-eth = "1.0.9"
+alloy-transport = "1.0.9"
+alloy-transport-http = { version = "1.0.9", features = [
   "reqwest-rustls-tls",
 ], default-features = false }
-alloy-hardforks = "0.2.5"
+alloy-hardforks = "0.2.2"
 alloy-trie = { version = "0.8.1", default-features = false }
-alloy-signer = { version = "1.0.5", default-features = false }
-alloy-signer-local = { version = "1.0.5", default-features = false }
-alloy-evm = { version = "0.8.1", default-features = false }
-alloy-genesis = { version = "1.0.5", default-features = false }
-revm = { version = "23.1.0", default-features = false }
+alloy-signer = { version = "1.0.9", default-features = false }
+alloy-signer-local = { version = "1.0.9", default-features = false }
+alloy-evm = { version = "0.10", default-features = false }
+alloy-genesis = { version = "1.0.9", default-features = false }
+revm = { version = "24.0.1", default-features = false, features = ["std", "serde-json"] }
 
 # OP Alloy and OP Revm dependencies
-op-alloy-consensus = { version = "0.16.0" }
-op-alloy-network = { version = "0.16.0" }
-op-alloy-rpc-types = { version = "0.16.0" }
-op-revm = { version = "4.0.2" }
+op-alloy-consensus = { version = "0.17.2" }
+op-alloy-network = { version = "0.17.2" }
+op-alloy-rpc-types = { version = "0.17.2" }
+op-revm = { version = "5.0.0" }
 
 # Reth dependencies
-reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", default-features = false }
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-node-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", features = [
+reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7", default-features = false }
+reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-node-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7", features = [
   "full",
 ] }
-reth-cli-util = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-chain-state = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-ethereum-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3", features = [
+reth-cli-util = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-chain-state = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-ethereum-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7", features = [
   "test-utils",
 ] }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
 
 # Reth test dependencies
-reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
-reth-testing-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.3" }
+reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-testing-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
 
 # Revmc dependencies
 revmc = { git = "https://github.com/paradigmxyz/revmc", features = [
@@ -105,7 +105,7 @@ revmc-build = { git = "https://github.com/paradigmxyz/revmc" }
 tikv-jemallocator = "0.6.0"
 
 # AI Inference dependencies
-alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.6.0", features = [
+alith = { git = "https://github.com/0xLazAI/alith", tag = "v0.7.3", features = [
   "llamacpp",
 ] }
 
