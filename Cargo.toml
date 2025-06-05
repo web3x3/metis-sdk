@@ -91,6 +91,18 @@ reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8", f
 reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
 reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
 
+# OP Reth dependencies
+reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-node = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+
+
 # Reth test dependencies
 reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
 reth-testing-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
