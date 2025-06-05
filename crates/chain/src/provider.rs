@@ -143,7 +143,7 @@ where
 
     fn execute_transaction_with_result_closure(
         &mut self,
-        tx: impl reth_evm::block::ExecutableTx<Self>,
+        tx: impl ExecutableTx<Self>,
         f: impl FnOnce(&ExecutionResult<<Self::Evm as reth_evm::Evm>::HaltReason>),
     ) -> Result<u64, BlockExecutionError> {
         self.executor.execute_transaction_with_result_closure(tx, f)
