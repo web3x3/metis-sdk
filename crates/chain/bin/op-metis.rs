@@ -22,7 +22,7 @@ fn main() {
         Cli::<OpChainSpecParser, RollupArgs>::parse().run(async move |builder, rollup_args| {
             info!(target: "reth::cli", "Launching node");
             let handle = builder.node(OpNode::new(rollup_args));
-            // TODO add exex and paralle executor
+            // TODO add exex and parallel executor
             handle.launch().await?.wait_for_node_exit().await
         })
     {
