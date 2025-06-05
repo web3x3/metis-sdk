@@ -1,8 +1,8 @@
 #![allow(missing_docs)]
 
 use clap::Parser;
-use reth_optimism_cli::{chainspec::OpChainSpecParser, Cli};
-use reth_optimism_node::{args::RollupArgs, OpNode};
+use reth_optimism_cli::{Cli, chainspec::OpChainSpecParser};
+use reth_optimism_node::{OpNode, args::RollupArgs};
 use tracing::info;
 
 #[global_allocator]
@@ -13,15 +13,16 @@ fn main() {
 
     // Enable backtraces unless a RUST_BACKTRACE value has already been explicitly provided.
     if std::env::var_os("RUST_BACKTRACE").is_none() {
-        unsafe { std::env::set_var("RUST_BACKTRACE", "1"); }
+        unsafe {
+            std::env::set_var("RUST_BACKTRACE", "1");
+        }
     }
 
     if let Err(err) =
         Cli::<OpChainSpecParser, RollupArgs>::parse().run(async move |builder, rollup_args| {
             info!(target: "reth::cli", "Launching node");
-            let handle =
-                builder.node(OpNode::new(rollup_args));
-                // TODO add exex
+            let handle = builder.node(OpNode::new(rollup_args));
+            // TODO add exex
             handle.launch().await?.wait_for_node_exit().await
         })
     {
