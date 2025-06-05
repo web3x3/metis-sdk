@@ -29,7 +29,6 @@ metis-vm = { path = "crates/vm" }
 metis-primitives = { path = "crates/primitives" }
 metis-pe = { path = "crates/pe" }
 metis-chain = { path = "crates/chain" }
-op-metis-chain = { path = "crates/optimism" }
 
 anyhow = "1.0.97"
 
@@ -93,15 +92,15 @@ reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "
 reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
 
 # OP Reth dependencies
-reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-node = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
-reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.7" }
+reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-node = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
+reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth", tag = "v1.4.8" }
 
 
 # Reth test dependencies

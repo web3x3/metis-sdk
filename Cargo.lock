@@ -558,9 +558,7 @@ checksum = "7734aecfc58a597dde036e4c5cace2ae43e2f8bf3d406b022a1ef34da178dd49"
 dependencies = [
  "alloy-primitives 1.1.2",
  "alloy-rlp",
- "arbitrary",
  "num_enum",
- "proptest",
  "serde",
  "strum 0.27.1",
 ]
@@ -6467,6 +6465,7 @@ dependencies = [
  "alloy-hardforks",
  "alloy-primitives 1.1.2",
  "alloy-sol-types",
+ "clap",
  "eyre",
  "futures",
  "futures-util",
@@ -6489,6 +6488,15 @@ dependencies = [
  "reth-node-api",
  "reth-node-core",
  "reth-node-ethereum",
+ "reth-optimism-chainspec",
+ "reth-optimism-cli",
+ "reth-optimism-consensus",
+ "reth-optimism-evm",
+ "reth-optimism-forks",
+ "reth-optimism-node",
+ "reth-optimism-payload-builder",
+ "reth-optimism-primitives",
+ "reth-optimism-rpc",
  "reth-primitives",
  "reth-primitives-traits",
  "reth-testing-utils",
@@ -7332,28 +7340,6 @@ dependencies = [
  "serde",
  "snap",
  "thiserror 2.0.12",
-]
-
-[[package]]
-name = "op-metis-chain"
-version = "0.2.0"
-dependencies = [
- "alith",
- "clap",
- "reth-cli-util",
- "reth-exex-test-utils",
- "reth-optimism-chainspec",
- "reth-optimism-cli",
- "reth-optimism-consensus",
- "reth-optimism-evm",
- "reth-optimism-forks",
- "reth-optimism-node",
- "reth-optimism-payload-builder",
- "reth-optimism-primitives",
- "reth-optimism-rpc",
- "reth-testing-utils",
- "revmc-build",
- "tracing",
 ]
 
 [[package]]
@@ -8525,7 +8511,6 @@ dependencies = [
  "alloy-eips",
  "alloy-primitives 1.1.2",
  "alloy-rlp",
- "arbitrary",
  "backon",
  "clap",
  "comfy-table",
@@ -8536,8 +8521,6 @@ dependencies = [
  "human_bytes",
  "itertools 0.14.0",
  "lz4",
- "proptest",
- "proptest-arbitrary-interop",
  "ratatui",
  "reqwest 0.12.19",
  "reth-chainspec",
@@ -8557,7 +8540,6 @@ dependencies = [
  "reth-era-downloader",
  "reth-era-utils",
  "reth-eth-wire",
- "reth-ethereum-primitives",
  "reth-etl",
  "reth-evm",
  "reth-exex",
@@ -8574,13 +8556,10 @@ dependencies = [
  "reth-primitives-traits",
  "reth-provider",
  "reth-prune",
- "reth-prune-types",
  "reth-stages",
- "reth-stages-types",
  "reth-static-file",
  "reth-static-file-types",
  "reth-trie",
- "reth-trie-common",
  "reth-trie-db",
  "secp256k1",
  "serde",
@@ -8618,7 +8597,6 @@ dependencies = [
  "serde",
  "thiserror 2.0.12",
  "tikv-jemallocator",
- "tracy-client",
 ]
 
 [[package]]
@@ -9180,7 +9158,6 @@ dependencies = [
  "alloy-chains",
  "alloy-primitives 1.1.2",
  "alloy-rlp",
- "arbitrary",
  "bytes",
  "derive_more 2.0.1",
  "futures",
@@ -9212,11 +9189,8 @@ dependencies = [
  "alloy-hardforks",
  "alloy-primitives 1.1.2",
  "alloy-rlp",
- "arbitrary",
  "bytes",
  "derive_more 2.0.1",
- "proptest",
- "proptest-arbitrary-interop",
  "reth-chainspec",
  "reth-codecs-derive",
  "reth-ethereum-primitives",
@@ -9362,7 +9336,6 @@ dependencies = [
  "alloy-eip2124",
  "alloy-hardforks",
  "alloy-primitives 1.1.2",
- "arbitrary",
  "auto_impl",
  "once_cell",
  "rustc-hash 2.1.1",
@@ -10082,8 +10055,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-chainspec"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-chains",
  "alloy-consensus",
@@ -10109,8 +10082,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-cli"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10121,7 +10094,6 @@ dependencies = [
  "eyre",
  "futures-util",
  "op-alloy-consensus",
- "proptest",
  "reth-chainspec",
  "reth-cli",
  "reth-cli-commands",
@@ -10157,8 +10129,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-consensus"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10182,8 +10154,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-evm"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10207,8 +10179,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-forks"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-op-hardforks",
  "alloy-primitives 1.1.2",
@@ -10218,8 +10190,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-node"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-primitives 1.1.2",
@@ -10264,8 +10236,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-payload-builder"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10323,8 +10295,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-rpc"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10381,8 +10353,8 @@ dependencies = [
 
 [[package]]
 name = "reth-optimism-txpool"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-eips",
@@ -10469,8 +10441,8 @@ dependencies = [
 
 [[package]]
 name = "reth-payload-util"
-version = "1.4.7"
-source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.7#dc7cb6e6670b0da294a0e5010e02855f5aaf6b49"
+version = "1.4.8"
+source = "git+https://github.com/paradigmxyz/reth?tag=v1.4.8#127595e23079de2c494048d0821ea1f1107eb624"
 dependencies = [
  "alloy-consensus",
  "alloy-primitives 1.1.2",
@@ -13580,28 +13552,6 @@ dependencies = [
  "tracing-core",
  "tracing-log",
  "tracing-serde",
-]
-
-[[package]]
-name = "tracy-client"
-version = "0.18.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3927832d93178f979a970d26deed7b03510586e328f31b0f9ad7a73985b8332a"
-dependencies = [
- "loom",
- "once_cell",
- "rustc-demangle",
- "tracy-client-sys",
-]
-
-[[package]]
-name = "tracy-client-sys"
-version = "0.25.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c032d68a49d25d9012a864fef1c64ac17aee43c87e0477bf7301d8ae8bfea7b7"
-dependencies = [
- "cc",
- "windows-targets 0.52.6",
 ]
 
 [[package]]
