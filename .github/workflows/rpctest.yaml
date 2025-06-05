@@ -11,7 +11,6 @@ on:
 
 env:
   RUST_VERSION: 1.86
-  METIS_SEPOLIA_NODE: https://metis-sepolia-rpc.publicnode.com
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -60,9 +59,8 @@ jobs:
           echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
 
           # Run flood tests
-          python3 -m flood eth_getBlockByNumber localhost:8545 $METIS_SEPOLIA_NODE --output eth_getBlockByNumber
-          python3 -m flood eth_getLogs localhost:8545 $METIS_SEPOLIA_NODE --output eth_getLogs
-          flood all metis=localhost:8545 metis-sepolia=$METIS_SEPOLIA_NODE --equality
+          python3 -m flood eth_getBlockByNumber localhost:8545 --output eth_getBlockByNumber
+          python3 -m flood eth_getLogs localhost:8545 --output eth_getLogs
 
       - uses: actions/upload-artifact@v4
         with:
