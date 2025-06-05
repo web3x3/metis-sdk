@@ -57,7 +57,10 @@ alloy-signer = { version = "1.0.9", default-features = false }
 alloy-signer-local = { version = "1.0.9", default-features = false }
 alloy-evm = { version = "0.10", default-features = false }
 alloy-genesis = { version = "1.0.9", default-features = false }
-revm = { version = "24.0.1", default-features = false, features = ["std", "serde-json"] }
+revm = { version = "24.0.1", default-features = false, features = [
+  "std",
+  "serde-json",
+] }
 
 # OP Alloy and OP Revm dependencies
 op-alloy-consensus = { version = "0.17.2" }
@@ -158,6 +161,7 @@ secp256k1 = { version = "0.30", default-features = false, features = [
   "recovery",
 ] }
 jsonrpsee = "0.25.1"
+indexmap = { version = "2.9.0", features = ["serde"] }
 
 tokio-stream = "0.1.17"
 hex = "0.4.3"
