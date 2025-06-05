@@ -12,7 +12,7 @@ use metis_tools::{find_all_json_tests, get_block_spec};
 use pretty_assertions::assert_eq;
 use revm::database::{CacheState, State};
 use revm::primitives::TxKind;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::num::NonZeroUsize;
 use std::path::{Path, PathBuf};
 use thiserror::Error;
@@ -41,7 +41,7 @@ struct RunArgs {
 pub struct Suite {
     env: TestEnv,
     // The key denotes the tx index + 1
-    transactions: HashMap<String, Transaction>,
+    transactions: HashMap<String, TestTransaction>,
     // The key denotes the address
     pre: HashMap<Address, Account>,
     // The key denotes the address
@@ -52,7 +52,7 @@ pub struct Suite {
     block_hashes: Option<HashMap<String, B256>>,
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize, Clone)]
 struct TestEnv {
     pub block_number: U256,
     pub current_coinbase: Address,
@@ -64,8 +64,8 @@ struct TestEnv {
     pub mix_hash: Option<B256>,
 }
 
-#[derive(Debug, Default, PartialEq, Eq, Deserialize, Clone)]
-struct Transaction {
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize, Clone)]
+struct TestTransaction {
     pub data: Bytes,
     pub gas_limit: U256,
     pub gas_price: Option<U256>,
@@ -82,7 +82,7 @@ struct Transaction {
     pub access_list: Option<Vec<AccessListItem>>,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, Deserialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Account {
     pub balance: U256,
     pub code: Bytes,
@@ -107,18 +107,18 @@ pub enum TestErrorKind {
     },
 }
 
-#[derive(Debug, PartialEq, Eq, Deserialize, Clone)]
+#[derive(Debug, Default, PartialEq, Eq, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ExpectLog {
     pub address: Address,
     pub data: Bytes,
     pub topics: Vec<B256>,
-    pub block_hash: B256,
-    pub block_number: U256,
-    pub transaction_hash: B256,
-    pub transaction_index: U256,
-    pub log_index: U256,
-    pub removed: bool,
+    pub block_hash: Option<B256>,
+    pub block_number: Option<U256>,
+    pub transaction_hash: Option<B256>,
+    pub transaction_index: Option<U256>,
+    pub log_index: Option<U256>,
+    pub removed: Option<bool>,
 }
 
 fn execute_test(path: &Path) -> Result<(), TestError> {
@@ -149,10 +149,9 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
             as_u64_saturated!(suite.env.block_number),
         );
         // Sort transactions by id
-        let mut transactions = Vec::with_capacity(suite.transactions.len());
-        for _ in 0..suite.transactions.len() {
-            transactions.push(Transaction::default());
-        }
+        let mut transactions = (0..suite.transactions.len())
+            .map(|_| TestTransaction::default())
+            .collect::<Vec<_>>();
         for (id, tx) in &suite.transactions {
             transactions[id.parse::<usize>().unwrap() - 1] = tx.clone();
         }

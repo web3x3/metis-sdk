@@ -6564,6 +6564,7 @@ dependencies = [
  "either",
  "hash-db",
  "hex",
+ "indexmap 2.9.0",
  "indicatif",
  "k256",
  "metis-chain",

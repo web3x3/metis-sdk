@@ -40,6 +40,7 @@ num_cpus.workspace = true
 indicatif.workspace = true
 walkdir.workspace = true
 clap.workspace = true
+indexmap.workspace = true
 
 hash-db.workspace = true
 plain_hasher.workspace = true
