@@ -83,6 +83,16 @@ pub trait Application {
         Ok(Default::default())
     }
 
+    async fn finalize_block(&self, request: request::FinalizeBlock) -> AbciResult<response::FinalizeBlock> {
+        Ok(response::FinalizeBlock {
+            events: vec![],
+            tx_results: vec![],
+            validator_updates: vec![],
+            consensus_param_updates: None,
+            app_hash: Default::default(),
+        })
+    }
+    
     /// Commit the current state at the current height.
     async fn commit(&self) -> AbciResult<response::Commit> {
         Ok(Default::default())
