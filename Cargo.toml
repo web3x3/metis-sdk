@@ -133,7 +133,7 @@ clap = { version = "4.5.38", features = ["derive"] }
 color-eyre = "0.6.3"
 criterion = "0.5.1"
 dashmap = "6.1.0"
-flate2 = "1.0.35"
+flate2 = "1.1.2"
 rand = "0.9"
 # rand 8 for secp256k1
 rand_08 = { package = "rand", version = "0.8" }
