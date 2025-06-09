@@ -7,6 +7,12 @@ edition.workspace = true
 metis-primitives.workspace = true
 metis-pe.workspace = true
 
+# comefbft abci
+tendermint = "*"
+async-trait = "0.1.88"
+tower = "0.5.2"
+tower-abci = "*"
+
 # Alloy and Revm dependencies
 alloy-primitives.workspace = true
 alloy-evm.workspace = true
