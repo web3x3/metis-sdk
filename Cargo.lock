@@ -6447,6 +6447,7 @@ dependencies = [
  "alloy-evm",
  "alloy-genesis",
  "alloy-hardforks",
+ "alloy-op-evm",
  "alloy-primitives 1.2.0",
  "alloy-sol-types",
  "clap",
