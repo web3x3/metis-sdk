@@ -5,7 +5,7 @@ use std::{
     pin::Pin,
     task::{Context, Poll},
 };
-use tendermint::abci::{request, response, Request, Response};
+use tendermint::abci::{Request, Response, request, response};
 use tower::Service;
 use tower_abci::BoxError;
 
@@ -83,7 +83,10 @@ pub trait Application {
         Ok(Default::default())
     }
 
-    async fn finalize_block(&self, request: request::FinalizeBlock) -> AbciResult<response::FinalizeBlock> {
+    async fn finalize_block(
+        &self,
+        request: request::FinalizeBlock,
+    ) -> AbciResult<response::FinalizeBlock> {
         Ok(response::FinalizeBlock {
             events: vec![],
             tx_results: vec![],
@@ -92,7 +95,7 @@ pub trait Application {
             app_hash: Default::default(),
         })
     }
-    
+
     /// Commit the current state at the current height.
     async fn commit(&self) -> AbciResult<response::Commit> {
         Ok(Default::default())
@@ -173,7 +176,6 @@ where
                 // Request::BeginBlock(r) => Response::BeginBlock(app.begin_block(r).await?),
                 // Request::DeliverTx(r) => Response::DeliverTx(app.deliver_tx(r).await?),
                 // Request::EndBlock(r) => Response::EndBlock(app.end_block(r).await?),
-
                 Request::FinalizeBlock(r) => Response::FinalizeBlock(app.finalize_block(r).await?),
 
                 Request::Commit => Response::Commit(app.commit().await?),
