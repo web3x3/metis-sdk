@@ -69,16 +69,22 @@ pub trait Application {
     }
 
     /// Signals the beginning of a new block, prior to any `DeliverTx` calls.
+    /// To be compatible with the ABCI interface of the legacy Tendermint version
+    #[allow(dead_code)]
     async fn begin_block(&self, request: request::BeginBlock) -> AbciResult<response::BeginBlock> {
         Ok(Default::default())
     }
 
     /// Apply a transaction to the application's state.
+    /// To be compatible with the ABCI interface of the legacy Tendermint version
+    #[allow(dead_code)]
     async fn deliver_tx(&self, request: request::DeliverTx) -> AbciResult<response::DeliverTx> {
         Ok(Default::default())
     }
 
     /// Signals the end of a block.
+    /// To be compatible with the ABCI interface of the legacy Tendermint version
+    #[allow(dead_code)]
     async fn end_block(&self, request: request::EndBlock) -> AbciResult<response::EndBlock> {
         Ok(Default::default())
     }
@@ -187,8 +193,8 @@ where
                 Request::ApplySnapshotChunk(r) => {
                     Response::ApplySnapshotChunk(app.apply_snapshot_chunk(r).await?)
                 }
-                Request::ExtendVote(r) => panic!("test"),
-                Request::VerifyVoteExtension(r) => panic!("test"),
+                Request::ExtendVote(_r) => panic!("test"),
+                Request::VerifyVoteExtension(_r) => panic!("test"),
                 Request::Flush => panic!("Flush should be handled by the Server!"),
             };
             Ok(res)
