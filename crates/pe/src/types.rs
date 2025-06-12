@@ -3,10 +3,12 @@
 use metis_primitives::{Address, B256, BuildIdentityHasher, HashMap, U256};
 use revm::state::AccountInfo;
 use smallvec::SmallVec;
-use std::fmt;
-use std::hash::Hash;
-use std::marker::PhantomData;
-use std::sync::atomic::{AtomicUsize, Ordering};
+use std::{
+    fmt,
+    hash::Hash,
+    marker::PhantomData,
+    sync::atomic::{AtomicUsize, Ordering},
+};
 
 pub struct AtomicWrapper<T: Into<usize> + From<usize>> {
     inner: AtomicUsize,

@@ -1,20 +1,20 @@
+use crate::result::{ReadError, VmExecutionError, VmExecutionResult};
 use crate::{
     AccountMeta, Entry, FinishExecFlags, Location, LocationHash, LocationValue, ReadOrigin,
-    ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
+    ReadOrigins, ReadSet, TxExecutionResult, TxIdx, TxVersion, WriteSet,
     mv_memory::{MvMemory, RewardPolicy, reward_policy},
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
 #[cfg(feature = "optimism")]
 use metis_primitives::Transaction;
-use metis_primitives::{BuildIdentityHasher, EvmState, HashMap, I257, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, HashMap, I257, hash_deterministic};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 #[cfg(feature = "optimism")]
 use op_revm::OpTransaction;
 #[cfg(feature = "optimism")]
 use op_revm::{DefaultOp, OpBuilder, OpContext, OpEvm, OpSpecId};
-use reth_primitives::{Receipt, TxType};
 #[cfg(feature = "optimism")]
 use revm::context::Cfg;
 #[cfg(feature = "compiler")]
@@ -28,8 +28,8 @@ use revm::{
     Database, ExecuteEvm, MainBuilder, MainnetEvm,
     bytecode::Bytecode,
     context::{
-        ContextTr, DBErrorMarker, TxEnv,
-        result::{EVMError, InvalidTransaction, ResultAndState},
+        ContextTr, TxEnv,
+        result::{EVMError, InvalidTransaction},
     },
     handler::MainnetContext,
     primitives::{Address, B256, KECCAK_EMPTY, U256, hardfork::SpecId},
@@ -43,100 +43,6 @@ use revm::{
 use smallvec::{SmallVec, smallvec};
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
-
-/// The execution error from the underlying EVM error.
-pub type ExecutionError = EVMError<ReadError>;
-
-/// Execution result of a transaction
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct TxExecutionResult {
-    /// Receipt of the execution
-    pub receipt: Receipt,
-    /// State that got updated
-    pub state: EvmState,
-}
-
-impl TxExecutionResult {
-    /// Construct an execution result from the raw result and state.
-    #[inline]
-    pub fn from_raw(tx_type: TxType, ResultAndState { result, state }: ResultAndState) -> Self {
-        Self {
-            receipt: Receipt {
-                tx_type,
-                success: result.is_success(),
-                cumulative_gas_used: result.gas_used(),
-                logs: result.into_logs(),
-            },
-            state,
-        }
-    }
-}
-
-pub(crate) enum VmExecutionError {
-    Retry,
-    FallbackToSequential,
-    Blocking(TxIdx),
-    ExecutionError(ExecutionError),
-}
-
-/// Errors when reading a location.
-#[derive(Debug, Clone, PartialEq, Eq, thiserror::Error)]
-pub enum ReadError {
-    /// Cannot read location from storage.
-    #[error("Failed reading from storage: {0}")]
-    StorageError(String),
-    /// This location has been written by a lower transaction.
-    #[error("Read of location is blocked by tx #{0}")]
-    Blocking(TxIdx),
-    /// There has been an inconsistent read like reading the same
-    /// location from storage in the first call but from [`Vm`] in
-    /// the next.
-    #[error("Inconsistent read")]
-    InconsistentRead,
-    /// Found an invalid nonce, like the first transaction of a sender
-    /// not having a (+1) nonce from storage.
-    #[error("Nonce {tx} too high, expected {state}")]
-    NonceTooHigh { tx: u64, state: u64 },
-    /// Found an invalid nonce, like the first transaction of a sender
-    /// not having a (-1) nonce from storage.
-    #[error("Nonce {tx} too low, expected {state}")]
-    NonceTooLow { tx: u64, state: u64 },
-    /// Read a self-destructed account that is very hard to handle, as
-    /// there is no performant way to mark all storage slots as cleared.
-    #[error("Tried to read self-destructed account")]
-    SelfDestructedAccount,
-    /// The stored value type doesn't match its location type.
-    #[error("Invalid type of stored value")]
-    InvalidValueType,
-}
-
-impl From<ReadError> for VmExecutionError {
-    fn from(err: ReadError) -> Self {
-        match err {
-            ReadError::InconsistentRead => Self::Retry,
-            ReadError::SelfDestructedAccount => Self::FallbackToSequential,
-            ReadError::Blocking(tx_idx) => Self::Blocking(tx_idx),
-            ReadError::NonceTooHigh { tx, state } => {
-                Self::ExecutionError(EVMError::Transaction(InvalidTransaction::NonceTooHigh {
-                    tx,
-                    state,
-                }))
-            }
-            ReadError::NonceTooLow { tx, state } => {
-                Self::ExecutionError(EVMError::Transaction(InvalidTransaction::NonceTooLow {
-                    tx,
-                    state,
-                }))
-            }
-            _ => Self::ExecutionError(EVMError::Database(err)),
-        }
-    }
-}
-
-pub(crate) struct VmExecutionResult {
-    pub(crate) execution_result: TxExecutionResult,
-    pub(crate) flags: FinishExecFlags,
-}
 
 // A database interface that intercepts reads while executing a specific
 // transaction. It provides values from the multi-version data structure
@@ -252,8 +158,6 @@ impl<'a, DB: DatabaseRef> VmDB<'a, DB> {
             .map(|a| a.code_hash))
     }
 }
-
-impl DBErrorMarker for ReadError {}
 
 impl<DB: DatabaseRef> Database for VmDB<'_, DB> {
     type Error = ReadError;
