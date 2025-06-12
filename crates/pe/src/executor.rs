@@ -1,9 +1,11 @@
 use crate::{
-    Entry, Location, LocationValue, Task, TxIdx, TxVersion,
+    Entry, ExecutionError, Location, LocationValue, Task, TxExecutionResult, TxVersion,
     dropper::AsyncDropper,
     mv_memory::{MvMemory, build_mv_memory},
+    result::VmExecutionError,
+    result::{ParallelExecutorError, VmExecutionResult},
     scheduler::{NormalProvider, Scheduler, TaskProvider},
-    vm::{ExecutionError, TxExecutionResult, Vm, VmExecutionError, VmExecutionResult, build_evm},
+    vm::{Vm, build_evm},
 };
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
@@ -19,36 +21,10 @@ use alloy_evm::EvmEnv;
 use metis_primitives::ExecuteEvm;
 use metis_primitives::{
     Account, AccountInfo, AccountStatus, CacheDB, ContextTr, DatabaseCommit, DatabaseRef, EVMError,
-    InvalidTransaction, KECCAK_EMPTY, SpecId, Transaction, TxEnv, TxNonce, U256,
-    hash_deterministic,
+    InvalidTransaction, KECCAK_EMPTY, SpecId, Transaction, TxEnv, U256, hash_deterministic,
 };
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
-
-/// Errors when executing a block with the parallel executor.
-#[derive(Debug, Clone, PartialEq, thiserror::Error)]
-pub enum ParallelExecutorError {
-    /// Nonce mismatch error including nonce too low and nonce too high errors.
-    #[error("Nonce mismatch for tx #{tx_idx}. Expected {executed_nonce}, got {tx_nonce}")]
-    NonceMismatch {
-        /// Transaction index
-        tx_idx: TxIdx,
-        /// Nonce from tx (from the very input)
-        tx_nonce: TxNonce,
-        /// Nonce from state and execution
-        executed_nonce: TxNonce,
-    },
-    #[error("Storage error: {0}")]
-    StorageError(String),
-    #[error("Execution error: {0}")]
-    ExecutionError(
-        #[source]
-        #[from]
-        ExecutionError,
-    ),
-    #[error("Unreachable error")]
-    UnreachableError,
-}
 
 /// Execution result of a block
 pub type ParallelExecutorResult = Result<Vec<TxExecutionResult>, ParallelExecutorError>;

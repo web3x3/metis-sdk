@@ -1,11 +1,12 @@
-use std::{collections::BTreeMap, sync::Mutex};
+use std::{collections::BTreeMap, fmt::Debug, sync::Mutex};
 
 use alloy_primitives::{Address, B256};
 use dashmap::{DashMap, DashSet};
 use metis_primitives::{BuildIdentityHasher, BuildSuffixHasher, HashMap, hash_deterministic};
-use revm::bytecode::Bytecode;
-use revm::context::{BlockEnv, TxEnv};
-use std::fmt::Debug;
+use revm::{
+    bytecode::Bytecode,
+    context::{BlockEnv, TxEnv},
+};
 
 use crate::{
     Entry, Location, LocationHash, ReadOrigin, ReadSet, ReadWriteSet, TxIdx, TxVersion, WriteSet,

@@ -1,20 +1,9 @@
+use crate::DBError;
 use metis_primitives::{
-    AccountState, Address, B256, BlockHashes, Bytecode, Bytecodes, DBErrorMarker, KECCAK_EMPTY,
-    U256, keccak256,
+    AccountState, Address, B256, BlockHashes, Bytecode, Bytecodes, KECCAK_EMPTY, U256, keccak256,
 };
-use revm::DatabaseRef;
-use revm::state::AccountInfo;
-use std::fmt::Debug;
-use std::sync::Arc;
-
-/// Database error definitions.
-#[derive(Debug, Clone, PartialEq, thiserror::Error)]
-pub enum DBError {
-    #[error("Storage error: {0}")]
-    StorageNotFound(String),
-}
-
-impl DBErrorMarker for DBError {}
+use revm::{DatabaseRef, state::AccountInfo};
+use std::{fmt::Debug, sync::Arc};
 
 /// A memory DB that stores the account and bytecode data in memory.
 /// Just for testing, in the real chain, we used the reth database.
