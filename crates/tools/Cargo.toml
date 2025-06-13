@@ -48,6 +48,13 @@ triehash.workspace = true
 k256.workspace = true
 either.workspace = true
 
+# comefbft abci
+tendermint.workspace = true
+async-trait.workspace = true
+tower.workspace = true
+tower-abci.workspace = true
+async-stm.workspace = true
+
 # Testing
 pretty_assertions.workspace = true
 
@@ -69,6 +76,11 @@ doc = false
 [[bin]]
 name = "metis-eelstest"
 path = "bins/eelstest/main.rs"
+doc = false
+
+[[bin]]
+name = "metis-abcitest"
+path = "bins/abcitest/main.rs"
 doc = false
 
 [features]
