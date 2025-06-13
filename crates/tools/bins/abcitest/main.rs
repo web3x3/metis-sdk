@@ -1,10 +1,11 @@
-use async_stm::{atomically, TVar};
+use async_stm::{TVar, atomically};
 use async_trait::async_trait;
+use metis_chain::tm_abci::abci_app::{
+    AbciResult, Application, ApplicationService, take_until_max_size,
+};
 use tendermint::abci::{request, response};
 use tendermint::validator;
-use metis_chain::tm_abci::abci_app::{Application, AbciResult, ApplicationService, take_until_max_size};
-use tower_abci::v038::{split, Server};
-
+use tower_abci::v038::{Server, split};
 
 #[derive(Clone)]
 pub struct KVStoreApp {
@@ -18,7 +19,6 @@ impl Default for KVStoreApp {
         Self::new()
     }
 }
-
 
 impl KVStoreApp {
     pub fn new() -> Self {
@@ -85,7 +85,7 @@ impl Application for KVStoreApp {
             let app_hash = self.app_hash.read()?.to_vec().try_into().unwrap();
             Ok((height, app_hash))
         })
-            .await;
+        .await;
 
         Ok(response::Info {
             data: "kvstore-example".to_string(),
@@ -97,7 +97,6 @@ impl Application for KVStoreApp {
     }
 
     async fn commit(&self) -> AbciResult<response::Commit> {
-
         let (retain_height, app_hash) = atomically(|| {
             // As in the other kvstore examples, just use store.len() as the "hash"
             let app_hash = (self.store.read()?.len() as u64).to_be_bytes();
@@ -105,7 +104,7 @@ impl Application for KVStoreApp {
             let retain_height = self.height.modify(|h| (h + 1, h))?;
             Ok((retain_height.into(), app_hash.to_vec().into()))
         })
-            .await;
+        .await;
 
         println!("test commit. height:{}", retain_height);
 
@@ -161,7 +160,6 @@ impl Application for KVStoreApp {
         Ok(response::ProcessProposal::Accept)
     }
 
-
     /// Used during state sync to discover available snapshots on peers.
     async fn list_snapshots(&self) -> AbciResult<response::ListSnapshots> {
         println!("test list_snapshots");
@@ -200,7 +198,6 @@ impl Application for KVStoreApp {
     }
 }
 
-
 #[tokio::main]
 async fn main() {
     let service = ApplicationService(KVStoreApp::new());
@@ -214,7 +211,6 @@ async fn main() {
         .info(info)
         .finish()
         .unwrap();
-
 
     server
         .listen_tcp("0.0.0.0:26658")
