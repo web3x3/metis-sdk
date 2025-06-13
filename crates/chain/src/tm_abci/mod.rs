@@ -1,1 +1,1 @@
-mod abci_app;
+pub mod abci_app;
