@@ -1,3 +1,5 @@
+#[cfg(feature = "optimism")]
+use crate::vm::build_op_evm;
 use crate::{
     Entry, ExecutionError, Location, LocationValue, Task, TxExecutionResult, TxVersion,
     dropper::AsyncDropper,
@@ -7,15 +9,6 @@ use crate::{
     scheduler::{NormalProvider, Scheduler, TaskProvider},
     vm::{Vm, build_evm},
 };
-#[cfg(feature = "compiler")]
-use std::sync::Arc;
-use std::{
-    fmt::Debug,
-    num::NonZeroUsize,
-    sync::{Mutex, OnceLock},
-    thread,
-};
-
 use alloy_evm::EvmEnv;
 #[cfg(feature = "compiler")]
 use metis_primitives::ExecuteEvm;
@@ -25,6 +18,16 @@ use metis_primitives::{
 };
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
+#[cfg(feature = "optimism")]
+use op_revm::OpTransaction;
+#[cfg(feature = "compiler")]
+use std::sync::Arc;
+use std::{
+    fmt::Debug,
+    num::NonZeroUsize,
+    sync::{Mutex, OnceLock},
+    thread,
+};
 
 /// Execution result of a block
 pub type ParallelExecutorResult = Result<Vec<TxExecutionResult>, ParallelExecutorError>;
@@ -362,7 +365,10 @@ pub fn execute_sequential<DB: DatabaseRef>(
     #[cfg(feature = "compiler")] worker: Arc<ExtCompileWorker>,
 ) -> ParallelExecutorResult {
     let mut db = CacheDB::new(db);
+    #[cfg(not(feature = "optimism"))]
     let mut evm = build_evm(&mut db, evm_env);
+    #[cfg(feature = "optimism")]
+    let mut evm = build_op_evm(&mut db, Default::default());
     let mut results = Vec::with_capacity(txs.len());
     let mut cumulative_gas_used: u64 = 0;
     for tx in txs {
@@ -373,7 +379,10 @@ pub fn execute_sequential<DB: DatabaseRef>(
             use revm::handler::Handler;
 
             let mut t = metis_vm::CompilerHandler::new(worker.clone());
+            #[cfg(not(feature = "optimism"))]
             evm.set_tx(tx);
+            #[cfg(feature = "optimism")]
+            evm.set_tx(OpTransaction::new(tx));
             t.run(&mut evm).map_err(evm_err_to_exec_error::<DB>)?
         };
         #[cfg(not(feature = "compiler"))]
