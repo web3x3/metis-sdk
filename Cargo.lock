@@ -259,8 +259,8 @@ dependencies = [
 
 [[package]]
 name = "alith"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-client",
  "alith-core",
@@ -288,8 +288,8 @@ dependencies = [
 
 [[package]]
 name = "alith-client"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-devices",
  "alith-interface",
@@ -310,8 +310,8 @@ dependencies = [
 
 [[package]]
 name = "alith-core"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-client",
  "alith-interface",
@@ -340,8 +340,8 @@ dependencies = [
 
 [[package]]
 name = "alith-data"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -361,8 +361,8 @@ dependencies = [
 
 [[package]]
 name = "alith-devices"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "anyhow",
  "colorful",
@@ -379,8 +379,8 @@ dependencies = [
 
 [[package]]
 name = "alith-inference"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-core",
  "alith-models",
@@ -411,8 +411,8 @@ dependencies = [
 
 [[package]]
 name = "alith-interface"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-devices",
  "alith-models",
@@ -436,8 +436,8 @@ dependencies = [
 
 [[package]]
 name = "alith-knowledge"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-client",
  "alith-core",
@@ -450,8 +450,8 @@ dependencies = [
 
 [[package]]
 name = "alith-models"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-prompt",
  "anyhow",
@@ -473,8 +473,8 @@ dependencies = [
 
 [[package]]
 name = "alith-prompt"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "anyhow",
  "colorful",
@@ -486,8 +486,8 @@ dependencies = [
 
 [[package]]
 name = "alith-store"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -499,8 +499,8 @@ dependencies = [
 
 [[package]]
 name = "alith-tee"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -516,8 +516,8 @@ dependencies = [
 
 [[package]]
 name = "alith-tools"
-version = "0.8.0"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.0#f3a4dcff5689fe662fd1d1773f9cfcd98e0a313e"
+version = "0.8.2"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
 dependencies = [
  "alith-core",
  "async-trait",
@@ -2030,7 +2030,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -2053,7 +2053,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "regex",
@@ -2338,9 +2338,9 @@ dependencies = [
 
 [[package]]
 name = "bon"
-version = "3.6.3"
+version = "3.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ced38439e7a86a4761f7f7d5ded5ff009135939ecb464a24452eaa4c1696af7d"
+checksum = "f61138465baf186c63e8d9b6b613b508cd832cba4ce93cf37ce5f096f91ac1a6"
 dependencies = [
  "bon-macros",
  "rustversion",
@@ -2348,9 +2348,9 @@ dependencies = [
 
 [[package]]
 name = "bon-macros"
-version = "3.6.3"
+version = "3.6.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0ce61d2d3844c6b8d31b2353d9f66cf5e632b3e9549583fe3cac2f4f6136725e"
+checksum = "40d1dad34aa19bf02295382f08d9bc40651585bd497266831d40ee6296fb49ca"
 dependencies = [
  "darling",
  "ident_case",
@@ -4975,7 +4975,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.61.2",
+ "windows-core 0.57.0",
 ]
 
 [[package]]
@@ -5527,15 +5527,6 @@ name = "itertools"
 version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b1c173a5686ce8bfa551b3563d0c2170bf24ca44da99c7ca4bfdab5418c3fe57"
-dependencies = [
- "either",
-]
-
-[[package]]
-name = "itertools"
-version = "0.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ba291022dbbd398a455acf126c1e341954079855bc60dfdda641363bd6922569"
 dependencies = [
  "either",
 ]
@@ -7954,7 +7945,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
