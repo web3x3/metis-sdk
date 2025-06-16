@@ -1,8 +1,9 @@
 use crate::{FinishExecFlags, TxIdx};
 use alloy_consensus::TxType;
 use metis_primitives::{
-    DBErrorMarker, EVMError, EvmState, InvalidTransaction, ResultAndState, TxNonce,
+    DBErrorMarker, DatabaseRef, EVMError, EvmState, InvalidTransaction, ResultAndState, TxNonce,
 };
+use op_revm::{OpHaltReason, OpTransactionError};
 use reth_primitives::Receipt;
 
 /// Database error definitions.
@@ -128,9 +129,70 @@ impl TxExecutionResult {
             state,
         }
     }
+
+    #[inline]
+    /// Convert an execution result from the raw Optimism result and state.
+    pub fn from_raw_op(
+        tx_type: TxType,
+        ResultAndState { result, state }: ResultAndState<OpHaltReason>,
+    ) -> Self {
+        Self {
+            receipt: Receipt {
+                tx_type,
+                success: result.is_success(),
+                cumulative_gas_used: result.gas_used(),
+                logs: result.into_logs(),
+            },
+            state,
+        }
+    }
 }
 
 pub(crate) struct VmExecutionResult {
     pub(crate) execution_result: TxExecutionResult,
     pub(crate) flags: FinishExecFlags,
+}
+
+/// Execution result of a block
+pub type ParallelExecutorResult = Result<Vec<TxExecutionResult>, ParallelExecutorError>;
+
+#[derive(Debug)]
+pub(crate) enum AbortReason {
+    FallbackToSequential,
+    ExecutionError(ExecutionError),
+}
+
+#[inline]
+pub(crate) fn evm_err_to_exec_error<DB: DatabaseRef>(
+    err: EVMError<DB::Error>,
+) -> ParallelExecutorError {
+    match err {
+        EVMError::Transaction(err) => ExecutionError::Transaction(err).into(),
+        EVMError::Header(err) => ExecutionError::Header(err).into(),
+        EVMError::Custom(err) => ExecutionError::Custom(err).into(),
+        // Note that parallel execution requires recording the wrapper DB for read-write sets,
+        // so DB errors of parallel and sequential executor are different. So we convert the
+        // database error to the custom error.
+        EVMError::Database(err) => ExecutionError::Custom(err.to_string()).into(),
+    }
+}
+
+#[inline]
+pub(crate) fn op_evm_err_to_exec_error<DB: DatabaseRef>(
+    err: EVMError<DB::Error, OpTransactionError>,
+) -> ParallelExecutorError {
+    match err {
+        EVMError::Transaction(err) => match err {
+            OpTransactionError::Base(err) => ExecutionError::Transaction(err).into(),
+            OpTransactionError::DepositSystemTxPostRegolith => {
+                ExecutionError::Custom("DepositSystemTxPostRegolith".to_string()).into()
+            }
+            OpTransactionError::HaltedDepositPostRegolith => {
+                ExecutionError::Custom("HaltedDepositPostRegolith".to_string()).into()
+            }
+        },
+        EVMError::Header(err) => ExecutionError::Header(err).into(),
+        EVMError::Custom(err) => ExecutionError::Custom(err).into(),
+        EVMError::Database(err) => ExecutionError::Custom(err.to_string()).into(),
+    }
 }
