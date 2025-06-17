@@ -1,4 +1,4 @@
-use alloy_consensus::{Block, Header};
+use alloy_consensus::{Block, Header, Receipt, TxType};
 use alloy_evm::{
     Database, Evm, EvmEnv, EvmFactory,
     block::{
@@ -9,7 +9,7 @@ use alloy_evm::{
     precompiles::PrecompilesMap,
 };
 use alloy_op_evm::{OpBlockExecutionCtx, OpBlockExecutor, OpEvm, OpEvmFactory};
-use metis_primitives::ExecutionResult;
+use metis_primitives::{CfgEnv, DatabaseCommit, ExecutionResult};
 use reth::api::NodeTypes;
 use reth::builder::{
     BuilderContext, Node, NodeAdapter, NodeComponentsBuilder, components::ExecutorBuilder,
@@ -24,15 +24,20 @@ use reth_primitives::SealedBlock;
 use reth_primitives_traits::SealedHeader;
 use revm::database::State;
 
+use crate::state::StateStorageAdapter;
+use alloy_eips::eip7685::Requests;
+use alloy_evm::block::{
+    BlockValidationError, InternalBlockExecutionError, state_changes::post_block_balance_increments,
+};
 use reth::builder::components::{BasicPayloadServiceBuilder, ComponentsBuilder};
+use reth_optimism_forks::OpHardforks;
 use reth_optimism_node::node::{
     OpAddOns, OpConsensusBuilder, OpEngineValidatorBuilder, OpNetworkBuilder, OpPayloadBuilder,
     OpPoolBuilder,
 };
 use reth_optimism_node::{OpEngineApiBuilder, OpNode, args::RollupArgs};
 use reth_optimism_rpc::eth::OpEthApiBuilder;
-use std::fmt::Debug;
-use std::sync::Arc;
+use std::{fmt::Debug, num::NonZeroUsize, sync::Arc};
 
 /// Optimism-related EVM configuration with the parallel executor.
 #[derive(Debug, Clone)]
@@ -68,6 +73,7 @@ impl BlockExecutorFactory for OpParallelEvmConfig {
         I: Inspector<<Self::EvmFactory as EvmFactory>::Context<&'a mut State<DB>>> + 'a,
     {
         OpParallelBlockExecutor {
+            spec: self.config.chain_spec().clone(),
             inner: OpBlockExecutor::new(
                 evm,
                 ctx,
@@ -122,14 +128,16 @@ impl ConfigureEvm for OpParallelEvmConfig {
 }
 
 /// Parallel block executor for Optimism.
-pub struct OpParallelBlockExecutor<Evm> {
-    inner: OpBlockExecutor<Evm, OpRethReceiptBuilder, Arc<OpChainSpec>>,
+pub struct OpParallelBlockExecutor<Evm, Spec> {
+    spec: Spec,
+    inner: OpBlockExecutor<Evm, OpRethReceiptBuilder, Spec>,
 }
 
-impl<'db, DB, E> BlockExecutor for OpParallelBlockExecutor<E>
+impl<'db, DB, E, Spec> BlockExecutor for OpParallelBlockExecutor<E, Spec>
 where
     DB: Database + 'db,
     E: Evm<DB = &'db mut State<DB>, Tx = OpTransaction<TxEnv>>,
+    Spec: OpHardforks,
 {
     type Transaction = OpTransactionSigned;
     type Receipt = OpReceipt;
@@ -185,17 +193,92 @@ where
     }
 }
 
-impl<'db, DB, E> OpParallelBlockExecutor<E>
+impl<'db, DB, E, Spec> OpParallelBlockExecutor<E, Spec>
 where
     DB: Database + 'db,
     E: Evm<DB = &'db mut State<DB>, Tx = OpTransaction<TxEnv>>,
+    Spec: OpHardforks,
 {
     pub fn execute_transactions(
         &mut self,
-        _transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
+        transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
     ) -> Result<BlockExecutionResult<OpReceipt>, BlockExecutionError> {
-        // TODO Execute block transactions parallel use metis_pe::ParallelExecutor
-        todo!()
+        // Execute block transactions parallel
+        let parallel_execute_result = self.execute(transactions)?;
+        let receipts = parallel_execute_result.receipts;
+        let requests = parallel_execute_result.requests;
+
+        // Governance reward for full block, ommers...
+        self.post_execution()?;
+
+        // Assemble new block execution result, there is no dump receipt
+        let results = BlockExecutionResult {
+            receipts,
+            requests,
+            gas_used: parallel_execute_result.gas_used,
+        };
+
+        Ok(results)
+    }
+
+    pub fn execute(
+        &mut self,
+        transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
+    ) -> Result<BlockExecutionResult<OpReceipt>, BlockExecutionError> {
+        // Set state clear flag if the block is after the Spurious Dragon hardfork.
+        let state_clear_flag = self
+            .spec
+            .is_spurious_dragon_active_at_block(self.evm().block().number);
+        let evm_env = EvmEnv::new(CfgEnv::default(), self.evm().block().clone());
+        let db = self.evm_mut().db_mut();
+        db.set_state_clear_flag(state_clear_flag);
+        let mut op_parallel_executor = metis_pe::OpParallelExecutor::default();
+        let results = op_parallel_executor.execute(
+            StateStorageAdapter::new(db),
+            evm_env,
+            transactions
+                .into_iter()
+                .map(|tx| tx.into_tx_env().base)
+                .collect::<Vec<TxEnv>>(),
+            NonZeroUsize::new(num_cpus::get()).unwrap_or(NonZeroUsize::new(1).unwrap()),
+        );
+
+        let mut total_gas_used: u64 = 0;
+        let receipts = results
+            .map_err(|err| {
+                BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(err)))
+            })?
+            .into_iter()
+            .map(|r| {
+                self.evm_mut().db_mut().commit(r.state);
+                total_gas_used += &r.receipt.cumulative_gas_used;
+                match &r.receipt.tx_type {
+                    TxType::Legacy => OpReceipt::Legacy(Receipt::from(r.receipt)),
+                    TxType::Eip1559 => OpReceipt::Eip1559(Receipt::from(r.receipt)),
+                    TxType::Eip2930 => OpReceipt::Eip2930(Receipt::from(r.receipt)),
+                    TxType::Eip7702 => OpReceipt::Eip7702(Receipt::from(r.receipt)),
+                    TxType::Eip4844 => panic!("don't support eip4844"),
+                }
+            })
+            .collect();
+
+        Ok(BlockExecutionResult {
+            receipts,
+            gas_used: total_gas_used,
+            requests: Requests::default(),
+        })
+    }
+
+    fn post_execution(&mut self) -> Result<(), BlockExecutionError> {
+        let balance_increments =
+            post_block_balance_increments::<Header>(&self.spec, self.evm().block(), &[], None);
+        // increment balances
+        self.evm_mut()
+            .db_mut()
+            .increment_balances(balance_increments.clone())
+            .map_err(|_| BlockValidationError::IncrementBalanceFailed)?;
+
+        Ok(())
     }
 }
 
