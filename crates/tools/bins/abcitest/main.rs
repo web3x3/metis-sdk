@@ -3,13 +3,14 @@ use async_trait::async_trait;
 use metis_chain::tm_abci::abci_app::{
     AbciResult, Application, ApplicationService, take_until_max_size,
 };
+use std::collections::HashMap;
 use tendermint::abci::{request, response};
 use tendermint::validator;
 use tower_abci::v038::{Server, split};
 
 #[derive(Clone)]
 pub struct KVStoreApp {
-    store: TVar<std::collections::HashMap<String, Vec<u8>>>,
+    store: TVar<HashMap<String, Vec<u8>>>,
     height: TVar<u32>,
     app_hash: TVar<[u8; 8]>,
 }
@@ -33,7 +34,7 @@ impl KVStoreApp {
 #[async_trait]
 impl Application for KVStoreApp {
     async fn init_chain(&self, request: request::InitChain) -> AbciResult<response::InitChain> {
-        println!("InitChain req，height: {}", request.initial_height);
+        println!("init chain req, height: {}", request.initial_height);
         println!("validator num: {}", request.validators.len());
 
         let mut validators = Vec::new();
@@ -72,13 +73,13 @@ impl Application for KVStoreApp {
     }
 
     async fn query(&self, request: request::Query) -> AbciResult<response::Query> {
-        println!("test query. req:{:?}", request);
+        println!("test query. req: {:?}", request);
 
         Ok(Default::default())
     }
 
     async fn info(&self, request: request::Info) -> AbciResult<response::Info> {
-        println!("test info. req:{:?}", request);
+        println!("test info. req: {:?}", request);
 
         let (height, app_hash) = atomically(|| {
             let height = self.height.read_clone()?.into();
@@ -106,7 +107,7 @@ impl Application for KVStoreApp {
         })
         .await;
 
-        println!("test commit. height:{}", retain_height);
+        println!("test commit. height: {}", retain_height);
 
         Ok(response::Commit {
             data: app_hash,
@@ -125,7 +126,7 @@ impl Application for KVStoreApp {
 
     /// Check the given transaction before putting it into the local mempool.
     async fn check_tx(&self, request: request::CheckTx) -> AbciResult<response::CheckTx> {
-        println!("test check_tx. req:{:?}", request);
+        println!("test check_tx. req: {:?}", request);
 
         Ok(Default::default())
     }
@@ -139,7 +140,7 @@ impl Application for KVStoreApp {
         &self,
         request: request::PrepareProposal,
     ) -> AbciResult<response::PrepareProposal> {
-        println!("test prepare_proposal. height:{:?}", request.height);
+        println!("test prepare_proposal. height: {:?}", request.height);
 
         let txs = take_until_max_size(request.txs, request.max_tx_bytes.try_into().unwrap());
 
@@ -155,7 +156,7 @@ impl Application for KVStoreApp {
         &self,
         request: request::ProcessProposal,
     ) -> AbciResult<response::ProcessProposal> {
-        println!("test process_proposal. height:{:?}", request.height);
+        println!("test process_proposal. height: {:?}", request.height);
 
         Ok(response::ProcessProposal::Accept)
     }
@@ -172,7 +173,7 @@ impl Application for KVStoreApp {
         &self,
         request: request::OfferSnapshot,
     ) -> AbciResult<response::OfferSnapshot> {
-        println!("test offer_snapshot. req:{:?}", request);
+        println!("test offer_snapshot. req: {:?}", request);
 
         Ok(Default::default())
     }
@@ -182,7 +183,7 @@ impl Application for KVStoreApp {
         &self,
         request: request::LoadSnapshotChunk,
     ) -> AbciResult<response::LoadSnapshotChunk> {
-        println!("test load_snapshot_chunk. req:{:?}", request);
+        println!("test load_snapshot_chunk. req: {:?}", request);
 
         Ok(Default::default())
     }
@@ -192,7 +193,7 @@ impl Application for KVStoreApp {
         &self,
         request: request::ApplySnapshotChunk,
     ) -> AbciResult<response::ApplySnapshotChunk> {
-        println!("test apply_snapshot_chunk. req:{:?}", request);
+        println!("test apply_snapshot_chunk. req: {:?}", request);
 
         Ok(Default::default())
     }
