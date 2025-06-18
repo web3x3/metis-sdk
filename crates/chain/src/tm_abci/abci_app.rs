@@ -38,7 +38,6 @@ pub trait Application {
 
     /// Check the given transaction before putting it into the local mempool.
     async fn check_tx(&self, request: request::CheckTx) -> AbciResult<response::CheckTx> {
-        //
         Ok(Default::default())
     }
 
