@@ -1,12 +1,10 @@
+use crate::interpreter::store::externs::FendermintExterns;
+use fvm::{
+    DefaultKernel, call_manager::DefaultCallManager, executor::DefaultExecutor,
+    machine::DefaultMachine,
+};
 use fvm_ipld_blockstore::Blockstore;
 use serde::{Deserialize, Serialize};
-use fvm::{
-    call_manager::DefaultCallManager,
-    executor::{DefaultExecutor},
-    machine::{DefaultMachine},
-    DefaultKernel,
-};
-use crate::interpreter::store::externs::FendermintExterns;
 
 /// Parts of the state which evolve during the lifetime of the chain.
 #[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
@@ -28,7 +26,8 @@ pub struct EvmStateParams {
 #[allow(dead_code)]
 pub struct EvmExecState<DB>
 where
-    DB: Blockstore + 'static, {
+    DB: Blockstore + 'static,
+{
     executor:
         DefaultExecutor<DefaultKernel<DefaultCallManager<DefaultMachine<DB, FendermintExterns>>>>,
 }
