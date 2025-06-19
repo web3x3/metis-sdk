@@ -111,7 +111,7 @@ pub trait KVWritable<S: KVStore> {
     where
         Self: 'a;
 
-    /// Start a read-write tranasction.
+    /// Start a read-write transaction.
     fn write(&self) -> Self::Tx<'_>;
 
     /// Start a read-write transaction, use it, then commit.

@@ -705,7 +705,7 @@ where
         // follow at the end, so we can also remove these checkpoints from memory at the time
         // the transaction is delivered, rather than when the whole thing is committed.
         // It is only important to the persistent database changes as an atomic step in the
-        // commit in case the block execution fails somewhere in the middle for uknown reasons.
+        // commit in case the block execution fails somewhere in the middle for unknown reasons.
         // But if that happened, we will have to restart the application again anyway, and
         // repopulate the in-memory checkpoints based on the last committed ledger.
         // So, while the pool is theoretically part of the evolving state and we can pass

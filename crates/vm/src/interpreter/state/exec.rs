@@ -20,7 +20,7 @@ pub struct EvmStateParams {
     // /// a chain ID might change during the lifetime of a chain, in case
     // /// there is a fork, or perhaps a subnet migration in IPC.
     // ///
-    // /// How exactly that would be communicated is uknown at this point.
+    // /// How exactly that would be communicated is unknown at this point.
     // pub chain_id: u64,
 }
 
