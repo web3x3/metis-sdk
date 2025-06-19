@@ -1,15 +1,13 @@
 use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
-use anyhow::{Result};
+use anyhow::Result;
 use serde::{Deserialize, Serialize};
 
-use metis_storage::{
-    Codec, Encode, KVReadable, KVStore, KVWritable,
-};
+use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
 use metis_vm::interpreter::state::exec::{EvmExecState, EvmStateParams};
 
-use crate::{BlockHeight};
+use crate::BlockHeight;
 
 use fvm_ipld_blockstore::Blockstore;
 
