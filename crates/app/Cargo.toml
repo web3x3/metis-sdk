@@ -1,0 +1,25 @@
+[package]
+name = "metis-app"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+exclude.workspace = true
+license.workspace = true
+readme.workspace = true
+
+[dependencies]
+async-trait.workspace = true
+anyhow.workspace = true
+tendermint.workspace = true
+cid.workspace = true
+serde.workspace = true
+tracing.workspace = true
+
+metis-chain.workspace = true
+metis-storage.workspace = true
+metis-vm.workspace = true
+
+fvm_ipld_blockstore.workspace = true
+
+[lints]
+workspace = true

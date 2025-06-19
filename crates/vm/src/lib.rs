@@ -9,12 +9,14 @@ pub mod pool;
 pub mod inference;
 #[cfg(feature = "inference")]
 pub use inference::{
-    DEFAULT_MODEL_PATH, GAS_PER_INFERENCE_TOKEN, INFERENCE_PRECOMPILE_ADDRESS, InferencePrecompiles,
+    InferencePrecompiles, DEFAULT_MODEL_PATH, GAS_PER_INFERENCE_TOKEN, INFERENCE_PRECOMPILE_ADDRESS,
 };
 
 pub mod env;
 pub mod error;
 mod runtime;
+
+pub mod interpreter;
 
 pub use error::Error;
 
