@@ -6,10 +6,9 @@ use serde::{Deserialize, Serialize};
 
 use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
 use metis_vm::interpreter::state::exec::{EvmExecState, EvmStateParams};
+use metis_vm::interpreter::store::block::Blockstore;
 
 use crate::BlockHeight;
-
-use fvm_ipld_blockstore::Blockstore;
 
 #[derive(Serialize)]
 #[repr(u8)]
@@ -39,7 +38,7 @@ pub struct AppState {
     block_height: BlockHeight,
     /// Oldest state hash height.
     oldest_state_height: BlockHeight,
-    /// Last committed version of the evolving state of the FVM.
+    /// Last committed version of the evolving state of the EVM.
     state_params: EvmStateParams,
 }
 
@@ -100,9 +99,9 @@ where
     /// *appeared*, which is in the block *after* the one which was committed.
     ///
     /// The state also contains things like timestamp and the network version,
-    /// so that we can retrospectively execute FVM messages at past block heights
+    /// so that we can retrospectively execute EVM messages at past block heights
     /// in read-only mode.
-    // state_hist: KVCollection<S, BlockHeight, FvmStateParams>,
+    // state_hist: KVCollection<S, BlockHeight, EvmStateParams>,
     /// Interpreter for block lifecycle events.
     interpreter: Arc<I>,
     /// CID resolution pool.
@@ -165,7 +164,7 @@ where
     + Codec<AppState>
     + Encode<AppStoreKey>
     + Encode<BlockHeight>
-    + Codec<FvmStateParams>,
+    + Codec<EvmStateParams>,
     DB: KVWritable<S> + KVReadable<S> + 'static + Clone,
     SS: Blockstore + 'static + Clone,
 {
@@ -184,7 +183,7 @@ where
             let state = AppState {
                 block_height: 0,
                 oldest_state_height: 0,
-                state_params: FvmStateParams {
+                state_params: EvmStateParams {
                     timestamp: Timestamp(0),
                     state_root,
                     network_version: NetworkVersion::MAX,
@@ -239,14 +238,14 @@ where
     }
 
     /// Put the execution state during block execution. Has to be empty.
-    fn put_exec_state(&self, state: FvmExecState<SS>) {
+    fn put_exec_state(&self, state: EvmExecState<SS>) {
         let mut guard = self.exec_state.lock().expect("mutex poisoned");
         assert!(guard.is_none(), "exec state not empty");
         *guard = Some(state);
     }
 
     /// Take the execution state during block execution. Has to be non-empty.
-    fn take_exec_state(&self) -> FvmExecState<SS> {
+    fn take_exec_state(&self) -> EvmExecState<SS> {
         let mut guard = self.exec_state.lock().expect("mutex poisoned");
         guard.take().expect("exec state empty")
     }
@@ -258,7 +257,7 @@ where
             (
                 CheckpointPool,
                 Arc<ParentFinalityProvider>,
-                FvmExecState<SS>,
+                EvmExecState<SS>,
             ),
         ) -> R,
         R: Future<
@@ -266,7 +265,7 @@ where
                 (
                     CheckpointPool,
                     Arc<ParentFinalityProvider>,
-                    FvmExecState<SS>,
+                    EvmExecState<SS>,
                 ),
                 T,
             )>,
@@ -283,11 +282,11 @@ where
         Ok(ret)
     }
 
-    /// Get a read only fvm execution state. This is useful to perform query commands targeting
+    /// Get a read only Evm execution state. This is useful to perform query commands targeting
     /// the latest state.
     pub fn new_read_only_exec_state(
         &self,
-    ) -> Result<Option<FvmExecState<ReadOnlyBlockstore<Arc<SS>>>>> {
+    ) -> Result<Option<EvmExecState<ReadOnlyBlockstore<Arc<SS>>>>> {
         let maybe_app_state = self.get_committed_state()?;
 
         Ok(if let Some(app_state) = maybe_app_state {
@@ -299,7 +298,7 @@ where
                 return Ok(None);
             }
 
-            let exec_state = FvmExecState::new(
+            let exec_state = EvmExecState::new(
                 ReadOnlyBlockstore::new(self.state_store.clone()),
                 self.multi_engine.as_ref(),
                 block_height as ChainEpoch,
@@ -323,9 +322,9 @@ where
     /// Returns the state params and the height of the block which committed it.
     fn state_params_at_height(
         &self,
-        height: FvmQueryHeight,
-    ) -> Result<(FvmStateParams, BlockHeight)> {
-        if let FvmQueryHeight::Height(h) = height {
+        height: EvmQueryHeight,
+    ) -> Result<(EvmStateParams, BlockHeight)> {
+        if let EvmQueryHeight::Height(h) = height {
             let tx = self.db.read();
             let sh = self
                 .state_hist
@@ -356,14 +355,14 @@ where
     + Codec<AppState>
     + Encode<AppStoreKey>
     + Encode<BlockHeight>
-    + Codec<FvmStateParams>,
+    + Codec<EvmStateParams>,
     S::Namespace: Sync + Send,
     DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
     SS: Blockstore + Clone + Send + Sync + 'static,
     I: GenesisInterpreter<
-        State = FvmGenesisState<SS>,
+        State = EvmGenesisState<SS>,
         Genesis = Vec<u8>,
-        Output = FvmGenesisOutput,
+        Output = EvmGenesisOutput,
     >,
     I: ProposalInterpreter<
         State = (CheckpointPool, Arc<ParentFinalityProvider>),
@@ -373,20 +372,20 @@ where
         State = (
             CheckpointPool,
             Arc<ParentFinalityProvider>,
-            FvmExecState<SS>,
+            EvmExecState<SS>,
         ),
         Message = Vec<u8>,
-        BeginOutput = FvmApplyRet,
+        BeginOutput = EvmApplyRet,
         DeliverOutput = BytesMessageApplyRes,
         EndOutput = (),
     >,
     I: CheckInterpreter<
-        State = FvmExecState<ReadOnlyBlockstore<SS>>,
+        State = EvmExecState<ReadOnlyBlockstore<SS>>,
         Message = Vec<u8>,
         Output = BytesMessageCheckRes,
     >,
     I: QueryInterpreter<
-        State = FvmQueryState<SS>,
+        State = EvmQueryState<SS>,
         Query = BytesMessageQuery,
         Output = BytesMessageQueryRes,
     >,
@@ -414,7 +413,7 @@ where
             .map_err(|e| anyhow!("failed to load bundle CAR from {bundle:?}: {e}"))?;
 
         let state =
-            FvmGenesisState::new(self.state_store_clone(), self.multi_engine.clone(), &bundle)
+            EvmGenesisState::new(self.state_store_clone(), self.multi_engine.clone(), &bundle)
                 .await
                 .context("failed to create genesis state")?;
 
@@ -437,7 +436,7 @@ where
         let app_state = AppState {
             block_height: height,
             oldest_state_height: height,
-            state_params: FvmStateParams {
+            state_params: EvmStateParams {
                 state_root,
                 timestamp: out.timestamp,
                 network_version: out.network_version,
@@ -467,7 +466,7 @@ where
     /// Query the application for data at the current or past height.
     async fn query(&self, request: request::Query) -> AbciResult<response::Query> {
         let db = self.state_store_clone();
-        let height = FvmQueryHeight::from(request.height.value());
+        let height = EvmQueryHeight::from(request.height.value());
         let (state_params, block_height) = self.state_params_at_height(height)?;
 
         tracing::info!(
@@ -485,13 +484,13 @@ where
             ));
         }
 
-        let state = FvmQueryState::new(
+        let state = EvmQueryState::new(
             db,
             self.multi_engine.clone(),
             block_height.try_into()?,
             state_params,
             self.check_state.clone(),
-            height == FvmQueryHeight::Pending,
+            height == EvmQueryHeight::Pending,
         )
             .context("error creating query state")?;
 
@@ -522,10 +521,10 @@ where
                 let state = self.committed_state()?;
 
                 // This would create a partial state, but some client scenarios need the full one.
-                // FvmCheckState::new(db, state.state_root(), state.chain_id())
+                // EvmCheckState::new(db, state.state_root(), state.chain_id())
                 //     .context("error creating check state")?
 
-                FvmExecState::new(
+                EvmExecState::new(
                     ReadOnlyBlockstore::new(db),
                     self.multi_engine.as_ref(),
                     state.block_height.try_into()?,
@@ -621,7 +620,7 @@ where
 
         tracing::debug!(height, "begin block");
 
-        let state = FvmExecState::new(db, self.multi_engine.as_ref(), height, state_params)
+        let state = EvmExecState::new(db, self.multi_engine.as_ref(), height, state_params)
             .context("error creating new state")?;
 
         tracing::debug!("initialized exec state");
@@ -650,7 +649,7 @@ where
                 ChainMessageApplyRet::Signed(Err(InvalidSignature(d))) => {
                     invalid_deliver_tx(AppError::InvalidSignature, d)
                 }
-                ChainMessageApplyRet::Signed(Ok(ret)) => to_deliver_tx(ret.fvm, ret.domain_hash),
+                ChainMessageApplyRet::Signed(Ok(ret)) => to_deliver_tx(ret.Evm, ret.domain_hash),
             },
         };
 
@@ -686,7 +685,7 @@ where
         let mut state = self.committed_state()?;
         state.block_height = exec_state.block_height().try_into()?;
         state.state_params.timestamp = exec_state.timestamp();
-        state.state_params.state_root = exec_state.commit().context("failed to commit FVM")?;
+        state.state_params.state_root = exec_state.commit().context("failed to commit Evm")?;
 
         let state_root = state.state_root();
 

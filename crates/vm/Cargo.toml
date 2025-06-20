@@ -19,11 +19,7 @@ moka.workspace = true
 
 serde.workspace = true
 
-# todo replace fvm to evm
 cid.workspace = true
-fvm_ipld_blockstore.workspace = true
-fvm = "*"
-fvm_shared = "*"
 
 [build-dependencies]
 revmc-build = { workspace = true, optional = true }

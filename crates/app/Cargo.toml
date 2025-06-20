@@ -19,7 +19,5 @@ metis-chain.workspace = true
 metis-storage.workspace = true
 metis-vm.workspace = true
 
-fvm_ipld_blockstore.workspace = true
-
 [lints]
 workspace = true
