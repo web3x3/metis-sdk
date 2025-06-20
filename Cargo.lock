@@ -2030,7 +2030,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.11.0",
  "lazy_static",
  "lazycell",
  "log",
@@ -2053,7 +2053,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.10.5",
+ "itertools 0.13.0",
  "proc-macro2",
  "quote",
  "regex",
@@ -2688,6 +2688,18 @@ checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
 dependencies = [
  "ciborium-io",
  "half",
+]
+
+[[package]]
+name = "cid"
+version = "0.11.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3147d8272e8fa0ccd29ce51194dd98f79ddfb8191ba9e3409884e751798acf3a"
+dependencies = [
+ "core2",
+ "multibase",
+ "multihash",
+ "unsigned-varint",
 ]
 
 [[package]]
@@ -4975,7 +4987,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.57.0",
+ "windows-core 0.61.2",
 ]
 
 [[package]]
@@ -6473,6 +6485,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "metis-app"
+version = "0.2.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "cid",
+ "metis-chain",
+ "metis-storage",
+ "metis-vm",
+ "serde",
+ "tendermint",
+ "tracing",
+]
+
+[[package]]
 name = "metis-chain"
 version = "0.2.1"
 dependencies = [
@@ -6590,6 +6617,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "metis-storage"
+version = "0.2.1"
+dependencies = [
+ "thiserror 2.0.12",
+]
+
+[[package]]
 name = "metis-tools"
 version = "0.2.1"
 dependencies = [
@@ -6645,12 +6679,14 @@ dependencies = [
  "alith",
  "alloy-sol-types",
  "anyhow",
+ "cid",
  "libloading",
  "metis-primitives",
  "moka",
  "revm",
  "revmc",
  "revmc-build",
+ "serde",
  "smallvec",
  "thiserror 2.0.12",
  "tokio",
@@ -7945,7 +7981,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.10.5",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.101",

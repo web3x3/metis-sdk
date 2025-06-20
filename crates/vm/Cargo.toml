@@ -17,6 +17,10 @@ libloading.workspace = true
 alith = { workspace = true, optional = true }
 moka.workspace = true
 
+serde.workspace = true
+
+cid.workspace = true
+
 [build-dependencies]
 revmc-build = { workspace = true, optional = true }
 

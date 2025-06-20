@@ -16,6 +16,8 @@ pub mod env;
 pub mod error;
 mod runtime;
 
+pub mod interpreter;
+
 pub use error::Error;
 
 #[cfg(test)]
