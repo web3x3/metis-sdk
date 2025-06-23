@@ -30,7 +30,7 @@ where
     exec_state: RefCell<Option<EvmExecState<ReadOnlyBlockstore<DB>>>>,
     /// Lazy locked check state.
     check_state: CheckStateRef<DB>,
-    /// Whether to try ot use the check state or not.
+    /// Whether to try to use the check state or not.
     pending: bool,
 }
 

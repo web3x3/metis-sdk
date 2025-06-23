@@ -401,7 +401,7 @@ where
         // todo get state_root hash
         // let state = self.committed_state()?;
 
-        // todo get lastest block height
+        // todo get latest block height
         // let height = tendermint::block::Height::try_from(state.block_height)?;
         let height = tendermint::block::Height::default();
 
