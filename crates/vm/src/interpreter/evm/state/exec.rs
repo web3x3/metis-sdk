@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
+use crate::interpreter::evm::store::block::Blockstore;
+use cid::Cid;
 use std::sync::Arc;
 
 /// Parts of the state which evolve during the lifetime of the chain.
-#[derive(Serialize, Deserialize, Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct EvmStateParams {
-    // pub state_root: Cid,
+    pub state_root: Cid,
     // pub timestamp: Timestamp,
     // pub network_version: NetworkVersion,
     // pub base_fee: TokenAmount,
@@ -21,4 +22,17 @@ pub struct EvmStateParams {
 #[allow(dead_code)]
 pub struct EvmExecState<DB> {
     pub db: Arc<DB>,
+}
+
+impl<DB> EvmExecState<DB>
+where
+    DB: Blockstore + 'static,
+{
+    pub fn new(// blockstore: DB,
+        // multi_engine: &MultiEngine,
+        // block_height: ChainEpoch,
+        // params: FvmStateParams,
+    ) -> anyhow::Result<Self> {
+        todo!()
+    }
 }

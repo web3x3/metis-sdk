@@ -2,11 +2,24 @@ use std::path::PathBuf;
 use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use serde::{Deserialize, Serialize};
+use async_trait::async_trait;
+use cid::Cid;
+use serde::Serialize;
 
+use metis_chain::tm_abci::abci_app::{AbciResult, Application};
 use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
-use metis_vm::interpreter::state::exec::{EvmExecState, EvmStateParams};
-use metis_vm::interpreter::store::block::Blockstore;
+use metis_vm::interpreter::evm::{
+    BytesMessageQuery, CheckInterpreter, GenesisInterpreter, QueryInterpreter,
+    state::{
+        CheckStateRef,
+        exec::{EvmExecState, EvmStateParams},
+        genesis::{EvmGenesisOutput, EvmGenesisState},
+        query::EvmQueryState,
+    },
+    store::block::{Blockstore, ReadOnlyBlockstore},
+};
+use tendermint::abci::request::FinalizeBlock;
+use tendermint::abci::{request, response};
 
 use crate::BlockHeight;
 
@@ -17,22 +30,21 @@ pub enum AppStoreKey {
     State,
 }
 
-// #[derive(Debug)]
-// #[repr(u32)]
-// pub enum AppError {
-//     /// Failed to deserialize the transaction.
-//     InvalidEncoding = 51,
-//     /// Failed to validate the user signature.
-//     InvalidSignature = 52,
-//     /// User sent a message they should not construct.
-//     IllegalMessage = 53,
-//     /// The genesis block hasn't been initialized yet.
-//     NotInitialized = 54,
-// }
+#[derive(Debug)]
+#[repr(u32)]
+enum _AppError {
+    /// Failed to deserialize the transaction.
+    InvalidEncoding = 51,
+    /// Failed to validate the user signature.
+    InvalidSignature = 52,
+    /// User sent a message they should not construct.
+    IllegalMessage = 53,
+    /// The genesis block hasn't been initialized yet.
+    NotInitialized = 54,
+}
 
 /// The application state record we keep a history of in the database.
-#[derive(Serialize, Deserialize)]
-#[allow(unreachable_pub)]
+#[allow(unreachable_pub, dead_code)]
 pub struct AppState {
     /// Last committed block height.
     block_height: BlockHeight,
@@ -43,16 +55,16 @@ pub struct AppState {
 }
 
 impl AppState {
-    // pub fn state_root(&self) -> Cid {
-    //     self.state_params.state_root
-    // }
+    const fn state_root(&self) -> Cid {
+        self.state_params.state_root
+    }
     // pub fn chain_id(&self) -> ChainID {
     //     ChainID::from(self.state_params.chain_id)
     // }
-    // pub fn app_hash(&self) -> tendermint::hash::AppHash {
-    //     tendermint::hash::AppHash::try_from(self.state_root().to_bytes())
-    //         .expect("hash can be wrapped")
-    // }
+    fn app_hash(&self) -> tendermint::hash::AppHash {
+        tendermint::hash::AppHash::try_from(self.state_root().to_bytes())
+            .expect("hash can be wrapped")
+    }
 }
 
 #[allow(dead_code, unreachable_pub)]
@@ -111,7 +123,7 @@ where
     /// State accumulating changes during block execution.
     exec_state: Arc<Mutex<Option<EvmExecState<SS>>>>,
     /// Projected (partial) state accumulating during transaction checks.
-    // check_state: CheckStateRef<SS>,
+    check_state: CheckStateRef<SS>,
     /// How much history to keep.
     ///
     /// Zero means unlimited.
@@ -149,7 +161,7 @@ where
             // resolve_pool,
             // parent_finality_provider,
             exec_state: Arc::new(Mutex::new(None)),
-            // check_state: Arc::new(tokio::sync::Mutex::new(None)),
+            check_state: Arc::new(tokio::sync::Mutex::new(None)),
         };
         // app.init_committed_state()?;
         Ok(app)
@@ -341,8 +353,6 @@ where
 }
 */
 
-// todo add ABCI wrapper
-/*
 // NOTE: The `Application` interface doesn't allow failures at the moment. The protobuf
 // of `Response` actually has an `Exception` type, so in theory we could use that, and
 // Tendermint would break up the connection. However, before the response could reach it,
@@ -352,103 +362,94 @@ where
 impl<DB, SS, S, I> Application for App<DB, SS, S, I>
 where
     S: KVStore
-    + Codec<AppState>
-    + Encode<AppStoreKey>
-    + Encode<BlockHeight>
-    + Codec<EvmStateParams>,
+        + Codec<AppState>
+        + Encode<AppStoreKey>
+        + Encode<BlockHeight>
+        + Codec<EvmStateParams>,
     S::Namespace: Sync + Send,
     DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
     SS: Blockstore + Clone + Send + Sync + 'static,
     I: GenesisInterpreter<
-        State = EvmGenesisState<SS>,
-        Genesis = Vec<u8>,
-        Output = EvmGenesisOutput,
-    >,
-    I: ProposalInterpreter<
-        State = (CheckpointPool, Arc<ParentFinalityProvider>),
-        Message = Vec<u8>,
-    >,
-    I: ExecInterpreter<
-        State = (
-            CheckpointPool,
-            Arc<ParentFinalityProvider>,
-            EvmExecState<SS>,
-        ),
-        Message = Vec<u8>,
-        BeginOutput = EvmApplyRet,
-        DeliverOutput = BytesMessageApplyRes,
-        EndOutput = (),
-    >,
+            State = EvmGenesisState<SS>,
+            Genesis = Vec<u8>,
+            Output = EvmGenesisOutput,
+        >,
+    // I: ProposalInterpreter<
+    //     State = (CheckpointPool, Arc<ParentFinalityProvider>),
+    //     Message = Vec<u8>,
+    // >,
+    // I: ExecInterpreter<
+    //     State = (
+    //         CheckpointPool,
+    //         Arc<ParentFinalityProvider>,
+    //         EvmExecState<SS>,
+    //     ),
+    //     Message = Vec<u8>,
+    //     BeginOutput = EvmApplyRet,
+    //     DeliverOutput = BytesMessageApplyRes,
+    //     EndOutput = (),
+    // >,
     I: CheckInterpreter<
-        State = EvmExecState<ReadOnlyBlockstore<SS>>,
-        Message = Vec<u8>,
-        Output = BytesMessageCheckRes,
-    >,
-    I: QueryInterpreter<
-        State = EvmQueryState<SS>,
-        Query = BytesMessageQuery,
-        Output = BytesMessageQueryRes,
-    >,
+            State = EvmExecState<ReadOnlyBlockstore<SS>>,
+            Message = Vec<u8>,
+            Output = (),
+        >,
+    I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
 {
     /// Provide information about the ABCI application.
     async fn info(&self, _request: request::Info) -> AbciResult<response::Info> {
-        let state = self.committed_state()?;
+        // todo get state_root hash
+        // let state = self.committed_state()?;
 
-        let height = tendermint::block::Height::try_from(state.block_height)?;
+        // todo get latest block height
+        // let height = tendermint::block::Height::try_from(state.block_height)?;
+        let height = tendermint::block::Height::default();
 
         let info = response::Info {
-            data: "fendermint".to_string(),
-            version: VERSION.to_owned(),
-            app_version: APP_VERSION,
+            data: "metis".to_string(),
+            version: "metis-v1".to_string(),
+            app_version: 1,
             last_block_height: height,
-            last_block_app_hash: state.app_hash(),
+            last_block_app_hash: Default::default(),
         };
         Ok(info)
     }
 
     /// Called once upon genesis.
     async fn init_chain(&self, request: request::InitChain) -> AbciResult<response::InitChain> {
-        let bundle = &self.builtin_actors_bundle;
-        let bundle = std::fs::read(bundle)
-            .map_err(|e| anyhow!("failed to load bundle CAR from {bundle:?}: {e}"))?;
+        // let state =
+        //     EvmGenesisState::new(self.state_store_clone())
+        //         .await
+        //         .context("failed to create genesis state")?;
 
-        let state =
-            EvmGenesisState::new(self.state_store_clone(), self.multi_engine.clone(), &bundle)
-                .await
-                .context("failed to create genesis state")?;
+        // let (state, out) = self
+        //     .interpreter
+        //     .init(state, request.app_state_bytes.to_vec())
+        //     .await
+        //     .context("failed to init from genesis")?;
 
-        tracing::info!(
-            manifest_root = format!("{}", state.manifest_data_cid),
-            "pre-genesis state created"
-        );
-
-        let (state, out) = self
-            .interpreter
-            .init(state, request.app_state_bytes.to_vec())
-            .await
-            .context("failed to init from genesis")?;
-
-        let state_root = state.commit().context("failed to commit genesis state")?;
+        // todo cal state_root hash with genesis
+        // let state_root = state.commit().context("failed to commit genesis state")?;
         let height = request.initial_height.into();
-        let validators =
-            to_validator_updates(out.validators).context("failed to convert validators")?;
+        // let validators =
+        //     to_validator_updates(out.validators).context("failed to convert validators")?;
 
         let app_state = AppState {
             block_height: height,
             oldest_state_height: height,
             state_params: EvmStateParams {
-                state_root,
-                timestamp: out.timestamp,
-                network_version: out.network_version,
-                base_fee: out.base_fee,
-                circ_supply: out.circ_supply,
-                chain_id: out.chain_id.into(),
+                state_root: Default::default(),
+                // timestamp: out.timestamp,
+                // network_version: out.network_version,
+                // base_fee: out.base_fee,
+                // circ_supply: out.circ_supply,
+                // chain_id: out.chain_id.into(),
             },
         };
 
         let response = response::InitChain {
             consensus_params: None,
-            validators,
+            validators: vec![],
             app_hash: app_state.app_hash(),
         };
 
@@ -458,77 +459,94 @@ where
             "init chain"
         );
 
-        self.set_committed_state(app_state)?;
+        // todo set state
+        // self.set_committed_state(app_state)?;
 
         Ok(response)
     }
 
     /// Query the application for data at the current or past height.
-    async fn query(&self, request: request::Query) -> AbciResult<response::Query> {
-        let db = self.state_store_clone();
-        let height = EvmQueryHeight::from(request.height.value());
-        let (state_params, block_height) = self.state_params_at_height(height)?;
-
-        tracing::info!(
-            query_height = request.height.value(),
-            block_height,
-            state_root = state_params.state_root.to_string(),
-            "running query"
-        );
-
-        // Don't run queries on the empty state, they won't work.
-        if block_height == 0 {
-            return Ok(invalid_query(
-                AppError::NotInitialized,
-                "The app hasn't been initialized yet.".to_owned(),
-            ));
-        }
-
-        let state = EvmQueryState::new(
-            db,
-            self.multi_engine.clone(),
-            block_height.try_into()?,
-            state_params,
-            self.check_state.clone(),
-            height == EvmQueryHeight::Pending,
-        )
-            .context("error creating query state")?;
-
-        let qry = (request.path, request.data.to_vec());
-
-        let (_, result) = self
-            .interpreter
-            .query(state, qry)
-            .await
-            .context("error running query")?;
-
-        let response = match result {
-            Err(e) => invalid_query(AppError::InvalidEncoding, e.description),
-            Ok(result) => to_query(result, block_height)?,
+    async fn query(&self, _request: request::Query) -> AbciResult<response::Query> {
+        // todo get state store
+        // let db = self.state_store_clone();
+        // let height = EvmQueryHeight::from(request.height.value());
+        // todo get state from exec state
+        // let (state_params, block_height) = self.state_params_at_height(height)?;
+        let _state_params = EvmStateParams {
+            state_root: Default::default(),
         };
-        Ok(response)
+
+        // tracing::info!(
+        //     query_height = request.height.value(),
+        //     request.height,
+        //     state_root = state_params.state_root.to_string(),
+        //     "running query"
+        // );
+
+        // // Don't run queries on the empty state, they won't work.
+        // if block_height == 0 {
+        //     return Ok(invalid_query(
+        //         AppError::NotInitialized,
+        //         "The app hasn't been initialized yet.".to_owned(),
+        //     ));
+        // }
+
+        // let state = EvmQueryState::new(
+        //     db,
+        //     // self.multi_engine.clone(),
+        //     request.height.try_into()?,
+        //     state_params,
+        //     self.check_state.clone(),
+        //     false,
+        // )
+        //     .context("error creating query state")?;
+
+        // let qry = (request.path, request.data.to_vec());
+
+        // let (_, _result) = self
+        //     .interpreter
+        //     .query(state, qry)
+        //     .await
+        //     .context("error running query")?;
+
+        // let response = match result {
+        //     Err(e) => invalid_query(AppError::InvalidEncoding, e.description),
+        //     Ok(result) => to_query(result, block_height)?,
+        // };
+        Ok(response::Query {
+            code: Default::default(),
+            log: "".to_string(),
+            info: "".to_string(),
+            index: 0,
+            key: Default::default(),
+            value: Default::default(),
+            proof: None,
+            height: Default::default(),
+            codespace: "".to_string(),
+        })
     }
 
     /// Check the given transaction before putting it into the local mempool.
     async fn check_tx(&self, request: request::CheckTx) -> AbciResult<response::CheckTx> {
+        /*
         // Keep the guard through the check, so there can be only one at a time.
         let mut guard = self.check_state.lock().await;
 
         let state = match guard.take() {
             Some(state) => state,
             None => {
-                let db = self.state_store_clone();
-                let state = self.committed_state()?;
+                // let db = self.state_store_clone();
+                // let state = self.committed_state()?;
 
                 // This would create a partial state, but some client scenarios need the full one.
                 // EvmCheckState::new(db, state.state_root(), state.chain_id())
                 //     .context("error creating check state")?
 
                 EvmExecState::new(
-                    ReadOnlyBlockstore::new(db),
-                    self.multi_engine.as_ref(),
-                    state.block_height.try_into()?,
-                    state.state_params,
+                    // ReadOnlyBlockstore::new(db),
+                    // self.multi_engine.as_ref(),
+                    // state.block_height.try_into()?,
+                    // state.state_params,
                 )
                     .context("error creating check state")?
             }
@@ -555,8 +573,25 @@ where
                 Ok(Ok(ret)) => to_check_tx(ret),
             },
         };
+        */
+        let _tx_bytes = request.tx.to_vec();
+        // todo use evm Deserialize tx_bytes to evm_tx
+        // let tx = Deserialize(tx_bytes)
+        // check validate tx
 
-        Ok(response)
+        Ok(response::CheckTx {
+            code: Default::default(),
+            data: Default::default(),
+            log: "".to_string(),
+            info: "".to_string(),
+            gas_wanted: 0,
+            gas_used: 0,
+            events: vec![],
+            codespace: "".to_string(),
+            sender: "".to_string(),
+            priority: 0,
+            mempool_error: "".to_string(),
+        })
     }
 
     /// Amend which transactions to put into the next block proposal.
@@ -564,44 +599,46 @@ where
         &self,
         request: request::PrepareProposal,
     ) -> AbciResult<response::PrepareProposal> {
-        let txs = request.txs.into_iter().map(|tx| tx.to_vec()).collect();
+        let txs = request.txs;
+        /*
+                let txs = request.txs.into_iter().map(|tx| tx.to_vec()).collect();
 
-        let txs = self
-            .interpreter
-            .prepare(
-                (
-                    self.resolve_pool.clone(),
-                    self.parent_finality_provider.clone(),
-                ),
-                txs,
-            )
-            .await
-            .context("failed to prepare proposal")?;
+                let txs = self
+                    .interpreter
+                    .prepare(
+                        (
+                            self.resolve_pool.clone(),
+                            self.parent_finality_provider.clone(),
+                        ),
+                        txs,
+                    )
+                    .await
+                    .context("failed to prepare proposal")?;
 
-        let txs = txs.into_iter().map(bytes::Bytes::from).collect();
-        let txs = take_until_max_size(txs, request.max_tx_bytes.try_into().unwrap());
-
+                let txs = txs.into_iter().map(bytes::Bytes::from).collect();
+                let txs = take_until_max_size(txs, request.max_tx_bytes.try_into().unwrap());
+        */
         Ok(response::PrepareProposal { txs })
     }
 
     /// Inspect a proposal and decide whether to vote on it.
     async fn process_proposal(
         &self,
-        request: request::ProcessProposal,
+        _request: request::ProcessProposal,
     ) -> AbciResult<response::ProcessProposal> {
-        let txs = request.txs.into_iter().map(|tx| tx.to_vec()).collect();
-
-        let accept = self
-            .interpreter
-            .process(
-                (
-                    self.resolve_pool.clone(),
-                    self.parent_finality_provider.clone(),
-                ),
-                txs,
-            )
-            .await
-            .context("failed to process proposal")?;
+        //todo based on exec state judge if tx is accept
+        let accept = true;
+        // let accept = self
+        //     .interpreter
+        //     .process(
+        //         (
+        //             self.resolve_pool.clone(),
+        //             self.parent_finality_provider.clone(),
+        //         ),
+        //         txs,
+        //     )
+        //     .await
+        //     .context("failed to process proposal")?;
 
         if accept {
             Ok(response::ProcessProposal::Accept)
@@ -610,121 +647,68 @@ where
         }
     }
 
-    /// Signals the beginning of a new block, prior to any `DeliverTx` calls.
-    async fn begin_block(&self, request: request::BeginBlock) -> AbciResult<response::BeginBlock> {
-        let db = self.state_store_clone();
-        let height = request.header.height.into();
-        let state = self.committed_state()?;
-        let mut state_params = state.state_params.clone();
-        state_params.timestamp = to_timestamp(request.header.time);
-
-        tracing::debug!(height, "begin block");
-
-        let state = EvmExecState::new(db, self.multi_engine.as_ref(), height, state_params)
-            .context("error creating new state")?;
-
-        tracing::debug!("initialized exec state");
-
-        self.put_exec_state(state);
-
-        let ret = self
-            .modify_exec_state(|s| self.interpreter.begin(s))
-            .await
-            .context("begin failed")?;
-
-        Ok(to_begin_block(ret))
-    }
-
-    /// Apply a transaction to the application's state.
-    async fn deliver_tx(&self, request: request::DeliverTx) -> AbciResult<response::DeliverTx> {
-        let msg = request.tx.to_vec();
-        let result = self
-            .modify_exec_state(|s| self.interpreter.deliver(s, msg))
-            .await
-            .context("deliver failed")?;
-
-        let response = match result {
-            Err(e) => invalid_deliver_tx(AppError::InvalidEncoding, e.description),
-            Ok(ret) => match ret {
-                ChainMessageApplyRet::Signed(Err(InvalidSignature(d))) => {
-                    invalid_deliver_tx(AppError::InvalidSignature, d)
-                }
-                ChainMessageApplyRet::Signed(Ok(ret)) => to_deliver_tx(ret.Evm, ret.domain_hash),
-            },
-        };
-
-        if response.code != 0.into() {
-            tracing::info!(
-                "deliver_tx failed: {:?} - {:?}",
-                response.code,
-                response.info
-            );
-        }
-
-        Ok(response)
-    }
-
-    /// Signals the end of a block.
-    async fn end_block(&self, request: request::EndBlock) -> AbciResult<response::EndBlock> {
-        tracing::debug!(height = request.height, "end block");
-
-        // TODO: Return events from epoch transitions.
-        let ret = self
-            .modify_exec_state(|s| self.interpreter.end(s))
-            .await
-            .context("end failed")?;
-
-        Ok(to_end_block(ret))
+    async fn finalize_block(&self, request: FinalizeBlock) -> AbciResult<response::FinalizeBlock> {
+        // todo exec txs
+        let _txs = request.txs;
+        //let tx_results = txs.into_iter().map(|tx| txRes = exec(tx)).collect();
+        Ok(response::FinalizeBlock {
+            events: vec![],
+            tx_results: vec![],
+            validator_updates: vec![],
+            consensus_param_updates: None,
+            app_hash: Default::default(),
+        })
     }
 
     /// Commit the current state at the current height.
     async fn commit(&self) -> AbciResult<response::Commit> {
-        let exec_state = self.take_exec_state();
+        // todo get state_root from exec state
+        /*
+                let exec_state = self.take_exec_state();
 
-        // Commit the execution state to the datastore.
-        let mut state = self.committed_state()?;
-        state.block_height = exec_state.block_height().try_into()?;
-        state.state_params.timestamp = exec_state.timestamp();
-        state.state_params.state_root = exec_state.commit().context("failed to commit Evm")?;
+                // Commit the execution state to the datastore.
+                let mut state = self.committed_state()?;
+                state.block_height = exec_state.block_height().try_into()?;
+                state.state_params.timestamp = exec_state.timestamp();
+                state.state_params.state_root = exec_state.commit().context("failed to commit Evm")?;
 
-        let state_root = state.state_root();
+                let state_root = state.state_root();
 
-        tracing::debug!(
-            state_root = state_root.to_string(),
-            timestamp = state.state_params.timestamp.0,
-            "commit state"
-        );
+                tracing::debug!(
+                    state_root = state_root.to_string(),
+                    timestamp = state.state_params.timestamp.0,
+                    "commit state"
+                );
 
-        // TODO: We can defer committing changes the resolution pool to this point.
-        // For example if a checkpoint is successfully executed, that's when we want to remove
-        // that checkpoint from the pool, and not propose it to other validators again.
-        // However, once Tendermint starts delivering the transactions, the commit will surely
-        // follow at the end, so we can also remove these checkpoints from memory at the time
-        // the transaction is delivered, rather than when the whole thing is committed.
-        // It is only important to the persistent database changes as an atomic step in the
-        // commit in case the block execution fails somewhere in the middle for unknown reasons.
-        // But if that happened, we will have to restart the application again anyway, and
-        // repopulate the in-memory checkpoints based on the last committed ledger.
-        // So, while the pool is theoretically part of the evolving state and we can pass
-        // it in and out, unless we want to defer commit to here (which the interpreters aren't
-        // notified about), we could add it to the `ChainMessageInterpreter` as a constructor argument,
-        // a sort of "ambient state", and not worry about in in the `App` at all.
+                // For example if a checkpoint is successfully executed, that's when we want to remove
+                // that checkpoint from the pool, and not propose it to other validators again.
+                // However, once Tendermint starts delivering the transactions, the commit will surely
+                // follow at the end, so we can also remove these checkpoints from memory at the time
+                // the transaction is delivered, rather than when the whole thing is committed.
+                // It is only important to the persistent database changes as an atomic step in the
+                // commit in case the block execution fails somewhere in the middle for unknown reasons.
+                // But if that happened, we will have to restart the application again anyway, and
+                // repopulate the in-memory checkpoints based on the last committed ledger.
+                // So, while the pool is theoretically part of the evolving state and we can pass
+                // it in and out, unless we want to defer commit to here (which the interpreters aren't
+                // notified about), we could add it to the `ChainMessageInterpreter` as a constructor argument,
+                // a sort of "ambient state", and not worry about in in the `App` at all.
 
-        // Commit app state to the datastore.
-        self.set_committed_state(state)?;
+                // Commit app state to the datastore.
+                self.set_committed_state(state)?;
 
-        // Reset check state.
-        let mut guard = self.check_state.lock().await;
-        *guard = None;
+                // Reset check state.
+                let mut guard = self.check_state.lock().await;
+                *guard = None;
 
-        tracing::debug!("committed state");
+                tracing::debug!("committed state");
+        */
 
         let response = response::Commit {
-            data: state_root.to_bytes().into(),
+            data: Default::default(),
             // We have to retain blocks until we can support Snapshots.
             retain_height: Default::default(),
         };
         Ok(response)
     }
 }
-*/

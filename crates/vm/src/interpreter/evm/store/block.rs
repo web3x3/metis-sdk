@@ -61,3 +61,25 @@ pub trait Blockstore {
         Ok(())
     }
 }
+
+#[derive(Clone)]
+pub struct ReadOnlyBlockstore<DB>(DB);
+
+impl<DB> ReadOnlyBlockstore<DB> {
+    pub fn new(store: DB) -> Self {
+        Self(store)
+    }
+}
+
+impl<DB> Blockstore for ReadOnlyBlockstore<DB>
+where
+    DB: Blockstore,
+{
+    fn get(&self, k: &Cid) -> anyhow::Result<Option<Vec<u8>>> {
+        self.0.get(k)
+    }
+
+    fn put_keyed(&self, k: &Cid, block: &[u8]) -> anyhow::Result<()> {
+        self.0.put_keyed(k, block)
+    }
+}

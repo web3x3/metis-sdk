@@ -1,5 +1,5 @@
 [package]
-name = "metis-app"
+name = "metis-vm-lib"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
@@ -8,17 +8,12 @@ license.workspace = true
 readme.workspace = true
 
 [dependencies]
-async-trait.workspace = true
 anyhow.workspace = true
-tendermint.workspace = true
-cid.workspace = true
 serde.workspace = true
-tracing.workspace = true
-tokio.workspace = true
 
-metis-chain.workspace = true
-metis-storage.workspace = true
-metis-vm.workspace = true
+metis-primitives.workspace = true
+num-derive.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true
