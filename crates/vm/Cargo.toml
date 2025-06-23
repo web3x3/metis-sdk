@@ -5,11 +5,13 @@ edition.workspace = true
 
 [dependencies]
 metis-primitives.workspace = true
+metis-vm-lib.workspace = true
 alloy-sol-types.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 tokio.workspace = true
 revm.workspace = true
+reth.workspace = true
 
 revmc = { workspace = true, optional = true }
 smallvec.workspace = true
@@ -18,8 +20,9 @@ alith = { workspace = true, optional = true }
 moka.workspace = true
 
 serde.workspace = true
-
 cid.workspace = true
+async-trait.workspace = true
+tracing.workspace = true
 
 [build-dependencies]
 revmc-build = { workspace = true, optional = true }
