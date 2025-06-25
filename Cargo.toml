@@ -1,5 +1,8 @@
 [workspace]
-members = ["crates/*"]
+members = [
+  "crates/*",
+  "crates/app/options"
+]
 
 resolver = "2"
 
@@ -32,6 +35,7 @@ metis-pe = { path = "crates/pe" }
 metis-chain = { path = "crates/chain" }
 metis-app = { path = "crates/app" }
 metis-storage = { path = "crates/storage" }
+metis-app-options = { path = "crates/app/options" }
 
 anyhow = "1.0.97"
 
@@ -180,6 +184,7 @@ either = "1.15.0"
 
 # comefbft abci
 tendermint = "*"
+tendermint-rpc = { version = "*", features = ["secp256k1", "http-client", "websocket-client"] }
 async-trait = "0.1.88"
 tower = "0.5.2"
 tower-abci = "*"
@@ -188,6 +193,14 @@ async-stm = "0.5.0"
 # app
 cid = "*"
 num-derive = "*"
+base64 = "0.22.1"
+serde_with = "*"
+config = "*"
+libsecp256k1 = "*"
+rand_chacha = "0.3.0"
+rocksdb = { version = "*", features = ["multi-threaded-cf"] }
+tempfile = "*"
+dirs = "*"
 
 [workspace.package]
 version = "0.2.1"
