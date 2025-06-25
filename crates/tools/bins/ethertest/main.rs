@@ -178,13 +178,6 @@ pub enum TestErrorKind {
     UnknownPrivateKey(B256),
     #[error(transparent)]
     SerdeDeserialize(#[from] serde_json::Error),
-    #[error("unexpected execution error")]
-    ExecutionError,
-    #[error("unexpected output: expected {expected_output:?}, got {got_output:?}")]
-    UnexpectedOutput {
-        expected_output: Option<Bytes>,
-        got_output: Option<Bytes>,
-    },
     #[error("unexpected exception: expected {expected_exception:?}, got {got_exception:?}")]
     UnexpectedException {
         expected_exception: Option<String>,
@@ -318,7 +311,7 @@ fn should_skip(path: &Path) -> bool {
     )
 }
 
-fn execute_test(path: &Path) -> Result<(), TestError> {
+fn execute_test(path: &Path) -> Result<(), Box<TestError>> {
     if should_skip(path) {
         return Ok(());
     }
@@ -597,7 +590,7 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
     Ok(())
 }
 
-fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, TestError> {
+fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, Box<TestError>> {
     let mut env = EvmEnv::default();
     env.cfg_env.chain_id = 1;
     env.cfg_env.spec = spec_id;
