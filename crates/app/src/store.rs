@@ -2,7 +2,7 @@ use metis_storage::{Codec, Decode, Encode, KVResult, KVStore};
 use serde::{Serialize, de::DeserializeOwned};
 use std::borrow::Cow;
 
-/// [`KVStore`] type we use to store historial data in the database.
+/// [`KVStore`] type we use to store historical data in the database.
 #[allow(dead_code, unreachable_pub)]
 #[derive(Clone)]
 pub struct AppStore;

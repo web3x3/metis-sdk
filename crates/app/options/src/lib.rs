@@ -50,7 +50,7 @@ pub enum LogLevel {
 pub struct GlobalOptions {
     // #[command(flatten)]
     // pub global: GlobalArgs,
-    /// Capture all the normal commands, basically to ingore them.
+    /// Capture all the normal commands, basically to ignore them.
     #[arg(allow_hyphen_values = true, trailing_var_arg = true)]
     pub cmd: Vec<String>,
 }
