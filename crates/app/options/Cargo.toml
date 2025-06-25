@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-clap = { version = "4.5.40", features = ["derive"] }
-tracing = "0.1.41"
+clap.workspace = true
+tracing.workspace = true
 tendermint-rpc.workspace = true
 
 metis-primitives.workspace = true

@@ -6628,7 +6628,6 @@ dependencies = [
  "cid",
  "config",
  "dirs 5.0.1",
- "ecdsa",
  "libsecp256k1",
  "metis-app-options",
  "metis-chain",
