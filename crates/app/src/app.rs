@@ -22,8 +22,6 @@ use metis_vm::interpreter::evm::{
 use tendermint::abci::request::FinalizeBlock;
 use tendermint::abci::{request, response};
 
-use crate::BlockHeight;
-
 #[derive(Serialize)]
 #[repr(u8)]
 #[allow(dead_code, unreachable_pub)]
@@ -48,9 +46,9 @@ enum _AppError {
 #[allow(unreachable_pub, dead_code)]
 pub struct AppState {
     /// Last committed block height.
-    block_height: BlockHeight,
+    block_height: u64,
     /// Oldest state hash height.
-    oldest_state_height: BlockHeight,
+    oldest_state_height: u64,
     /// Last committed version of the evolving state of the EVM.
     state_params: EvmStateParams,
 }
