@@ -201,6 +201,7 @@ rand_chacha = "0.3.0"
 rocksdb = { version = "*", features = ["multi-threaded-cf"] }
 tempfile = "*"
 dirs = "*"
+tracing-subscriber = "*"
 
 [workspace.package]
 version = "0.2.1"

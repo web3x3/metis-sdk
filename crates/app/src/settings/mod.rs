@@ -1,3 +1,4 @@
+#![allow(missing_docs)]
 use anyhow::Context;
 use config::{Config, ConfigError, Environment, File};
 use serde::Deserialize;
