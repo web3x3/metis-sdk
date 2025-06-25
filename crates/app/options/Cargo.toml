@@ -1,0 +1,11 @@
+[package]
+name = "metis-app-options"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+clap = { version = "4.5.40", features = ["derive"] }
+tracing = "0.1.41"
+tendermint-rpc.workspace = true
+
+metis-primitives.workspace = true

@@ -1,5 +1,5 @@
 use std::path::PathBuf;
-use std::sync::{Arc, Mutex};
+// use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
 use async_trait::async_trait;
@@ -7,16 +7,17 @@ use cid::Cid;
 use serde::Serialize;
 
 use metis_chain::tm_abci::abci_app::{AbciResult, Application};
-use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
+// use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
+use metis_storage::KVStore;
 use metis_vm::interpreter::evm::{
-    BytesMessageQuery, CheckInterpreter, GenesisInterpreter, QueryInterpreter,
+    // BytesMessageQuery, CheckInterpreter, GenesisInterpreter, QueryInterpreter,
     state::{
-        CheckStateRef,
-        exec::{EvmExecState, EvmStateParams},
-        genesis::{EvmGenesisOutput, EvmGenesisState},
-        query::EvmQueryState,
+        // CheckStateRef,
+        exec::EvmStateParams,
+        // genesis::{EvmGenesisOutput, EvmGenesisState},
+        // query::EvmQueryState,
     },
-    store::block::{Blockstore, ReadOnlyBlockstore},
+    // store::block::{Blockstore, ReadOnlyBlockstore},
 };
 use tendermint::abci::request::FinalizeBlock;
 use tendermint::abci::{request, response};
@@ -87,81 +88,80 @@ pub struct AppConfig<S: KVStore> {
 /// Handle ABCI requests.
 #[derive(Clone)]
 #[allow(dead_code, unreachable_pub)]
-pub struct App<DB, SS, S, I>
+// pub struct App<DB, SS, S, I>
+pub struct App
 where
-    SS: Blockstore + 'static,
-    S: KVStore,
+// SS: Blockstore + 'static,
+// S: KVStore,
 {
-    /// Database backing all key-value operations.
-    db: Arc<DB>,
-    /// State store, backing all the smart contracts.
-    ///
-    /// Must be kept separate from storage that can be influenced by network operations such as Bitswap;
-    /// nodes must be able to run transactions deterministically. By contrast the Bitswap store should
-    /// be able to read its own storage area as well as state storage, to serve content from both.
+    // /// Database backing all key-value operations.
+    // db: Arc<DB>,
+    // /// State store, backing all the smart contracts.
+    // ///
+    // /// Must be kept separate from storage that can be influenced by network operations such as Bitswap;
+    // /// nodes must be able to run transactions deterministically. By contrast the Bitswap store should
+    // /// be able to read its own storage area as well as state storage, to serve content from both.
     // state_store: Arc<SS>,
 
-    /// Namespace to store app state.
-    namespace: S::Namespace,
-    /// Collection of past state parameters.
-    ///
-    /// We store the state hash for the height of the block where it was committed,
-    /// which is different from how Tendermint Core will refer to it in queries,
-    /// shifted by one, because Tendermint Core will use the height where the hash
-    /// *appeared*, which is in the block *after* the one which was committed.
-    ///
-    /// The state also contains things like timestamp and the network version,
-    /// so that we can retrospectively execute EVM messages at past block heights
-    /// in read-only mode.
+    // /// Namespace to store app state.
+    // namespace: S::Namespace,
+    // /// Collection of past state parameters.
+    // ///
+    // /// We store the state hash for the height of the block where it was committed,
+    // /// which is different from how Tendermint Core will refer to it in queries,
+    // /// shifted by one, because Tendermint Core will use the height where the hash
+    // /// *appeared*, which is in the block *after* the one which was committed.
+    // ///
+    // /// The state also contains things like timestamp and the network version,
+    // /// so that we can retrospectively execute EVM messages at past block heights
+    // /// in read-only mode.
     // state_hist: KVCollection<S, BlockHeight, EvmStateParams>,
-    /// Interpreter for block lifecycle events.
-    interpreter: Arc<I>,
-    /// CID resolution pool.
+    // /// Interpreter for block lifecycle events.
+    // interpreter: Arc<I>,
+    // /// CID resolution pool.
     // resolve_pool: CheckpointPool,
-    /// The parent finality provider for top down checkpoint
+    // /// The parent finality provider for top down checkpoint
     // parent_finality_provider: Arc<ParentFinalityProvider>,
-    /// State accumulating changes during block execution.
-    exec_state: Arc<Mutex<Option<EvmExecState<SS>>>>,
-    /// Projected (partial) state accumulating during transaction checks.
-    check_state: CheckStateRef<SS>,
-    /// How much history to keep.
-    ///
-    /// Zero means unlimited.
-    state_hist_size: u64,
+    // /// State accumulating changes during block execution.
+    // exec_state: Arc<Mutex<Option<EvmExecState<SS>>>>,
+    // /// Projected (partial) state accumulating during transaction checks.
+    // check_state: CheckStateRef<SS>,
+    // /// How much history to keep.
+    // // /// Zero means unlimited.
+    // state_hist_size: u64,
 }
 
 #[allow(dead_code, unreachable_pub)]
-impl<DB, SS, S, I> App<DB, SS, S, I>
+impl App
 where
-    S: KVStore
-        + Codec<AppState>
-        + Encode<AppStoreKey>
-        + Encode<BlockHeight>
-        + Codec<EvmStateParams>,
-    DB: KVWritable<S> + KVReadable<S> + Clone + 'static,
-    SS: Blockstore + Clone + 'static,
+// S: KVStore,
+// + Codec<AppState>
+// + Encode<AppStoreKey>
+// + Encode<BlockHeight>
+// + Codec<EvmStateParams>,
+// DB: KVWritable<S> + KVReadable<S> + Clone + 'static,
+// SS: Blockstore + Clone + 'static,
 {
-    pub fn new(
-        config: AppConfig<S>,
-        db: DB,
+    pub const fn new(// config: AppConfig<S>,
+        // db: DB,
         // state_store: SS,
-        interpreter: I,
+        // interpreter: I,
         // resolve_pool: CheckpointPool,
         // parent_finality_provider: Arc<ParentFinalityProvider>,
     ) -> Result<Self> {
         let app = Self {
-            db: Arc::new(db),
+            // db: Arc::new(db),
             // state_store: Arc::new(state_store),
             // multi_engine: Arc::new(MultiEngine::new(1)),
             // builtin_actors_bundle: config.builtin_actors_bundle,
-            namespace: config.app_namespace,
+            // namespace: config.app_namespace,
             // state_hist: KVCollection::new(config.state_hist_namespace),
-            state_hist_size: config.state_hist_size,
-            interpreter: Arc::new(interpreter),
+            // state_hist_size: config.state_hist_size,
+            // interpreter: Arc::new(interpreter),
             // resolve_pool,
             // parent_finality_provider,
-            exec_state: Arc::new(Mutex::new(None)),
-            check_state: Arc::new(tokio::sync::Mutex::new(None)),
+            // exec_state: Arc::new(Mutex::new(None)),
+            // check_state: Arc::new(tokio::sync::Mutex::new(None)),
         };
         // app.init_committed_state()?;
         Ok(app)
@@ -359,42 +359,44 @@ where
 // the `tower-abci` library would throw an exception when it tried to convert a
 // `Response::Exception` into a `ConsensusResponse` for example.
 #[async_trait]
-impl<DB, SS, S, I> Application for App<DB, SS, S, I>
+// impl<DB, SS, S, I> Application for App<DB, SS, S, I>
+impl Application for App
 where
-    S: KVStore
-        + Codec<AppState>
-        + Encode<AppStoreKey>
-        + Encode<BlockHeight>
-        + Codec<EvmStateParams>,
-    S::Namespace: Sync + Send,
-    DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
-    SS: Blockstore + Clone + Send + Sync + 'static,
-    I: GenesisInterpreter<
-            State = EvmGenesisState<SS>,
-            Genesis = Vec<u8>,
-            Output = EvmGenesisOutput,
-        >,
-    // I: ProposalInterpreter<
-    //     State = (CheckpointPool, Arc<ParentFinalityProvider>),
-    //     Message = Vec<u8>,
-    // >,
-    // I: ExecInterpreter<
-    //     State = (
-    //         CheckpointPool,
-    //         Arc<ParentFinalityProvider>,
-    //         EvmExecState<SS>,
-    //     ),
-    //     Message = Vec<u8>,
-    //     BeginOutput = EvmApplyRet,
-    //     DeliverOutput = BytesMessageApplyRes,
-    //     EndOutput = (),
-    // >,
-    I: CheckInterpreter<
-            State = EvmExecState<ReadOnlyBlockstore<SS>>,
-            Message = Vec<u8>,
-            Output = (),
-        >,
-    I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
+// S: KVStore,
+// + Codec<AppState>
+// + Encode<AppStoreKey>
+// + Encode<BlockHeight>
+// + Codec<EvmStateParams>,
+// S::Namespace: Sync + Send,
+// DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
+// SS: Blockstore + Clone + Send + Sync + 'static,
+// todo Implement the corresponding trait
+// I: GenesisInterpreter<
+//         State = EvmGenesisState<SS>,
+//         Genesis = Vec<u8>,
+//         Output = EvmGenesisOutput,
+//     >,
+// I: ProposalInterpreter<
+//     State = (CheckpointPool, Arc<ParentFinalityProvider>),
+//     Message = Vec<u8>,
+// >,
+// I: ExecInterpreter<
+//     State = (
+//         CheckpointPool,
+//         Arc<ParentFinalityProvider>,
+//         EvmExecState<SS>,
+//     ),
+//     Message = Vec<u8>,
+//     BeginOutput = EvmApplyRet,
+//     DeliverOutput = BytesMessageApplyRes,
+//     EndOutput = (),
+// >,
+// I: CheckInterpreter<
+//         State = EvmExecState<ReadOnlyBlockstore<SS>>,
+//         Message = Vec<u8>,
+//         Output = (),
+//     >,
+// I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
 {
     /// Provide information about the ABCI application.
     async fn info(&self, _request: request::Info) -> AbciResult<response::Info> {

@@ -2,6 +2,9 @@
 #![allow(missing_docs)]
 
 mod app;
+mod cmd;
+mod settings;
+mod store;
 
 // Different type from `ChainEpoch` just because we might use epoch in a more traditional sense for checkpointing.
 pub type BlockHeight = u64;
