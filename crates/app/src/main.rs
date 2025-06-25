@@ -1,10 +1,10 @@
 #![allow(missing_docs)]
-use tracing_subscriber::FmtSubscriber;
 pub use metis_app_options as options;
+use tracing_subscriber::FmtSubscriber;
 
+mod app;
 mod cmd;
 mod settings;
-mod app;
 mod store;
 
 #[tokio::main]
