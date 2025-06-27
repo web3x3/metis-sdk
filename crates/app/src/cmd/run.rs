@@ -1,10 +1,7 @@
-use crate::{
-    app::App, cmd, cmd::key::read_secret_key, settings::Settings, store::MemoryBlockstore,
-};
+use crate::{app::App, cmd, cmd::key::read_secret_key, settings::Settings};
 use anyhow::{Context, anyhow};
 use metis_app_options::run::RunArgs;
 use metis_chain::tm_abci::abci_app::ApplicationService;
-
 pub use tendermint_rpc::HttpClient;
 use tower_abci::v038::{Server, split};
 
@@ -59,22 +56,7 @@ async fn run(settings: Settings) -> anyhow::Result<()> {
     // let ns = Namespaces::default();
     // let _db = open_db(&settings, &ns).context("error opening DB")?;
 
-    // Blockstore for actors.
-    let state_store = MemoryBlockstore::default();
-
-    let app: App<MemoryBlockstore> = App::new(
-        // AppConfig {
-        //     app_namespace: ns.app,
-        //     state_hist_namespace: ns.state_hist,
-        //     state_hist_size: settings.db.state_hist_size,
-        //     builtin_actors_bundle: settings.builtin_actors_bundle(),
-        // },
-        // db,
-        state_store,
-        // interpreter,
-        // resolve_pool,
-        // parent_finality_provider.clone(),
-    )?;
+    let app: App = App::new()?;
 
     let service = ApplicationService(app);
 

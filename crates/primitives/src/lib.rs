@@ -30,7 +30,8 @@ pub use revm::context_interface::{
     },
 };
 pub use revm::database::{
-    CacheDB, DBErrorMarker, Database, DatabaseCommit, DatabaseRef, EmptyDB, PlainAccount,
+    Cache, CacheDB, CacheState, DBErrorMarker, Database, DatabaseCommit, DatabaseRef, EmptyDB,
+    PlainAccount, State,
 };
 pub use revm::precompile::{PrecompileError, PrecompileOutput, PrecompileSpecId, Precompiles};
 pub use revm::primitives::{

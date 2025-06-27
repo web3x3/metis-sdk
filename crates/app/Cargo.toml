@@ -25,6 +25,7 @@ tracing-subscriber.workspace = true
 metis-chain.workspace = true
 metis-storage.workspace = true
 metis-vm.workspace = true
+metis-pe.workspace = true
 metis-app-options.workspace = true
 metis-primitives.workspace = true
 
