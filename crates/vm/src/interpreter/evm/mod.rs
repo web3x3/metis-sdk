@@ -144,7 +144,7 @@ pub trait CheckInterpreter: Sync + Send {
         state: Self::State,
         msg: Self::Message,
         is_recheck: bool,
-    ) -> anyhow::Result<(Self::State, Self::Output)>;
+    ) -> anyhow::Result<Self::Output>;
 }
 
 /// Run a query over the ledger.

@@ -157,7 +157,6 @@ where
                 oldest_state_height: 0,
                 state_params: EvmStateParams {
                     state_root: Default::default(),
-                    chain_id: "".to_string(),
                 },
             }), // multi_engine: Arc::new(MultiEngine::new(1)),
                 // builtin_actors_bundle: config.builtin_actors_bundle,
@@ -422,14 +421,6 @@ where
 
     /// Called once upon genesis.
     async fn init_chain(&self, request: request::InitChain) -> AbciResult<response::InitChain> {
-        let chain_id = &self.app_state.state_params.chain_id;
-        if request.chain_id != chain_id.clone() {
-            // todo verify chain_id
-            // return Err(tower_abci::BoxError::new(format!(
-            //     "Current chain ID: {}, Tendermint chain ID: {}",
-            //     chain_id, request.chain_id
-            // )));
-        }
         // let state =
         //     EvmGenesisState::new(self.state_store_clone())
         //         .await
@@ -452,11 +443,6 @@ where
             oldest_state_height: height,
             state_params: EvmStateParams {
                 state_root: Default::default(),
-                // timestamp: out.timestamp,
-                // network_version: out.network_version,
-                // base_fee: out.base_fee,
-                // circ_supply: out.circ_supply,
-                chain_id: "".to_string(),
             },
         };
 
@@ -488,7 +474,6 @@ where
         // let (state_params, block_height) = self.state_params_at_height(height)?;
         let _state_params = EvmStateParams {
             state_root: self.app_state.state_root(),
-            chain_id: self.app_state.state_params.chain_id.clone(),
         };
 
         // tracing::info!(

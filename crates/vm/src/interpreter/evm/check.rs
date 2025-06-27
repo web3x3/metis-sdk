@@ -5,15 +5,14 @@ use crate::interpreter::evm::{
 };
 use async_trait::async_trait;
 
-use metis_primitives::Address;
-use metis_vm_lib::error::ExitCode;
+use metis_primitives::{Address, Env, InvalidTransaction};
 
 /// Transaction check results are expressed by the exit code, so that hopefully
 /// they would result in the same error code if they were applied.
 pub struct EvmCheckRet {
     pub sender: Address,
     pub gas_limit: u64,
-    pub exit_code: ExitCode,
+    pub error: Option<InvalidTransaction>,
     pub info: Option<String>,
 }
 
@@ -25,8 +24,9 @@ where
 {
     // We simulate the full pending state so that client can call methods on
     // contracts that haven't been deployed yet.
+    // TODO: change it to the state db.
     type State = EvmExecState<ReadOnlyBlockstore<DB>>;
-    type Message = metis_vm_lib::message::Message;
+    type Message = Env;
     type Output = EvmCheckRet;
 
     /// Check that:
@@ -35,87 +35,15 @@ where
     /// * sender has enough funds to cover the gas cost
     async fn check(
         &self,
-        state: Self::State,
+        _state: Self::State,
         msg: Self::Message,
         _is_recheck: bool,
-    ) -> anyhow::Result<(Self::State, Self::Output)> {
-        let checked = |state, exit_code: ExitCode, info: Option<String>| {
-            tracing::info!(
-                exit_code = exit_code.value(),
-                from = msg.from.to_string(),
-                to = msg.to.to_string(),
-                method_num = msg.method_num,
-                info = info.clone().unwrap_or_default(),
-                "check transaction"
-            );
-            let ret = EvmCheckRet {
-                sender: msg.from,
-                gas_limit: msg.gas_limit,
-                exit_code,
-                info,
-            };
-            Ok((state, ret))
-        };
-
-        if let Err(e) = msg.check() {
-            return checked(
-                state,
-                ExitCode::SYS_ASSERTION_FAILED,
-                Some(format!("pre-check failure: {:#}", e)),
-            );
-        }
-        /*
-                // NOTE: This would be a great place for let-else, but clippy runs into a compilation bug.
-                let state_tree = state.state_tree_mut();
-
-                // This code is left in place for reference of a partial check performed on top of `FvmCheckState`.
-                if let Some(id) = state_tree.lookup_id(&msg.from)? {
-                    if let Some(mut actor) = state_tree.get_actor(id)? {
-                        let balance_needed = msg.gas_fee_cap.clone() * msg.gas_limit;
-                        if actor.balance < balance_needed {
-                            return checked(
-                                state,
-                                ExitCode::SYS_SENDER_STATE_INVALID,
-                                Some(
-                                    format! {"actor balance {} less than needed {}", actor.balance, balance_needed},
-                                ),
-                            );
-                        } else if actor.sequence != msg.sequence {
-                            return checked(
-                                state,
-                                ExitCode::SYS_SENDER_STATE_INVALID,
-                                Some(
-                                    format! {"expected sequence {}, got {}", actor.sequence, msg.sequence},
-                                ),
-                            );
-                        } else if self.exec_in_check {
-                            // Instead of modifying just the partial state, we will execute the call in earnest.
-                            // This is required for fully supporting the Ethereum API "pending" queries, if that's needed.
-
-                            // This will stack the effect for subsequent transactions added to the mempool.
-                            let (apply_ret, _) = state.execute_explicit(msg.clone())?;
-                            return checked(
-                                state,
-                                apply_ret.msg_receipt.exit_code,
-                                apply_ret
-                                    .failure_info
-                                    .map(|i| i.to_string())
-                                    .filter(|s| !s.is_empty()),
-                            );
-                        } else {
-                            actor.sequence += 1;
-                            actor.balance -= balance_needed;
-                            state_tree.set_actor(id, actor);
-
-                            return checked(state, ExitCode::OK, None);
-                        }
-                    }
-                }
-        */
-        checked(
-            state,
-            ExitCode::SYS_SENDER_INVALID,
-            Some(format! {"cannot find actor {}", msg.from}),
-        )
+    ) -> anyhow::Result<Self::Output> {
+        Ok(EvmCheckRet {
+            sender: msg.tx.caller,
+            gas_limit: msg.tx.gas_limit,
+            error: None,
+            info: None,
+        })
     }
 }

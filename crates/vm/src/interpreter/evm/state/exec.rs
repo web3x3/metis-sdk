@@ -6,16 +6,6 @@ use std::sync::Arc;
 #[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct EvmStateParams {
     pub state_root: B256,
-    // pub timestamp: Timestamp,
-    // pub network_version: NetworkVersion,
-    // pub base_fee: TokenAmount,
-    // pub circ_supply: TokenAmount,
-    // /// The [`ChainID`] is stored here to hint at the possibility that
-    // /// a chain ID might change during the lifetime of a chain, in case
-    // /// there is a fork, or perhaps a subnet migration in IPC.
-    // ///
-    // /// How exactly that would be communicated is unknown at this point.
-    pub chain_id: String,
 }
 
 /// A state we create for the execution of all the messages in a block.

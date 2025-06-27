@@ -1,6 +1,7 @@
 use std::hash::{BuildHasher, BuildHasherDefault, Hash, Hasher};
 use std::ops::{Add, AddAssign, Sub, SubAssign};
 
+pub use alloy_evm::EvmEnv;
 pub use alloy_primitives::{
     Signature, SignatureError, Signed, TxHash, TxIndex, TxKind, TxNonce, TxNumber, Uint,
     map::DefaultHashBuilder,
@@ -49,6 +50,13 @@ pub use revm::state::{
 pub use revm::{Context, MainBuilder, MainContext, MainnetEvm};
 pub use revm::{ExecuteCommitEvm, ExecuteEvm, InspectEvm};
 pub use rustc_hash::FxBuildHasher;
+
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct Env {
+    pub block: BlockEnv,
+    pub tx: TxEnv,
+    pub cfg: CfgEnv,
+}
 
 /// Mapping from address to [`Account`].
 pub type AccountState = HashMap<Address, Account>;
