@@ -1,11 +1,11 @@
 use crate::interpreter::evm::store::block::Blockstore;
-use cid::Cid;
+use metis_primitives::B256;
 use std::sync::Arc;
 
 /// Parts of the state which evolve during the lifetime of the chain.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone, Eq, PartialEq, Default)]
 pub struct EvmStateParams {
-    pub state_root: Cid,
+    pub state_root: B256,
     // pub timestamp: Timestamp,
     // pub network_version: NetworkVersion,
     // pub base_fee: TokenAmount,
@@ -15,7 +15,7 @@ pub struct EvmStateParams {
     // /// there is a fork, or perhaps a subnet migration in IPC.
     // ///
     // /// How exactly that would be communicated is unknown at this point.
-    // pub chain_id: u64,
+    pub chain_id: String,
 }
 
 /// A state we create for the execution of all the messages in a block.

@@ -1,13 +1,13 @@
 use std::path::PathBuf;
-// use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 
 use anyhow::Result;
 use async_trait::async_trait;
-use cid::Cid;
 use serde::Serialize;
 
 use metis_chain::tm_abci::abci_app::{AbciResult, Application};
 // use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
+use metis_primitives::B256;
 use metis_storage::KVStore;
 use metis_vm::interpreter::evm::{
     // BytesMessageQuery, CheckInterpreter, GenesisInterpreter, QueryInterpreter,
@@ -17,7 +17,7 @@ use metis_vm::interpreter::evm::{
         // genesis::{EvmGenesisOutput, EvmGenesisState},
         // query::EvmQueryState,
     },
-    // store::block::{Blockstore, ReadOnlyBlockstore},
+    store::block::Blockstore,
 };
 use tendermint::abci::request::FinalizeBlock;
 use tendermint::abci::{request, response};
@@ -44,6 +44,7 @@ enum _AppError {
 
 /// The application state record we keep a history of in the database.
 #[allow(unreachable_pub, dead_code)]
+#[derive(Clone, Default)]
 pub struct AppState {
     /// Last committed block height.
     block_height: u64,
@@ -54,14 +55,14 @@ pub struct AppState {
 }
 
 impl AppState {
-    const fn state_root(&self) -> Cid {
+    const fn state_root(&self) -> B256 {
         self.state_params.state_root
     }
     // pub fn chain_id(&self) -> ChainID {
     //     ChainID::from(self.state_params.chain_id)
     // }
     fn app_hash(&self) -> tendermint::hash::AppHash {
-        tendermint::hash::AppHash::try_from(self.state_root().to_bytes())
+        tendermint::hash::AppHash::try_from(self.state_root().to_vec())
             .expect("hash can be wrapped")
     }
 }
@@ -87,10 +88,10 @@ pub struct AppConfig<S: KVStore> {
 #[derive(Clone)]
 #[allow(dead_code, unreachable_pub)]
 // pub struct App<DB, SS, S, I>
-pub struct App
+pub struct App<SS>
 where
-// SS: Blockstore + 'static,
-// S: KVStore,
+    SS: Blockstore + 'static,
+    // S: KVStore,
 {
     // /// Database backing all key-value operations.
     // db: Arc<DB>,
@@ -99,8 +100,8 @@ where
     // /// Must be kept separate from storage that can be influenced by network operations such as Bitswap;
     // /// nodes must be able to run transactions deterministically. By contrast the Bitswap store should
     // /// be able to read its own storage area as well as state storage, to serve content from both.
-    // state_store: Arc<SS>,
-
+    state_store: Arc<SS>,
+    app_state: Arc<AppState>,
     // /// Namespace to store app state.
     // namespace: S::Namespace,
     // /// Collection of past state parameters.
@@ -130,36 +131,44 @@ where
 }
 
 #[allow(dead_code, unreachable_pub)]
-impl App
+impl<SS> App<SS>
 where
-// S: KVStore,
-// + Codec<AppState>
-// + Encode<AppStoreKey>
-// + Encode<BlockHeight>
-// + Codec<EvmStateParams>,
-// DB: KVWritable<S> + KVReadable<S> + Clone + 'static,
-// SS: Blockstore + Clone + 'static,
+    // S: KVStore,
+    // + Codec<AppState>
+    // + Encode<AppStoreKey>
+    // + Encode<BlockHeight>
+    // + Codec<EvmStateParams>,
+    // DB: KVWritable<S> + KVReadable<S> + Clone + 'static,
+    SS: Blockstore + Clone + 'static,
 {
-    pub const fn new(// config: AppConfig<S>,
+    pub fn new(
+        // config: AppConfig<S>,
         // db: DB,
-        // state_store: SS,
+        state_store: SS,
         // interpreter: I,
         // resolve_pool: CheckpointPool,
         // parent_finality_provider: Arc<ParentFinalityProvider>,
     ) -> Result<Self> {
         let app = Self {
             // db: Arc::new(db),
-            // state_store: Arc::new(state_store),
-            // multi_engine: Arc::new(MultiEngine::new(1)),
-            // builtin_actors_bundle: config.builtin_actors_bundle,
-            // namespace: config.app_namespace,
-            // state_hist: KVCollection::new(config.state_hist_namespace),
-            // state_hist_size: config.state_hist_size,
-            // interpreter: Arc::new(interpreter),
-            // resolve_pool,
-            // parent_finality_provider,
-            // exec_state: Arc::new(Mutex::new(None)),
-            // check_state: Arc::new(tokio::sync::Mutex::new(None)),
+            state_store: Arc::new(state_store),
+            app_state: Arc::new(AppState {
+                block_height: 0,
+                oldest_state_height: 0,
+                state_params: EvmStateParams {
+                    state_root: Default::default(),
+                    chain_id: "".to_string(),
+                },
+            }), // multi_engine: Arc::new(MultiEngine::new(1)),
+                // builtin_actors_bundle: config.builtin_actors_bundle,
+                // namespace: config.app_namespace,
+                // state_hist: KVCollection::new(config.state_hist_namespace),
+                // state_hist_size: config.state_hist_size,
+                // interpreter: Arc::new(interpreter),
+                // resolve_pool,
+                // parent_finality_provider,
+                // exec_state: Arc::new(Mutex::new(None)),
+                // check_state: Arc::new(tokio::sync::Mutex::new(None)),
         };
         // app.init_committed_state()?;
         Ok(app)
@@ -358,65 +367,69 @@ where
 // `Response::Exception` into a `ConsensusResponse` for example.
 #[async_trait]
 // impl<DB, SS, S, I> Application for App<DB, SS, S, I>
-impl Application for App
+impl<SS> Application for App<SS>
 where
-// S: KVStore,
-// + Codec<AppState>
-// + Encode<AppStoreKey>
-// + Encode<BlockHeight>
-// + Codec<EvmStateParams>,
-// S::Namespace: Sync + Send,
-// DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
-// SS: Blockstore + Clone + Send + Sync + 'static,
-// todo Implement the corresponding trait
-// I: GenesisInterpreter<
-//         State = EvmGenesisState<SS>,
-//         Genesis = Vec<u8>,
-//         Output = EvmGenesisOutput,
-//     >,
-// I: ProposalInterpreter<
-//     State = (CheckpointPool, Arc<ParentFinalityProvider>),
-//     Message = Vec<u8>,
-// >,
-// I: ExecInterpreter<
-//     State = (
-//         CheckpointPool,
-//         Arc<ParentFinalityProvider>,
-//         EvmExecState<SS>,
-//     ),
-//     Message = Vec<u8>,
-//     BeginOutput = EvmApplyRet,
-//     DeliverOutput = BytesMessageApplyRes,
-//     EndOutput = (),
-// >,
-// I: CheckInterpreter<
-//         State = EvmExecState<ReadOnlyBlockstore<SS>>,
-//         Message = Vec<u8>,
-//         Output = (),
-//     >,
-// I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
+    // S: KVStore,
+    // + Codec<AppState>
+    // + Encode<AppStoreKey>
+    // + Encode<BlockHeight>
+    // + Codec<EvmStateParams>,
+    // S::Namespace: Sync + Send,
+    // DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
+    SS: Blockstore + Clone + Send + Sync + 'static,
+    // todo Implement the corresponding trait
+    // I: GenesisInterpreter<
+    //         State = EvmGenesisState<SS>,
+    //         Genesis = Vec<u8>,
+    //         Output = EvmGenesisOutput,
+    //     >,
+    // I: ProposalInterpreter<
+    //     State = (CheckpointPool, Arc<ParentFinalityProvider>),
+    //     Message = Vec<u8>,
+    // >,
+    // I: ExecInterpreter<
+    //     State = (
+    //         CheckpointPool,
+    //         Arc<ParentFinalityProvider>,
+    //         EvmExecState<SS>,
+    //     ),
+    //     Message = Vec<u8>,
+    //     BeginOutput = EvmApplyRet,
+    //     DeliverOutput = BytesMessageApplyRes,
+    //     EndOutput = (),
+    // >,
+    // I: CheckInterpreter<
+    //         State = EvmExecState<ReadOnlyBlockstore<SS>>,
+    //         Message = Vec<u8>,
+    //         Output = (),
+    //     >,
+    // I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
 {
     /// Provide information about the ABCI application.
     async fn info(&self, _request: request::Info) -> AbciResult<response::Info> {
-        // todo get state_root hash
-        // let state = self.committed_state()?;
-
-        // todo get latest block height
-        // let height = tendermint::block::Height::try_from(state.block_height)?;
-        let height = tendermint::block::Height::default();
+        let height = tendermint::block::Height::try_from(self.app_state.block_height)?;
+        let app_hash = self.app_state.app_hash();
 
         let info = response::Info {
             data: "metis".to_string(),
             version: "metis-v1".to_string(),
             app_version: 1,
             last_block_height: height,
-            last_block_app_hash: Default::default(),
+            last_block_app_hash: app_hash,
         };
         Ok(info)
     }
 
     /// Called once upon genesis.
     async fn init_chain(&self, request: request::InitChain) -> AbciResult<response::InitChain> {
+        let chain_id = &self.app_state.state_params.chain_id;
+        if request.chain_id != chain_id.clone() {
+            // todo verify chain_id
+            // return Err(tower_abci::BoxError::new(format!(
+            //     "Current chain ID: {}, Tendermint chain ID: {}",
+            //     chain_id, request.chain_id
+            // )));
+        }
         // let state =
         //     EvmGenesisState::new(self.state_store_clone())
         //         .await
@@ -443,7 +456,7 @@ where
                 // network_version: out.network_version,
                 // base_fee: out.base_fee,
                 // circ_supply: out.circ_supply,
-                // chain_id: out.chain_id.into(),
+                chain_id: "".to_string(),
             },
         };
 
@@ -466,6 +479,7 @@ where
     }
 
     /// Query the application for data at the current or past height.
+    /// // todo now only latest state
     async fn query(&self, _request: request::Query) -> AbciResult<response::Query> {
         // todo get state store
         // let db = self.state_store_clone();
@@ -473,7 +487,8 @@ where
         // todo get state from exec state
         // let (state_params, block_height) = self.state_params_at_height(height)?;
         let _state_params = EvmStateParams {
-            state_root: Default::default(),
+            state_root: self.app_state.state_root(),
+            chain_id: self.app_state.state_params.chain_id.clone(),
         };
 
         // tracing::info!(
@@ -705,9 +720,9 @@ where
         */
 
         let response = response::Commit {
-            data: Default::default(),
+            data: self.app_state.app_hash().as_bytes().to_vec().into(),
             // We have to retain blocks until we can support Snapshots.
-            retain_height: Default::default(),
+            retain_height: tendermint::block::Height::try_from(self.app_state.block_height)?,
         };
         Ok(response)
     }

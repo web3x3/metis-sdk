@@ -20,7 +20,6 @@ alith = { workspace = true, optional = true }
 moka.workspace = true
 
 serde.workspace = true
-cid.workspace = true
 async-trait.workspace = true
 tracing.workspace = true
 

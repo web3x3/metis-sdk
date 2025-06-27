@@ -1,5 +1,4 @@
 use crate::interpreter::evm::{state::exec::EvmExecState, store::block::Blockstore};
-// todo use metis state adaptor
 use reth::revm::db::State;
 
 /// Create an empty state tree.
