@@ -7,5 +7,6 @@ edition.workspace = true
 
 [dependencies]
 revm.workspace = true
+alloy-evm.workspace = true
 serde.workspace = true
 rustc-hash.workspace = true
