@@ -9,16 +9,6 @@ use metis_chain::tm_abci::abci_app::{AbciResult, Application};
 // use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
 use metis_primitives::B256;
 use metis_storage::KVStore;
-use metis_vm::interpreter::evm::{
-    // BytesMessageQuery, CheckInterpreter, GenesisInterpreter, QueryInterpreter,
-    state::{
-        // CheckStateRef,
-        exec::EvmStateParams,
-        // genesis::{EvmGenesisOutput, EvmGenesisState},
-        // query::EvmQueryState,
-    },
-    store::block::Blockstore,
-};
 use tendermint::abci::request::FinalizeBlock;
 use tendermint::abci::{request, response};
 
@@ -44,26 +34,17 @@ enum _AppError {
 
 /// The application state record we keep a history of in the database.
 #[allow(unreachable_pub, dead_code)]
-#[derive(Clone, Default)]
 pub struct AppState {
     /// Last committed block height.
     block_height: u64,
     /// Oldest state hash height.
     oldest_state_height: u64,
-    /// Last committed version of the evolving state of the EVM.
-    state_params: EvmStateParams,
 }
 
 impl AppState {
-    const fn state_root(&self) -> B256 {
-        self.state_params.state_root
-    }
-    // pub fn chain_id(&self) -> ChainID {
-    //     ChainID::from(self.state_params.chain_id)
-    // }
+    // TODO: calculate the state root hash from the reth state provider.
     fn app_hash(&self) -> tendermint::hash::AppHash {
-        tendermint::hash::AppHash::try_from(self.state_root().to_vec())
-            .expect("hash can be wrapped")
+        tendermint::hash::AppHash::try_from(B256::ZERO.to_vec()).expect("hash can be wrapped")
     }
 }
 
@@ -87,20 +68,8 @@ pub struct AppConfig<S: KVStore> {
 /// Handle ABCI requests.
 #[derive(Clone)]
 #[allow(dead_code, unreachable_pub)]
-// pub struct App<DB, SS, S, I>
-pub struct App<SS>
-where
-    SS: Blockstore + 'static,
-    // S: KVStore,
-{
-    // /// Database backing all key-value operations.
-    // db: Arc<DB>,
-    // /// State store, backing all the smart contracts.
-    // ///
-    // /// Must be kept separate from storage that can be influenced by network operations such as Bitswap;
-    // /// nodes must be able to run transactions deterministically. By contrast the Bitswap store should
-    // /// be able to read its own storage area as well as state storage, to serve content from both.
-    state_store: Arc<SS>,
+pub struct App {
+    // TODO: use the reth state provider
     app_state: Arc<AppState>,
     // /// Namespace to store app state.
     // namespace: S::Namespace,
@@ -131,33 +100,18 @@ where
 }
 
 #[allow(dead_code, unreachable_pub)]
-impl<SS> App<SS>
-where
-    // S: KVStore,
-    // + Codec<AppState>
-    // + Encode<AppStoreKey>
-    // + Encode<BlockHeight>
-    // + Codec<EvmStateParams>,
-    // DB: KVWritable<S> + KVReadable<S> + Clone + 'static,
-    SS: Blockstore + Clone + 'static,
-{
-    pub fn new(
-        // config: AppConfig<S>,
+impl App {
+    pub fn new(// config: AppConfig<S>,
         // db: DB,
-        state_store: SS,
+        // state_store: SS,
         // interpreter: I,
         // resolve_pool: CheckpointPool,
         // parent_finality_provider: Arc<ParentFinalityProvider>,
     ) -> Result<Self> {
         let app = Self {
-            // db: Arc::new(db),
-            state_store: Arc::new(state_store),
             app_state: Arc::new(AppState {
                 block_height: 0,
                 oldest_state_height: 0,
-                state_params: EvmStateParams {
-                    state_root: Default::default(),
-                },
             }), // multi_engine: Arc::new(MultiEngine::new(1)),
                 // builtin_actors_bundle: config.builtin_actors_bundle,
                 // namespace: config.app_namespace,
@@ -366,44 +320,7 @@ where
 // `Response::Exception` into a `ConsensusResponse` for example.
 #[async_trait]
 // impl<DB, SS, S, I> Application for App<DB, SS, S, I>
-impl<SS> Application for App<SS>
-where
-    // S: KVStore,
-    // + Codec<AppState>
-    // + Encode<AppStoreKey>
-    // + Encode<BlockHeight>
-    // + Codec<EvmStateParams>,
-    // S::Namespace: Sync + Send,
-    // DB: KVWritable<S> + KVReadable<S> + Clone + Send + Sync + 'static,
-    SS: Blockstore + Clone + Send + Sync + 'static,
-    // todo Implement the corresponding trait
-    // I: GenesisInterpreter<
-    //         State = EvmGenesisState<SS>,
-    //         Genesis = Vec<u8>,
-    //         Output = EvmGenesisOutput,
-    //     >,
-    // I: ProposalInterpreter<
-    //     State = (CheckpointPool, Arc<ParentFinalityProvider>),
-    //     Message = Vec<u8>,
-    // >,
-    // I: ExecInterpreter<
-    //     State = (
-    //         CheckpointPool,
-    //         Arc<ParentFinalityProvider>,
-    //         EvmExecState<SS>,
-    //     ),
-    //     Message = Vec<u8>,
-    //     BeginOutput = EvmApplyRet,
-    //     DeliverOutput = BytesMessageApplyRes,
-    //     EndOutput = (),
-    // >,
-    // I: CheckInterpreter<
-    //         State = EvmExecState<ReadOnlyBlockstore<SS>>,
-    //         Message = Vec<u8>,
-    //         Output = (),
-    //     >,
-    // I: QueryInterpreter<State = EvmQueryState<SS>, Query = BytesMessageQuery, Output = ()>,
-{
+impl Application for App {
     /// Provide information about the ABCI application.
     async fn info(&self, _request: request::Info) -> AbciResult<response::Info> {
         let height = tendermint::block::Height::try_from(self.app_state.block_height)?;
@@ -441,9 +358,6 @@ where
         let app_state = AppState {
             block_height: height,
             oldest_state_height: height,
-            state_params: EvmStateParams {
-                state_root: Default::default(),
-            },
         };
 
         let response = response::InitChain {
@@ -452,11 +366,7 @@ where
             app_hash: app_state.app_hash(),
         };
 
-        tracing::info!(
-            state_root = format!("{}", app_state.state_root()),
-            app_hash = format!("{}", app_state.app_hash()),
-            "init chain"
-        );
+        tracing::info!(app_hash = format!("{}", app_state.app_hash()), "init chain");
 
         // todo set state
         // self.set_committed_state(app_state)?;
@@ -467,52 +377,6 @@ where
     /// Query the application for data at the current or past height.
     /// // todo now only latest state
     async fn query(&self, _request: request::Query) -> AbciResult<response::Query> {
-        // todo get state store
-        // let db = self.state_store_clone();
-        // let height = EvmQueryHeight::from(request.height.value());
-        // todo get state from exec state
-        // let (state_params, block_height) = self.state_params_at_height(height)?;
-        let _state_params = EvmStateParams {
-            state_root: self.app_state.state_root(),
-        };
-
-        // tracing::info!(
-        //     query_height = request.height.value(),
-        //     request.height,
-        //     state_root = state_params.state_root.to_string(),
-        //     "running query"
-        // );
-
-        // // Don't run queries on the empty state, they won't work.
-        // if block_height == 0 {
-        //     return Ok(invalid_query(
-        //         AppError::NotInitialized,
-        //         "The app hasn't been initialized yet.".to_owned(),
-        //     ));
-        // }
-
-        // let state = EvmQueryState::new(
-        //     db,
-        //     // self.multi_engine.clone(),
-        //     request.height.try_into()?,
-        //     state_params,
-        //     self.check_state.clone(),
-        //     false,
-        // )
-        //     .context("error creating query state")?;
-
-        // let qry = (request.path, request.data.to_vec());
-
-        // let (_, _result) = self
-        //     .interpreter
-        //     .query(state, qry)
-        //     .await
-        //     .context("error running query")?;
-
-        // let response = match result {
-        //     Err(e) => invalid_query(AppError::InvalidEncoding, e.description),
-        //     Ok(result) => to_query(result, block_height)?,
-        // };
         Ok(response::Query {
             code: Default::default(),
             log: "".to_string(),

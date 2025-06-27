@@ -5,7 +5,6 @@ use tracing_subscriber::FmtSubscriber;
 mod app;
 mod cmd;
 mod settings;
-mod store;
 
 #[tokio::main]
 async fn main() {
