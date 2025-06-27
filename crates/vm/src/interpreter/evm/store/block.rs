@@ -1,4 +1,4 @@
-use cid::Cid;
+use metis_primitives::B256;
 
 #[derive(Copy, Clone)]
 pub struct Block<D>
@@ -11,30 +11,30 @@ where
 
 pub trait Blockstore {
     /// Gets the block from the blockstore.
-    fn get(&self, k: &Cid) -> anyhow::Result<Option<Vec<u8>>>;
+    fn get(&self, k: &B256) -> anyhow::Result<Option<Vec<u8>>>;
 
-    /// Put a block with a pre-computed cid.
+    /// Put a block with a pre-computed BlockHash(B256).
     ///
-    /// If you don't yet know the CID, use put. Some blockstores will re-compute the CID internally
+    /// If you don't yet know the Hash, use put. Some blockstores will re-compute the Hash internally
     /// even if you provide it.
     ///
-    /// If you _do_ already know the CID, use this method as some blockstores _won't_ recompute it.
-    fn put_keyed(&self, k: &Cid, block: &[u8]) -> anyhow::Result<()>;
+    /// If you _do_ already know the Hash, use this method as some blockstores _won't_ recompute it.
+    fn put_keyed(&self, k: &B256, block: &[u8]) -> anyhow::Result<()>;
 
     /// Checks if the blockstore has the specified block.
-    fn has(&self, k: &Cid) -> anyhow::Result<bool> {
+    fn has(&self, k: &B256) -> anyhow::Result<bool> {
         Ok(self.get(k)?.is_some())
     }
 
     /// Puts the block into the blockstore, computing the hash with the specified multicodec.
     ///
     /// By default, this defers to put.
-    fn put<D>(&self, _block: &Block<D>) -> anyhow::Result<Cid>
+    fn put<D>(&self, _block: &Block<D>) -> anyhow::Result<B256>
     where
         Self: Sized,
         D: AsRef<[u8]>,
     {
-        Ok(Cid::default())
+        Ok(B256::default())
     }
 
     fn put_many<D, I>(&self, _blocks: I) -> anyhow::Result<()>
@@ -46,20 +46,20 @@ pub trait Blockstore {
         Ok(())
     }
 
-    /// Bulk-put pre-keyed blocks into the blockstore.
-    ///
-    /// By default, this defers to put_keyed.
-    fn put_many_keyed<D, I>(&self, blocks: I) -> anyhow::Result<()>
-    where
-        Self: Sized,
-        D: AsRef<[u8]>,
-        I: IntoIterator<Item = (Cid, D)>,
-    {
-        for (c, b) in blocks {
-            self.put_keyed(&c, b.as_ref())?
-        }
-        Ok(())
-    }
+    // /// Bulk-put pre-keyed blocks into the blockstore.
+    // ///
+    // /// By default, this defers to put_keyed.
+    // fn put_many_keyed<D, I>(&self, blocks: I) -> anyhow::Result<()>
+    // where
+    //     Self: Sized,
+    //     D: AsRef<[u8]>,
+    //     I: IntoIterator<Item = (B256, D)>,
+    // {
+    //     for (c, b) in blocks {
+    //         self.put_keyed(c, b.as_ref())?
+    //     }
+    //     Ok(())
+    // }
 }
 
 #[derive(Clone)]
@@ -75,11 +75,11 @@ impl<DB> Blockstore for ReadOnlyBlockstore<DB>
 where
     DB: Blockstore,
 {
-    fn get(&self, k: &Cid) -> anyhow::Result<Option<Vec<u8>>> {
+    fn get(&self, k: &B256) -> anyhow::Result<Option<Vec<u8>>> {
         self.0.get(k)
     }
 
-    fn put_keyed(&self, k: &Cid, block: &[u8]) -> anyhow::Result<()> {
+    fn put_keyed(&self, k: &B256, block: &[u8]) -> anyhow::Result<()> {
         self.0.put_keyed(k, block)
     }
 }

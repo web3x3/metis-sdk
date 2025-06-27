@@ -1,5 +1,4 @@
 use anyhow::{Context, anyhow};
-use cid::Cid;
 use std::cell::RefCell;
 
 use crate::interpreter::evm::{
@@ -135,10 +134,10 @@ where
     }
     */
 
-    /// Read a CID from the underlying IPLD store.
-    pub fn store_get(&self, key: &Cid) -> anyhow::Result<Option<Vec<u8>>> {
-        self.store.get(key)
-    }
+    // /// Read a CID from the underlying IPLD store.
+    // pub fn store_get(&self, key: &Cid) -> anyhow::Result<Option<Vec<u8>>> {
+    //     self.store.get(key)
+    // }
 
     // /// Get the state of an actor, if it exists.
     // pub async fn actor_state(
