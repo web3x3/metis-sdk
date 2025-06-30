@@ -259,8 +259,8 @@ dependencies = [
 
 [[package]]
 name = "alith"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-client",
  "alith-core",
@@ -288,8 +288,8 @@ dependencies = [
 
 [[package]]
 name = "alith-client"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-devices",
  "alith-interface",
@@ -310,14 +310,15 @@ dependencies = [
 
 [[package]]
 name = "alith-core"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-client",
  "alith-interface",
  "alith-models",
  "anyhow",
  "async-trait",
+ "bon",
  "dagrs",
  "futures",
  "hnsw_rs",
@@ -325,6 +326,7 @@ dependencies = [
  "mcp-client",
  "rayon",
  "regex",
+ "reqwest 0.12.20",
  "schemars",
  "serde",
  "serde_json",
@@ -340,8 +342,8 @@ dependencies = [
 
 [[package]]
 name = "alith-data"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -361,8 +363,8 @@ dependencies = [
 
 [[package]]
 name = "alith-devices"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "anyhow",
  "colorful",
@@ -379,8 +381,8 @@ dependencies = [
 
 [[package]]
 name = "alith-inference"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-core",
  "alith-models",
@@ -411,8 +413,8 @@ dependencies = [
 
 [[package]]
 name = "alith-interface"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-devices",
  "alith-models",
@@ -436,8 +438,8 @@ dependencies = [
 
 [[package]]
 name = "alith-knowledge"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-client",
  "alith-core",
@@ -450,8 +452,8 @@ dependencies = [
 
 [[package]]
 name = "alith-models"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-prompt",
  "anyhow",
@@ -473,8 +475,8 @@ dependencies = [
 
 [[package]]
 name = "alith-prompt"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "anyhow",
  "colorful",
@@ -486,8 +488,8 @@ dependencies = [
 
 [[package]]
 name = "alith-store"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -499,8 +501,8 @@ dependencies = [
 
 [[package]]
 name = "alith-tee"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-core",
  "anyhow",
@@ -516,8 +518,8 @@ dependencies = [
 
 [[package]]
 name = "alith-tools"
-version = "0.8.2"
-source = "git+https://github.com/0xLazAI/alith?tag=v0.8.2#925df3ff87dde637d8307db8bcbda0cbda9776db"
+version = "0.9.0"
+source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba266144250ece94e55e"
 dependencies = [
  "alith-core",
  "async-trait",
@@ -1444,6 +1446,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "ansi_term"
+version = "0.12.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "d52a9bb7ec0cf484c551830a7ce27bd20d67eac647e1befb56b0be4ee39a55d2"
+dependencies = [
+ "winapi",
+]
+
+[[package]]
 name = "anstream"
 version = "0.6.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2076,7 +2087,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.11.0",
+ "itertools 0.10.5",
  "lazy_static",
  "lazycell",
  "log",
@@ -2099,7 +2110,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.13.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "regex",
@@ -3595,20 +3606,11 @@ dependencies = [
 
 [[package]]
 name = "dirs"
-version = "5.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "44c45a9d03d6676652bcb5e724c7e988de1acad23a711b5217ab9cbecbec2225"
-dependencies = [
- "dirs-sys 0.4.1",
-]
-
-[[package]]
-name = "dirs"
 version = "6.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c3e8aa94d75141228480295a7d0e7feb620b1a5ad9f12bc40be62411e38cce4e"
 dependencies = [
- "dirs-sys 0.5.0",
+ "dirs-sys",
 ]
 
 [[package]]
@@ -3619,18 +3621,6 @@ checksum = "b98cf8ebf19c3d1b223e151f99a4f9f0690dca41414773390fc824184ac833e1"
 dependencies = [
  "cfg-if",
  "dirs-sys-next",
-]
-
-[[package]]
-name = "dirs-sys"
-version = "0.4.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "520f05a5cbd335fae5a99ff7a6ab8627577660ee5cfd6a94a6a929b52ff0321c"
-dependencies = [
- "libc",
- "option-ext",
- "redox_users 0.4.6",
- "windows-sys 0.48.0",
 ]
 
 [[package]]
@@ -4685,25 +4675,25 @@ dependencies = [
 
 [[package]]
 name = "hf-hub"
-version = "0.4.2"
+version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cc03dcb0b0a83ae3f3363ec811014ae669f083e4e499c66602f447c4828737a1"
+checksum = "629d8f3bbeda9d148036d6b0de0a3ab947abd08ce90626327fc3547a49d59d97"
 dependencies = [
- "dirs 5.0.1",
+ "dirs",
  "futures",
  "http 1.3.1",
  "indicatif",
  "libc",
  "log",
  "num_cpus",
- "rand 0.8.5",
+ "rand 0.9.1",
  "reqwest 0.12.20",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
  "tokio",
  "ureq",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -5129,7 +5119,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.61.2",
+ "windows-core 0.57.0",
 ]
 
 [[package]]
@@ -6087,7 +6077,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.53.0",
+ "windows-targets 0.52.6",
 ]
 
 [[package]]
@@ -6548,6 +6538,15 @@ dependencies = [
 
 [[package]]
 name = "matchers"
+version = "0.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f099785f7595cc4b4553a174ce30dd7589ef93391ff414dbb67f62392b9e0ce1"
+dependencies = [
+ "regex-automata 0.1.10",
+]
+
+[[package]]
+name = "matchers"
 version = "0.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8263075bb86c5a1b1427b5ae862e8889656f126e9f77c484496e8b47cf5c5558"
@@ -6647,7 +6646,7 @@ dependencies = [
  "async-trait",
  "base64 0.22.1",
  "config",
- "dirs 6.0.0",
+ "dirs",
  "libsecp256k1",
  "metis-app-options",
  "metis-chain",
@@ -6664,7 +6663,7 @@ dependencies = [
  "tokio",
  "tower-abci",
  "tracing",
- "tracing-subscriber 0.3.19",
+ "tracing-subscriber 0.2.25",
 ]
 
 [[package]]
@@ -8242,7 +8241,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.14.0",
+ "itertools 0.10.5",
  "proc-macro2",
  "quote",
  "syn 2.0.101",
@@ -12945,7 +12944,7 @@ version = "3.1.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8b1fdf65dd6331831494dd616b30351c38e96e45921a27745cf98490458b90bb"
 dependencies = [
- "dirs 6.0.0",
+ "dirs",
 ]
 
 [[package]]
@@ -14159,6 +14158,17 @@ dependencies = [
 
 [[package]]
 name = "tracing-log"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f751112709b4e791d8ce53e32c4ed2d353565a795ce84da2285393f41557bdf2"
+dependencies = [
+ "log",
+ "once_cell",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-log"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ee855f1f400bd0e5c02d150ae5de3840039a3f54b025156404e34c23c03f47c3"
@@ -14182,6 +14192,16 @@ dependencies = [
 
 [[package]]
 name = "tracing-serde"
+version = "0.1.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bc6b213177105856957181934e4920de57730fc69bf42c37ee5bb664d406d9e1"
+dependencies = [
+ "serde",
+ "tracing-core",
+]
+
+[[package]]
+name = "tracing-serde"
 version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "704b1aeb7be0d0a84fc9828cae51dab5970fee5088f83d1dd7ee6f6246fc6ff1"
@@ -14196,7 +14216,20 @@ version = "0.2.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0e0d2eaa99c3c2e41547cfa109e910a68ea03823cccad4a0525dcbc9b01e8c71"
 dependencies = [
+ "ansi_term",
+ "chrono",
+ "lazy_static",
+ "matchers 0.0.1",
+ "regex",
+ "serde",
+ "serde_json",
+ "sharded-slab",
+ "smallvec",
+ "thread_local",
+ "tracing",
  "tracing-core",
+ "tracing-log 0.1.4",
+ "tracing-serde 0.1.3",
 ]
 
 [[package]]
@@ -14205,7 +14238,7 @@ version = "0.3.19"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e8189decb5ac0fa7bc8b96b7cb9b2701d60d48805aca84a238004d665fcc4008"
 dependencies = [
- "matchers",
+ "matchers 0.1.0",
  "nu-ansi-term",
  "once_cell",
  "regex",
@@ -14216,8 +14249,8 @@ dependencies = [
  "thread_local",
  "tracing",
  "tracing-core",
- "tracing-log",
- "tracing-serde",
+ "tracing-log 0.2.0",
+ "tracing-serde 0.2.0",
 ]
 
 [[package]]
@@ -15149,6 +15182,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "windows-sys"
+version = "0.60.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f2f500e4d28234f72040990ec9d39e3a6b950f9f22d3dba18416c35882612bcb"
+dependencies = [
+ "windows-targets 0.53.2",
+]
+
+[[package]]
 name = "windows-targets"
 version = "0.42.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -15196,9 +15238,9 @@ dependencies = [
 
 [[package]]
 name = "windows-targets"
-version = "0.53.0"
+version = "0.53.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b1e4c7e8ceaaf9cb7d7507c974735728ab453b67ef8f18febdd7c11fe59dca8b"
+checksum = "c66f69fcc9ce11da9966ddb31a40968cad001c5bedeb5c2b82ede4253ab48aef"
 dependencies = [
  "windows_aarch64_gnullvm 0.53.0",
  "windows_aarch64_msvc 0.53.0",
