@@ -9,7 +9,6 @@ use std::{
 };
 use tendermint_rpc::Url;
 
-#[allow(dead_code, unreachable_pub)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct GasOpt {
     pub min_gas_premium: u64,
@@ -17,14 +16,12 @@ pub struct GasOpt {
     pub max_fee_hist_size: u64,
 }
 
-#[allow(dead_code, unreachable_pub)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Address {
     pub host: String,
     pub port: u32,
 }
 
-#[allow(dead_code, unreachable_pub)]
 impl Address {
     pub fn addr(&self) -> String {
         format!("{}:{}", self.host, self.port)
@@ -32,7 +29,6 @@ impl Address {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(dead_code, unreachable_pub)]
 pub struct AbciSettings {
     pub listen: Address,
     /// Queue size for each ABCI component.
@@ -40,7 +36,6 @@ pub struct AbciSettings {
 }
 
 #[derive(Debug, Deserialize, Clone)]
-#[allow(dead_code, unreachable_pub)]
 pub struct DbSettings {
     /// Length of the app state history to keep in the database before pruning; 0 means unlimited.
     ///
@@ -51,7 +46,6 @@ pub struct DbSettings {
 /// Ethereum API facade settings.
 #[serde_as]
 #[derive(Debug, Deserialize, Clone)]
-#[allow(dead_code, unreachable_pub)]
 pub struct EthSettings {
     pub listen: Address,
     #[serde_as(as = "DurationSeconds<u64>")]
@@ -60,7 +54,6 @@ pub struct EthSettings {
     pub gas: GasOpt,
 }
 
-#[allow(dead_code, unreachable_pub)]
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
     /// Home directory configured on the CLI, to which all paths in settings can be set relative.
@@ -103,7 +96,6 @@ macro_rules! home_relative {
     };
 }
 
-#[allow(dead_code, unreachable_pub)]
 impl Settings {
     home_relative!(
         data_dir,
@@ -159,7 +151,6 @@ impl Settings {
 /// * absolute, e.g. "/foo/bar"
 /// * relative to the system `$HOME` directory, e.g. "~/foo/bar"
 /// * relative to the configured `--home-dir` directory, e.g. "foo/bar"
-#[allow(dead_code, unreachable_pub)]
 pub fn expand_path(home_dir: &Path, path: &Path) -> PathBuf {
     if path.starts_with("/") {
         PathBuf::from(path)
@@ -171,7 +162,6 @@ pub fn expand_path(home_dir: &Path, path: &Path) -> PathBuf {
 }
 
 /// Expand paths that begin with "~" to `$HOME`.
-#[allow(dead_code, unreachable_pub)]
 pub fn expand_tilde<P: AsRef<Path>>(path: P) -> PathBuf {
     let p = path.as_ref().to_path_buf();
     if !p.starts_with("~") {

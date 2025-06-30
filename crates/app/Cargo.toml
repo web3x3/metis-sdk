@@ -8,20 +8,6 @@ license.workspace = true
 readme.workspace = true
 
 [dependencies]
-async-trait.workspace = true
-anyhow.workspace = true
-tendermint.workspace = true
-serde.workspace = true
-tracing.workspace = true
-tokio.workspace = true
-base64.workspace = true
-tendermint-rpc.workspace = true
-tower-abci.workspace = true
-libsecp256k1.workspace = true
-rand_chacha.workspace = true
-serde_json.workspace = true
-tracing-subscriber.workspace = true
-
 metis-chain.workspace = true
 metis-storage.workspace = true
 metis-vm.workspace = true
@@ -29,9 +15,32 @@ metis-pe.workspace = true
 metis-app-options.workspace = true
 metis-primitives.workspace = true
 
+anyhow.workspace = true
+serde.workspace = true
+tracing.workspace = true
+tokio.workspace = true
+base64.workspace = true
+
+libsecp256k1.workspace = true
+rand_chacha.workspace = true
+serde_json.workspace = true
+tracing-subscriber.workspace = true
+
+# Comefbft abci
+tendermint.workspace = true
+async-trait.workspace = true
+tendermint-rpc.workspace = true
+tower-abci.workspace = true
+tower.workspace = true
+async-stm.workspace = true
+futures.workspace = true
+
 serde_with.workspace = true
 config.workspace = true
 dirs.workspace = true
 
 [lints]
 workspace = true
+
+[[example]]
+name = "abci_kvstore_app"

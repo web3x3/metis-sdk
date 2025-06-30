@@ -5,16 +5,15 @@ use anyhow::Result;
 use async_trait::async_trait;
 use serde::Serialize;
 
-use metis_chain::tm_abci::abci_app::{AbciResult, Application};
+use crate::abci::app::{AbciResult, Application};
 // use metis_storage::{Codec, Encode, KVReadable, KVStore, KVWritable};
 use metis_primitives::B256;
 use metis_storage::KVStore;
 use tendermint::abci::request::FinalizeBlock;
 use tendermint::abci::{request, response};
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 #[repr(u8)]
-#[allow(dead_code, unreachable_pub)]
 pub enum AppStoreKey {
     State,
 }
@@ -33,12 +32,12 @@ enum _AppError {
 }
 
 /// The application state record we keep a history of in the database.
-#[allow(unreachable_pub, dead_code)]
+#[derive(Debug)]
 pub struct AppState {
     /// Last committed block height.
-    block_height: u64,
+    pub block_height: u64,
     /// Oldest state hash height.
-    oldest_state_height: u64,
+    pub oldest_state_height: u64,
 }
 
 impl AppState {
@@ -48,7 +47,7 @@ impl AppState {
     }
 }
 
-#[allow(dead_code, unreachable_pub)]
+#[derive(Debug)]
 pub struct AppConfig<S: KVStore> {
     /// Namespace to store the current app state.
     pub app_namespace: S::Namespace,
@@ -66,8 +65,7 @@ pub struct AppConfig<S: KVStore> {
 // type ParentFinalityProvider = Toggle<CachedFinalityProvider>;
 
 /// Handle ABCI requests.
-#[derive(Clone)]
-#[allow(dead_code, unreachable_pub)]
+#[derive(Clone, Debug)]
 pub struct App {
     // TODO: use the reth state provider
     app_state: Arc<AppState>,
@@ -99,7 +97,6 @@ pub struct App {
     // state_hist_size: u64,
 }
 
-#[allow(dead_code, unreachable_pub)]
 impl App {
     pub fn new(// config: AppConfig<S>,
         // db: DB,
@@ -319,7 +316,6 @@ where
 // the `tower-abci` library would throw an exception when it tried to convert a
 // `Response::Exception` into a `ConsensusResponse` for example.
 #[async_trait]
-// impl<DB, SS, S, I> Application for App<DB, SS, S, I>
 impl Application for App {
     /// Provide information about the ABCI application.
     async fn info(&self, _request: request::Info) -> AbciResult<response::Info> {
