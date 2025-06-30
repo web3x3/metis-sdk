@@ -377,7 +377,7 @@ pub fn op_execute_sequential<DB: DatabaseRef>(
                 .map_err(op_evm_err_to_exec_error::<DB>)?
         };
 
-        evm.0.db().commit(result_and_state.state.clone());
+        evm.0.db_mut().commit(result_and_state.state.clone());
 
         let mut execution_result = TxExecutionResult::from_raw_op(tx_type, result_and_state);
 

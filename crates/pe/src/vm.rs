@@ -6,20 +6,16 @@ use crate::{
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use metis_primitives::{BuildIdentityHasher, HashMap, I257, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, EvmState, HashMap, I257, hash_deterministic};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
+use revm::context::ContextSetters;
 #[cfg(feature = "compiler")]
 use revm::handler::FrameInitOrResult;
-use revm::handler::Handler;
-use revm::handler::instructions::InstructionProvider;
-use revm::handler::{EthFrame, EvmTr, FrameResult, PrecompileProvider};
-use revm::interpreter::InterpreterResult;
-use revm::interpreter::interpreter::EthInterpreter;
+use revm::handler::{EvmTr, FrameResult, FrameTr};
 use revm::{
     Database, DatabaseRef, ExecuteEvm, MainBuilder, MainContext, MainnetEvm,
     bytecode::Bytecode,
-    context::JournalOutput,
     context::{
         ContextTr, TxEnv,
         result::{EVMError, InvalidTransaction},
@@ -29,6 +25,7 @@ use revm::{
     primitives::{Address, B256, KECCAK_EMPTY, U256, hardfork::SpecId},
     state::AccountInfo,
 };
+use revm::{handler::Handler, interpreter::interpreter_action::FrameInit};
 use smallvec::{SmallVec, smallvec};
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
@@ -444,7 +441,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
 
         let mut evm = build_evm(&mut db, self.evm_env.clone());
 
-        let result_and_state = {
+        let result = {
             evm.set_tx(tx.clone());
             #[cfg(feature = "compiler")]
             let mut t = WithoutRewardBeneficiaryHandler::new(self.worker.clone());
@@ -452,13 +449,14 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
             let mut t = WithoutRewardBeneficiaryHandler::default();
             t.run(&mut evm)
         };
-        match result_and_state {
-            Ok(result_and_state) => {
+        match result {
+            Ok(result) => {
                 // There are at least three locations most of the time: the sender,
                 // the recipient, and the beneficiary accounts.
                 let mut write_set =
                     WriteSet::with_capacity_and_hasher(100, BuildIdentityHasher::default());
-                for (address, account) in &result_and_state.state {
+                let state = evm.finalize();
+                for (address, account) in &state {
                     if account.is_selfdestructed() {
                         // For now we are betting on [code_hash] triggering the sequential
                         // fallback when we read a self-destructed contract.
@@ -550,11 +548,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                     }
                 }
 
-                self.apply_rewards(
-                    &mut write_set,
-                    tx,
-                    U256::from(result_and_state.result.gas_used()),
-                )?;
+                self.apply_rewards(&mut write_set, tx, U256::from(result.gas_used()))?;
 
                 // Drop the vm instance and the database instance.
                 drop(evm);
@@ -578,7 +572,7 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                     VmExecutionError::ExecutionError(EVMError::Custom(err.to_string()))
                 })?;
                 Ok(VmExecutionResult {
-                    execution_result: TxExecutionResult::from_raw(tx_type, result_and_state),
+                    execution_result: TxExecutionResult::from_raw(tx_type, result, state),
                     flags,
                 })
             }
@@ -670,27 +664,18 @@ pub struct WithoutRewardBeneficiaryHandler<EVM> {
 impl<EVM> Handler for WithoutRewardBeneficiaryHandler<EVM>
 where
     EVM: EvmTr<
-            Context: ContextTr<Journal: JournalTr<FinalOutput = JournalOutput>>,
-            Precompiles: PrecompileProvider<EVM::Context, Output = InterpreterResult>,
-            Instructions: InstructionProvider<
-                Context = EVM::Context,
-                InterpreterTypes = EthInterpreter,
-            >,
+            Context: ContextTr<Journal: JournalTr<State = EvmState>>,
+            Frame: FrameTr<FrameInit = FrameInit, FrameResult = FrameResult>,
         >,
 {
     type Evm = EVM;
     type Error = EVMError<<<EVM::Context as ContextTr>::Db as Database>::Error, InvalidTransaction>;
-    type Frame = EthFrame<
-        EVM,
-        EVMError<<<EVM::Context as ContextTr>::Db as Database>::Error, InvalidTransaction>,
-        <EVM::Instructions as InstructionProvider>::InterpreterTypes,
-    >;
     type HaltReason = HaltReason;
 
     fn reward_beneficiary(
         &self,
         _evm: &mut Self::Evm,
-        _exec_result: &mut FrameResult,
+        _exec_result: &mut <<Self::Evm as EvmTr>::Frame as FrameTr>::FrameResult,
     ) -> Result<(), Self::Error> {
         // Skip beneficiary reward
         Ok(())

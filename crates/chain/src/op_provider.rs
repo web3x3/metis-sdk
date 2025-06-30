@@ -226,9 +226,9 @@ where
         transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
     ) -> Result<BlockExecutionResult<OpReceipt>, BlockExecutionError> {
         // Set state clear flag if the block is after the Spurious Dragon hardfork.
-        let state_clear_flag = self
-            .spec
-            .is_spurious_dragon_active_at_block(self.evm().block().number);
+        let state_clear_flag = self.spec.is_spurious_dragon_active_at_block(
+            self.evm().block().number.try_into().unwrap_or(u64::MAX),
+        );
         let evm_env = EvmEnv::new(CfgEnv::default(), self.evm().block().clone());
         let db = self.evm_mut().db_mut();
         db.set_state_clear_flag(state_clear_flag);
