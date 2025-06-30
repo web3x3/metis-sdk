@@ -44,7 +44,7 @@ alloy-primitives = { version = "1.2.1", default-features = false, features = [
   "asm-keccak",
   "map-foldhash",
 ] }
-alloy-sol-types = { version = "1.2.0", default-features = false, features = [
+alloy-sol-types = { version = "1.2.1", default-features = false, features = [
   "std",
 ] }
 alloy-eips = { version = "1.0.13", default-features = false }
