@@ -1,7 +1,8 @@
 use crate::{FinishExecFlags, TxIdx};
 use alloy_consensus::TxType;
 use metis_primitives::{
-    DBErrorMarker, DatabaseRef, EVMError, EvmState, InvalidTransaction, ResultAndState, TxNonce,
+    Account, Address, DBErrorMarker, DatabaseRef, EVMError, EvmState, ExecutionResult, HashMap,
+    InvalidTransaction, ResultAndState, TxNonce,
 };
 use op_revm::{OpHaltReason, OpTransactionError};
 use reth_primitives::Receipt;
@@ -118,7 +119,11 @@ pub struct TxExecutionResult {
 impl TxExecutionResult {
     /// Construct an execution result from the raw result and state.
     #[inline]
-    pub fn from_raw(tx_type: TxType, ResultAndState { result, state }: ResultAndState) -> Self {
+    pub fn from_raw(
+        tx_type: TxType,
+        result: ExecutionResult,
+        state: HashMap<Address, Account>,
+    ) -> Self {
         Self {
             receipt: Receipt {
                 tx_type,

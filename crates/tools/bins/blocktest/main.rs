@@ -158,10 +158,10 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
         let mut env = EvmEnv::default();
         env.cfg_env.chain_id = 1;
         env.cfg_env.spec = spec_id;
-        env.block_env.number = as_u64_saturated!(suite.env.block_number);
+        env.block_env.number = suite.env.block_number;
         env.block_env.beneficiary = suite.env.current_coinbase;
         env.block_env.gas_limit = as_u64_saturated!(suite.env.current_gas_limit);
-        env.block_env.timestamp = as_u64_saturated!(suite.env.current_timestamp);
+        env.block_env.timestamp = suite.env.current_timestamp;
         env.block_env.difficulty = suite.env.current_difficulty;
         env.block_env.prevrandao = Some(suite.env.mix_hash.unwrap_or_default());
         env.block_env.basefee = suite

@@ -1,31 +1,28 @@
 use crate::state::StateStorageAdapter;
 use alloy_consensus::Header;
 use alloy_eips::eip7685::Requests;
-use alloy_evm::Database;
 use alloy_evm::block::{
     BlockExecutionError, BlockValidationError, CommitChanges, SystemCaller,
     state_changes::post_block_balance_increments,
 };
 use alloy_evm::eth::dao_fork::DAO_HARDFORK_BENEFICIARY;
 use alloy_evm::eth::{dao_fork, eip6110};
+use alloy_evm::{Database, FromRecoveredTx, FromTxWithEncoded};
 use alloy_hardforks::EthereumHardfork;
 use metis_primitives::{CfgEnv, ExecutionResult, SpecId, TxEnv};
 use reth::api::{FullNodeTypes, NodeTypes};
 use reth::builder::BuilderContext;
 use reth::builder::components::ExecutorBuilder;
 use reth::{providers::BlockExecutionResult, revm::db::State};
-use reth_chainspec::ChainSpec;
+use reth_chainspec::{ChainSpec, EthChainSpec, Hardforks};
 use reth_ethereum_primitives::{Block, EthPrimitives, Receipt, TransactionSigned};
-use reth_evm::block::{
-    BlockExecutorFactory, BlockExecutorFor, ExecutableTx, InternalBlockExecutionError,
-};
+use reth_evm::TransactionEnv;
+use reth_evm::block::{ExecutableTx, InternalBlockExecutionError};
 use reth_evm::eth::spec::EthExecutorSpec;
 use reth_evm::eth::{EthBlockExecutionCtx, EthBlockExecutor, EthBlockExecutorFactory};
 use reth_evm::precompiles::PrecompilesMap;
 use reth_evm::{ConfigureEvm, OnStateHook, execute::BlockExecutor};
-use reth_evm::{
-    EthEvmFactory, Evm, EvmEnv, EvmFactory, EvmFor, InspectorFor, NextBlockEnvAttributes,
-};
+use reth_evm::{EthEvmFactory, Evm, EvmEnv, EvmFactory, NextBlockEnvAttributes};
 pub use reth_evm_ethereum::EthEvmConfig;
 use reth_evm_ethereum::{EthBlockAssembler, RethReceiptBuilder};
 use reth_primitives_traits::{SealedBlock, SealedHeader};
@@ -37,8 +34,8 @@ use std::sync::Arc;
 
 /// Ethereum-related EVM configuration with the parallel executor.
 #[derive(Debug, Clone)]
-pub struct ParallelEthEvmConfig<EvmFactory = EthEvmFactory> {
-    pub config: EthEvmConfig<EvmFactory>,
+pub struct ParallelEthEvmConfig<C = ChainSpec, EvmFactory = EthEvmFactory> {
+    pub config: EthEvmConfig<C, EvmFactory>,
 }
 
 impl ParallelEthEvmConfig {
@@ -49,10 +46,16 @@ impl ParallelEthEvmConfig {
     }
 }
 
-impl<EvmF> ConfigureEvm for ParallelEthEvmConfig<EvmF>
+impl<ChainSpec, EvmF> ConfigureEvm for ParallelEthEvmConfig<ChainSpec, EvmF>
 where
-    EvmF: EvmFactory<Tx = TxEnv, Spec = SpecId, Precompiles = PrecompilesMap>
-        + Clone
+    ChainSpec: EthExecutorSpec + EthChainSpec + Hardforks + 'static,
+    EvmF: EvmFactory<
+            Tx: TransactionEnv
+                    + FromRecoveredTx<TransactionSigned>
+                    + FromTxWithEncoded<TransactionSigned>,
+            Spec = SpecId,
+            Precompiles = PrecompilesMap,
+        > + Clone
         + Debug
         + Send
         + Sync
@@ -95,27 +98,6 @@ where
         attributes: Self::NextBlockEnvCtx,
     ) -> EthBlockExecutionCtx<'_> {
         self.config.context_for_next_block(parent, attributes)
-    }
-
-    /// Creates a strategy with given EVM and execution context.
-    fn create_executor<'a, DB, I>(
-        &'a self,
-        evm: EvmFor<Self, &'a mut State<DB>, I>,
-        ctx: <Self::BlockExecutorFactory as BlockExecutorFactory>::ExecutionCtx<'a>,
-    ) -> impl BlockExecutorFor<'a, Self::BlockExecutorFactory, DB, I>
-    where
-        DB: Database,
-        I: InspectorFor<Self, &'a mut State<DB>> + 'a,
-    {
-        ParallelBlockExecutor {
-            spec: self.config.executor_factory.spec(),
-            executor: EthBlockExecutor::new(
-                evm,
-                ctx,
-                self.config.executor_factory.spec(),
-                *self.config.executor_factory.receipt_builder(),
-            ),
-        }
     }
 }
 
@@ -223,9 +205,9 @@ where
         &mut self,
         transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
     ) -> Result<BlockExecutionResult<Receipt>, BlockExecutionError> {
-        let state_clear_flag = self
-            .spec
-            .is_spurious_dragon_active_at_block(self.evm().block().number);
+        let state_clear_flag = self.spec.is_spurious_dragon_active_at_block(
+            self.evm().block().number.try_into().unwrap_or(u64::MAX),
+        );
         let evm_env = EvmEnv::new(CfgEnv::default(), self.evm().block().clone());
         let db = self.evm_mut().db_mut();
         db.set_state_clear_flag(state_clear_flag);
@@ -271,7 +253,7 @@ where
         if self
             .spec
             .ethereum_fork_activation(EthereumHardfork::Dao)
-            .transitions_at_block(self.evm().block().number)
+            .transitions_at_block(self.evm().block().number.try_into().unwrap_or(u64::MAX))
         {
             // drain balances from hardcoded addresses.
             let drained_balance: u128 = self
@@ -299,7 +281,10 @@ where
     fn calc_requests(&mut self, receipts: Vec<Receipt>) -> Result<Requests, BlockExecutionError> {
         let evm = self.executor.evm_mut();
         let block = evm.block();
-        let requests = if self.spec.is_prague_active_at_timestamp(block.timestamp) {
+        let requests = if self
+            .spec
+            .is_prague_active_at_timestamp(block.timestamp.try_into().unwrap_or(u64::MAX))
+        {
             // Collect all EIP-6110 deposits
             let deposit_requests =
                 eip6110::parse_deposits_from_receipts(self.spec.clone(), &receipts)?;

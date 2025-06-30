@@ -9,11 +9,11 @@ pub use alloy_primitives::{
 pub use revm::bytecode::{
     Bytecode,
     eip7702::Eip7702Bytecode,
-    eof::{CodeInfo as EofCodeInfo, EOF_MAGIC_BYTES, EOF_MAGIC_HASH, Eof, EofBody},
     opcode::{OpCode, OpCodeInfo},
 };
 pub use revm::context::{
-    Block, BlockEnv, CfgEnv, ContextTr, TransactTo, Transaction, TxEnv, result::EVMError,
+    Block, BlockEnv, CfgEnv, ContextError, ContextSetters, ContextTr, TransactTo, Transaction,
+    TxEnv, result::EVMError,
 };
 pub use revm::context_interface::{
     block::{BlobExcessGasAndPrice, calc_blob_gasprice, calc_excess_blob_gas},

@@ -19,7 +19,7 @@ use revm::{
     bytecode::Bytecode,
     context::Cfg,
     context::{
-        ContextTr, TxEnv,
+        ContextSetters, ContextTr, TxEnv,
         result::{EVMError, InvalidTransaction},
     },
     handler::EvmTr,
@@ -440,21 +440,22 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
             .map_err(VmExecutionError::from)?;
         let mut evm = build_op_evm(&mut db, Default::default());
 
-        let result_and_state = {
-            evm.set_tx(OpTransaction::new(tx.clone()));
+        let result = {
+            evm.0.set_tx(OpTransaction::new(tx.clone()));
             #[cfg(feature = "compiler")]
             let mut t = WithoutRewardBeneficiaryHandler::new(self.worker.clone());
             #[cfg(not(feature = "compiler"))]
             let mut t = WithoutRewardBeneficiaryHandler::default();
             t.run(&mut evm)
         };
-        match result_and_state {
-            Ok(result_and_state) => {
+        match result {
+            Ok(result) => {
                 // There are at least three locations most of the time: the sender,
                 // the recipient, and the beneficiary accounts.
                 let mut write_set =
                     WriteSet::with_capacity_and_hasher(100, BuildIdentityHasher::default());
-                for (address, account) in &result_and_state.state {
+                let state = evm.finalize();
+                for (address, account) in &state {
                     if account.is_selfdestructed() {
                         // For now we are betting on [code_hash] triggering the sequential
                         // fallback when we read a self-destructed contract.
@@ -550,12 +551,7 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
                     }
                 }
 
-                self.apply_rewards(
-                    &mut write_set,
-                    tx,
-                    U256::from(result_and_state.result.gas_used()),
-                    evm.ctx(),
-                )?;
+                self.apply_rewards(&mut write_set, tx, U256::from(result.gas_used()), evm.ctx())?;
 
                 // Drop the vm instance and the database instance.
                 drop(evm);
@@ -579,7 +575,7 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
                     VmExecutionError::ExecutionError(EVMError::Custom(err.to_string()))
                 })?;
                 Ok(VmExecutionResult {
-                    execution_result: TxExecutionResult::from_raw(tx_type, result_and_state),
+                    execution_result: TxExecutionResult::from_raw(tx_type, result, state),
                     flags,
                 })
             }
@@ -636,7 +632,7 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
                 } else {
                     let enveloped = op_ctx.tx().enveloped_tx().cloned();
                     let spec = op_ctx.cfg().spec();
-                    let l1_block_info = op_ctx.chain();
+                    let l1_block_info = op_ctx.chain_mut();
 
                     let Some(enveloped_tx) = &enveloped else {
                         panic!("[OPTIMISM] Failed to load enveloped transaction.");

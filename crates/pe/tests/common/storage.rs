@@ -54,7 +54,7 @@ impl StorageBuilder {
     pub fn build(self) -> HashMap<U256, StorageSlot> {
         self.dict
             .iter()
-            .map(|(k, v)| (*k, StorageSlot::new(*v)))
+            .map(|(k, v)| (*k, StorageSlot::new(*v, 0)))
             .collect()
     }
 }
