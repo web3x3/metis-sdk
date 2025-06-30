@@ -6,9 +6,7 @@ use base64::engine::{DecodePaddingMode, GeneralPurposeConfig};
 use base64::{Engine, alphabet};
 use metis_app_options::{Commands, Options};
 
-#[allow(dead_code, unreachable_pub)]
 pub mod key;
-#[allow(dead_code, unreachable_pub)]
 pub mod run;
 
 /// A [`GeneralPurpose`] engine using the [`alphabet::STANDARD`] base64 alphabet
@@ -20,19 +18,16 @@ const B64_ENGINE: GeneralPurpose = GeneralPurpose::new(
         .with_decode_padding_mode(DecodePaddingMode::Indifferent),
 );
 
-#[allow(dead_code, unreachable_pub)]
 /// Encode bytes in a format that the Genesis deserializer can handle.
 pub fn to_b64(bz: &[u8]) -> String {
     B64_ENGINE.encode(bz)
 }
 
-#[allow(dead_code, unreachable_pub)]
 pub fn from_b64(b64: &str) -> anyhow::Result<Vec<u8>> {
     Ok(B64_ENGINE.decode(b64)?)
 }
 
 #[async_trait]
-#[allow(dead_code, unreachable_pub)]
 pub trait Cmd {
     type Settings;
     async fn exec(&self, settings: Self::Settings) -> anyhow::Result<()>;
@@ -73,7 +68,6 @@ macro_rules! cmd {
 }
 
 /// Execute the command specified in the options.
-#[allow(dead_code, unreachable_pub)]
 pub async fn exec(opts: &Options) -> anyhow::Result<()> {
     match &opts.command {
         Commands::Run(args) => args.exec(settings(opts)?).await,

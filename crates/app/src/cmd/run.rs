@@ -1,7 +1,7 @@
+use crate::abci::app::ApplicationService;
 use crate::{app::App, cmd, cmd::key::read_secret_key, settings::Settings};
 use anyhow::{Context, anyhow};
 use metis_app_options::run::RunArgs;
-use metis_chain::tm_abci::abci_app::ApplicationService;
 pub use tendermint_rpc::HttpClient;
 use tower_abci::v038::{Server, split};
 

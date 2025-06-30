@@ -1,8 +1,9 @@
+#![allow(missing_docs)]
+#![allow(missing_debug_implementations)]
+
 use async_stm::{TVar, atomically};
 use async_trait::async_trait;
-use metis_chain::tm_abci::abci_app::{
-    AbciResult, Application, ApplicationService, take_until_max_size,
-};
+use metis_app::abci::app::{AbciResult, Application, ApplicationService, take_until_max_size};
 use std::collections::HashMap;
 use tendermint::abci::{request, response};
 use tendermint::validator;
