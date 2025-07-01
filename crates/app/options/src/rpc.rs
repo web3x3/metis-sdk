@@ -51,16 +51,7 @@ pub enum RpcCommands {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum RpcQueryCommands {
-    /// Get the state of an actor; print it as JSON.
-    ActorState {
-        /// Address of the actor to query.
-        #[arg(long, short)]
-        address: Address,
-    },
-    /// Get the slowly changing state parameters.
-    StateParams,
-}
+pub enum RpcQueryCommands {}
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum RpcEvmCommands {

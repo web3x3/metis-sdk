@@ -6682,6 +6682,7 @@ dependencies = [
  "metis-chain",
  "metis-pe",
  "metis-primitives",
+ "metis-rpc",
  "metis-storage",
  "metis-vm",
  "rand_chacha 0.3.1",
@@ -6823,6 +6824,22 @@ dependencies = [
  "revm",
  "rustc-hash 2.1.1",
  "serde",
+]
+
+[[package]]
+name = "metis-rpc"
+version = "0.2.1"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "bincode",
+ "metis-app-options",
+ "metis-primitives",
+ "serde",
+ "tendermint",
+ "tendermint-rpc",
+ "thiserror 2.0.12",
+ "tracing",
 ]
 
 [[package]]

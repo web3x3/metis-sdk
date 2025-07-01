@@ -35,6 +35,7 @@ metis-chain = { path = "crates/chain" }
 metis-storage = { path = "crates/storage" }
 metis-app = { path = "crates/app" }
 metis-app-options = { path = "crates/app/options" }
+metis-rpc = { path = "crates/rpc" }
 
 anyhow = "1.0.97"
 
