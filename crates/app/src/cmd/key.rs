@@ -1,7 +1,7 @@
 use anyhow::{Context, anyhow};
 use libsecp256k1::{PublicKey, SecretKey};
 use metis_primitives::Address;
-use rand_chacha::{ChaCha20Rng, rand_core::SeedableRng};
+use rand_08;
 use serde_json::json;
 use std::path::{Path, PathBuf};
 
@@ -23,8 +23,7 @@ cmd! {
 
 cmd! {
   KeyGenArgs(self) {
-    let mut rng = ChaCha20Rng::from_entropy();
-    let sk = SecretKey::random(&mut rng);
+    let sk = SecretKey::random(&mut rand_08::thread_rng());
     let pk = PublicKey::from_secret_key(&sk);
 
     export(&self.out_dir, &self.name, "sk", &secret_to_b64(&sk))?;
