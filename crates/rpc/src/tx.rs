@@ -29,7 +29,7 @@ pub struct SignedMessage {
 }
 
 impl SignedMessage {
-    /// serialize for SignedMessage
+    /// serialize for `SignedMessage`
     pub fn serialize(&self) -> anyhow::Result<Vec<u8>> {
         Ok(serialize(&self)?)
     }

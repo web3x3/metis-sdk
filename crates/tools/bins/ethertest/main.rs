@@ -594,10 +594,10 @@ fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, Box<TestError>> {
     let mut env = EvmEnv::default();
     env.cfg_env.chain_id = 1;
     env.cfg_env.spec = spec_id;
-    env.block_env.number = test.env.current_number.try_into().unwrap_or(u64::MAX);
+    env.block_env.number = test.env.current_number;
     env.block_env.beneficiary = test.env.current_coinbase;
     env.block_env.gas_limit = test.env.current_gas_limit.try_into().unwrap_or(u64::MAX);
-    env.block_env.timestamp = test.env.current_timestamp.try_into().unwrap_or(u64::MAX);
+    env.block_env.timestamp = test.env.current_timestamp;
     env.block_env.basefee = test
         .env
         .current_base_fee
@@ -610,7 +610,7 @@ fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, Box<TestError>> {
     if let Some(current_excess_blob_gas) = test.env.current_excess_blob_gas {
         env.block_env.set_blob_excess_gas_and_price(
             current_excess_blob_gas.to(),
-            spec_id.is_enabled_in(SpecId::PRAGUE),
+            revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
         );
     } else if let (Some(parent_blob_gas_used), Some(parent_excess_blob_gas)) = (
         test.env.parent_blob_gas_used,
@@ -625,7 +625,7 @@ fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, Box<TestError>> {
                     .map(|i| i.to())
                     .unwrap_or(TARGET_BLOB_GAS_PER_BLOCK_CANCUN),
             ),
-            spec_id.is_enabled_in(SpecId::PRAGUE),
+            revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN,
         );
     }
     Ok(env)

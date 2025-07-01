@@ -1,8 +1,8 @@
 use crate::cmd;
-use crate::options::rpc::{
+use async_trait::async_trait;
+use metis_app_options::rpc::{
     BroadcastMode, EvmArgs, RpcArgs, RpcCommands, RpcEvmCommands, RpcQueryCommands, TransArgs,
 };
-use async_trait::async_trait;
 use metis_rpc::tx::{
     AsyncResponse, CommitResponse, GasParams, SignedMessage, SyncResponse, TxAsync, TxClient,
     TxCommit, TxSync,
@@ -119,23 +119,25 @@ fn print_json<T: Serialize>(value: &T) -> anyhow::Result<()> {
     Ok(())
 }
 
+#[derive(Debug)]
 pub enum BroadcastResponse<T> {
     Async(AsyncResponse<T>),
     Sync(SyncResponse<T>),
-    Commit(CommitResponse<T>),
+    Commit(Box<CommitResponse<T>>),
 }
 
+#[allow(dead_code)]
 struct BroadcastModeWrapper(BroadcastMode);
 
 impl metis_rpc::tx::BroadcastMode for BroadcastModeWrapper {
     type Response<T> = BroadcastResponse<T>;
 }
 
-fn gas_params(args: &TransArgs) -> GasParams {
+const fn gas_params(args: &TransArgs) -> GasParams {
     GasParams {
         gas_limit: args.gas_limit,
-        gas_fee_cap: args.gas_fee_cap.clone(),
-        gas_premium: args.gas_premium.clone(),
+        gas_fee_cap: args.gas_fee_cap,
+        gas_premium: args.gas_premium,
     }
 }
 
@@ -145,7 +147,7 @@ struct TransClient {
 }
 
 impl TransClient {
-    pub fn new(client: ClientApi, args: &TransArgs) -> anyhow::Result<Self> {
+    const fn new(client: ClientApi, args: &TransArgs) -> anyhow::Result<Self> {
         let client = Self {
             inner: client,
             broadcast_mode: args.broadcast_mode,
@@ -172,7 +174,7 @@ impl TxClient<BroadcastModeWrapper> for TransClient {
             }
             BroadcastMode::Commit => {
                 let res = TxClient::<TxCommit>::perform(&self.inner, msg, f).await?;
-                Ok(BroadcastResponse::Commit(res))
+                Ok(BroadcastResponse::Commit(Box::new(res)))
             }
         }
     }

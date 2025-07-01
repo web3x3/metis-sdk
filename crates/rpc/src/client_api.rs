@@ -268,9 +268,8 @@ impl<C: tendermint_rpc::client::Client + Sync> Client for C {
         prove: bool,
     ) -> Result<EncodedResponseQuery, Self::Error> {
         let data = data.unwrap_or_default();
-        let zero: u8 = 0;
         let height = height
-            .map(|height| Height::try_from(zero).map_err(|_err| Error::InvalidHeight(height)))
+            .map(|height| Height::try_from(height).map_err(|_err| Error::InvalidHeight(height)))
             .transpose()?;
 
         let response = self.abci_query(Some(path), data, height, prove).await?;
@@ -279,7 +278,7 @@ impl<C: tendermint_rpc::client::Client + Sync> Client for C {
                 data: response.value,
                 info: response.info,
                 proof: response.proof,
-                height: response.height.value().into(),
+                height: response.height.value(),
             }),
             Code::Err(code) => Err(Error::Query(response.info, code.into())),
         }

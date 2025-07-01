@@ -12,6 +12,7 @@ use crate::{
 
 #[cfg(feature = "compiler")]
 use metis_primitives::ExecuteEvm;
+use revm::context::result::ExecResultAndState;
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
 use std::{
@@ -377,9 +378,10 @@ pub fn execute_sequential<DB: DatabaseRef>(
             evm.transact(tx).map_err(evm_err_to_exec_error::<DB>)?
         };
 
-        evm.db().commit(result_and_state.state.clone());
+        evm.db_mut().commit(result_and_state.state.clone());
+        let ExecResultAndState { result, state } = result_and_state;
 
-        let mut execution_result = TxExecutionResult::from_raw(tx_type, result_and_state);
+        let mut execution_result = TxExecutionResult::from_raw(tx_type, result, state);
 
         cumulative_gas_used =
             cumulative_gas_used.saturating_add(execution_result.receipt.cumulative_gas_used);

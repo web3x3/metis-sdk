@@ -73,39 +73,43 @@ cmd! {
   }
 }
 
-#[allow(dead_code, unreachable_pub)]
+#[inline]
 fn secret_to_b64(sk: &SecretKey) -> String {
     to_b64(&sk.serialize())
 }
-#[allow(dead_code, unreachable_pub)]
+
+#[inline]
 fn public_to_b64(pk: &PublicKey) -> String {
     to_b64(&pk.serialize_compressed())
 }
-#[allow(dead_code, unreachable_pub)]
+
+#[inline]
 fn b64_to_public(b64: &str) -> anyhow::Result<PublicKey> {
     let json = json!(b64);
     let pk: PublicKey = serde_json::from_value(json)?;
     Ok(pk)
 }
-#[allow(dead_code, unreachable_pub)]
+
+#[inline]
 fn b64_to_secret(b64: &str) -> anyhow::Result<SecretKey> {
     let bz = from_b64(b64)?;
     let sk = SecretKey::parse_slice(&bz)?;
     Ok(sk)
 }
-#[allow(dead_code, unreachable_pub)]
+
 pub fn read_public_key(public_key: &PathBuf) -> anyhow::Result<PublicKey> {
     let b64 = std::fs::read_to_string(public_key).context("failed to read public key")?;
     let pk = b64_to_public(&b64).context("failed to parse public key")?;
     Ok(pk)
 }
-#[allow(dead_code, unreachable_pub)]
+
 pub fn read_secret_key(secret_key: &PathBuf) -> anyhow::Result<SecretKey> {
     let b64 = std::fs::read_to_string(secret_key).context("failed to read secret key")?;
     let sk = b64_to_secret(&b64).context("failed to parse secret key")?;
     Ok(sk)
 }
-#[allow(dead_code, unreachable_pub)]
+
+#[inline]
 fn export(output_dir: &Path, name: &str, ext: &str, b64: &str) -> anyhow::Result<()> {
     let output_path = output_dir.join(format!("{name}.{ext}"));
     std::fs::write(output_path, b64)?;

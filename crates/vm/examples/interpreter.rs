@@ -55,7 +55,7 @@ fn main() {
             cfg.chain_id = 1;
         })
         .modify_block_chained(|block| {
-            block.number = 30;
+            block.number = U256::from(30);
             block.gas_limit = 5_000_000;
             block.beneficiary = beneficiary;
         })

@@ -12,8 +12,9 @@ use metis_primitives::{
 };
 use metis_tools::get_block_spec;
 use reqwest::Url;
+use revm::context::ContextSetters;
 use revm::{
-    Context, ExecuteCommitEvm, ExecuteEvm, MainBuilder, MainContext,
+    Context, ExecuteCommitEvm, MainBuilder, MainContext,
     database::{AlloyDB, CacheDB, StateBuilder, WrapDatabaseAsync},
 };
 use serde::{Deserialize, Serialize};
@@ -110,9 +111,9 @@ async fn main() -> Result<()> {
     let ctx = Context::mainnet()
         .with_db(&mut state)
         .modify_block_chained(|b| {
-            b.number = block.header.number;
+            b.number = U256::from(block.header.number);
             b.beneficiary = block.header.beneficiary;
-            b.timestamp = block.header.timestamp;
+            b.timestamp = U256::from(block.header.timestamp);
             b.difficulty = block.header.difficulty;
             b.gas_limit = block.header.gas_limit;
             b.basefee = block.header.base_fee_per_gas.unwrap_or_default();

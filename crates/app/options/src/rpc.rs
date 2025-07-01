@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand, ValueEnum};
 use metis_primitives::{Address, Bytes, U256};
 use std::path::PathBuf;
-use tendermint_rpc::{Url};
+use tendermint_rpc::Url;
 
 #[derive(Args, Debug)]
 pub struct RpcArgs {
