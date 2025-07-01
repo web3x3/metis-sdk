@@ -1,0 +1,28 @@
+[package]
+name = "metis-rpc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+exclude.workspace = true
+license.workspace = true
+readme.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+async-trait.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+bincode.workspace = true
+
+tendermint.workspace = true
+tendermint-rpc.workspace = true
+
+metis-primitives.workspace = true
+metis-app-options.workspace = true
+
+[features]
+async-send = []
+
+[lints]
+workspace = true

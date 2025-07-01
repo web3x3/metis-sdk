@@ -1,7 +1,7 @@
 use clap::{Args, Subcommand, ValueEnum};
 use metis_primitives::{Address, Bytes, U256};
 use std::path::PathBuf;
-use tendermint_rpc::Url;
+use tendermint_rpc::{Url};
 
 #[derive(Args, Debug)]
 pub struct RpcArgs {
@@ -51,16 +51,7 @@ pub enum RpcCommands {
 }
 
 #[derive(Subcommand, Debug, Clone)]
-pub enum RpcQueryCommands {
-    /// Get the state of an actor; print it as JSON.
-    ActorState {
-        /// Address of the actor to query.
-        #[arg(long, short)]
-        address: Address,
-    },
-    /// Get the slowly changing state parameters.
-    StateParams,
-}
+pub enum RpcQueryCommands {}
 
 #[derive(Subcommand, Debug, Clone)]
 pub enum RpcEvmCommands {

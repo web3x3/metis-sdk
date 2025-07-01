@@ -104,8 +104,6 @@ impl App {
     pub fn new(// config: AppConfig<S>,
         // db: DB,
         // state_store: SS,
-        // interpreter: I,
-        // resolve_pool: CheckpointPool,
         // parent_finality_provider: Arc<ParentFinalityProvider>,
     ) -> Result<Self> {
         let app = Self {

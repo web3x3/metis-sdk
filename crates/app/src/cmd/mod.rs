@@ -9,6 +9,8 @@ use metis_app_options::{Commands, Options};
 #[allow(dead_code, unreachable_pub)]
 pub mod key;
 #[allow(dead_code, unreachable_pub)]
+pub mod rpc;
+#[allow(dead_code, unreachable_pub)]
 pub mod run;
 
 /// A [`GeneralPurpose`] engine using the [`alphabet::STANDARD`] base64 alphabet
@@ -80,7 +82,7 @@ pub async fn exec(opts: &Options) -> anyhow::Result<()> {
         Commands::Key(args) => args.exec(()).await,
         // todo add other cmd
         // Commands::Genesis(args) => args.exec(()).await,
-        // Commands::Rpc(args) => args.exec(()).await,
+        Commands::Rpc(args) => args.exec(()).await,
         // Commands::Eth(args) => args.exec(settings(opts)?.eth).await,
         _ => Ok(()),
     }

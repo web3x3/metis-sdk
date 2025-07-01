@@ -28,6 +28,7 @@ metis-vm.workspace = true
 metis-pe.workspace = true
 metis-app-options.workspace = true
 metis-primitives.workspace = true
+metis-rpc.workspace = true
 
 serde_with.workspace = true
 config.workspace = true
