@@ -54,7 +54,7 @@ alloy-provider = { version = "1.0.13", features = [
 ], default-features = false }
 alloy-rlp = { version = "0.3.10", features = ["core-net"] }
 alloy-rpc-types-eth = "1.0.13"
-alloy-transport = "1.0.13"
+alloy-transport = "1.0.17"
 alloy-transport-http = { version = "1.0.13", features = [
   "reqwest-rustls-tls",
 ], default-features = false }
