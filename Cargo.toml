@@ -61,7 +61,7 @@ alloy-transport-http = { version = "1.0.13", features = [
 alloy-hardforks = "0.2.11"
 alloy-trie = { version = "0.9.0", default-features = false }
 alloy-signer = { version = "1.0.13", default-features = false }
-alloy-signer-local = { version = "1.0.13", default-features = false }
+alloy-signer-local = { version = "1.0.17", default-features = false }
 alloy-evm = { version = "0.12", default-features = false }
 alloy-genesis = { version = "1.0.13", default-features = false }
 revm = { version = "26.0.1", default-features = false, features = [
