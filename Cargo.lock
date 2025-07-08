@@ -280,7 +280,7 @@ dependencies = [
  "hex",
  "rand 0.8.5",
  "rand 0.9.1",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "schemars 0.8.22",
  "serde",
  "tokio",
@@ -327,7 +327,7 @@ dependencies = [
  "mcp-client",
  "rayon",
  "regex",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "schemars 0.8.22",
  "serde",
  "serde_json",
@@ -353,7 +353,7 @@ dependencies = [
  "bytesize",
  "rand 0.8.5",
  "rand 0.9.1",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -402,7 +402,7 @@ dependencies = [
  "indexmap 2.10.0",
  "llama-cpp-2",
  "rand 0.9.1",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -427,7 +427,7 @@ dependencies = [
  "colorful",
  "dotenvy",
  "indenter",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "secrecy",
  "serde",
  "serde_json",
@@ -510,7 +510,7 @@ dependencies = [
  "async-trait",
  "either",
  "hex",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -524,7 +524,7 @@ source = "git+https://github.com/0xLazAI/alith?tag=v0.9.0#d1dbbaa2209b358c5135ba
 dependencies = [
  "alith-core",
  "async-trait",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "scraper",
  "serde",
  "serde_json",
@@ -947,7 +947,7 @@ dependencies = [
  "lru 0.13.0",
  "parking_lot",
  "pin-project",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -1016,7 +1016,7 @@ dependencies = [
  "async-stream",
  "futures",
  "pin-project",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "tokio",
@@ -1330,7 +1330,7 @@ checksum = "f643645a33a681d09ac1ca2112014c2ca09c68aad301da4400484d59c746bc70"
 dependencies = [
  "alloy-json-rpc",
  "alloy-transport",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde_json",
  "tower 0.5.2",
  "tracing",
@@ -2102,7 +2102,7 @@ dependencies = [
  "bitflags 2.9.1",
  "cexpr",
  "clang-sys",
- "itertools 0.12.1",
+ "itertools 0.13.0",
  "proc-macro2",
  "quote",
  "regex",
@@ -4019,7 +4019,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -4724,7 +4724,7 @@ dependencies = [
  "log",
  "num_cpus",
  "rand 0.9.1",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde",
  "serde_json",
  "thiserror 2.0.12",
@@ -5156,7 +5156,7 @@ dependencies = [
  "js-sys",
  "log",
  "wasm-bindgen",
- "windows-core 0.57.0",
+ "windows-core 0.61.2",
 ]
 
 [[package]]
@@ -6114,7 +6114,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "07033963ba89ebaf1584d767badaa2e8fcec21aedea6b8c0346d487d49c28667"
 dependencies = [
  "cfg-if",
- "windows-targets 0.48.5",
+ "windows-targets 0.53.2",
 ]
 
 [[package]]
@@ -6804,7 +6804,7 @@ dependencies = [
  "pretty_assertions",
  "rand 0.9.1",
  "rayon",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-primitives",
  "revm",
  "revmc-build",
@@ -6876,7 +6876,7 @@ dependencies = [
  "plain_hasher",
  "pretty_assertions",
  "rayon",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-chainspec",
  "reth-db",
  "reth-db-api",
@@ -8279,7 +8279,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a56d757972c98b346a9b766e3f02746cde6dd1cd1d1d563472929fdd74bec4d"
 dependencies = [
  "anyhow",
- "itertools 0.12.1",
+ "itertools 0.14.0",
  "proc-macro2",
  "quote",
  "syn 2.0.104",
@@ -8736,9 +8736,9 @@ dependencies = [
 
 [[package]]
 name = "reqwest"
-version = "0.12.20"
+version = "0.12.22"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "eabf4c97d9130e2bf606614eb937e86edac8292eaa6f422f995d7e8de1eb1813"
+checksum = "cbc931937e6ca3a06e3b6c0aa7841849b160a90351d6ab467a8b9b9959767531"
 dependencies = [
  "base64 0.22.1",
  "bytes",
@@ -8944,7 +8944,7 @@ dependencies = [
  "itertools 0.14.0",
  "lz4",
  "ratatui",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-chainspec",
  "reth-cli",
  "reth-cli-runner",
@@ -9107,7 +9107,7 @@ dependencies = [
  "derive_more 2.0.1",
  "eyre",
  "futures",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-node-api",
  "reth-primitives-traits",
  "reth-tracing",
@@ -9530,7 +9530,7 @@ dependencies = [
  "bytes",
  "eyre",
  "futures-util",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-fs-util",
  "sha2 0.10.9",
  "tokio",
@@ -10089,7 +10089,7 @@ source = "git+https://github.com/paradigmxyz/reth?tag=v1.5.0#61e38f9af154fe91e77
 dependencies = [
  "futures-util",
  "if-addrs",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "serde_with",
  "thiserror 2.0.12",
  "tokio",
@@ -10747,7 +10747,7 @@ dependencies = [
  "op-alloy-rpc-types-engine",
  "op-revm",
  "parking_lot",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-chain-state",
  "reth-chainspec",
  "reth-evm",
@@ -11420,7 +11420,7 @@ dependencies = [
  "itertools 0.14.0",
  "num-traits",
  "rayon",
- "reqwest 0.12.20",
+ "reqwest 0.12.22",
  "reth-chainspec",
  "reth-codecs",
  "reth-config",
@@ -14929,7 +14929,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.48.0",
+ "windows-sys 0.59.0",
 ]
 
 [[package]]
