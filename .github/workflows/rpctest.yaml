@@ -44,7 +44,7 @@ jobs:
 
       - name: Start the metis dev node
         run: |
-          make install
+          make PROFILE=maxperf install
           metis node --dev --dev.block-time 2s --http --http.api=all &
           sleep 5
 
