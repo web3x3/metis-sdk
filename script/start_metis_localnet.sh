@@ -13,8 +13,12 @@ cargo run --bin malachitebft-eth-utils genesis
 cd -
 
 # start metis nodes
+# as reth engine
 ./metis_nodes.sh
 
+# Establishing links between peers
 ./add_peers.sh
 
+# start malaketh-layered nodes
+# as consensus components
 ./malachite_nodes.sh
