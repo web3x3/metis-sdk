@@ -12,6 +12,12 @@ Firstly, see [here](../../CONTRIBUTING.md) to install build dependencies. Then i
 make install
 ```
 
+Or build with the max performance mode
+
+```shell
+make PROFILE=maxperf install
+```
+
 Execute the following command to launch a Metis devnet:
 
 ```shell
