@@ -124,12 +124,12 @@ async fn main() -> Result<()> {
         });
     let mut evm =
         ctx.build_mainnet_with_inspector(revm::inspector::inspectors::TracerEip3155::new_stdout());
-    let txs = block.transactions.len();
+    let tx_size = block.transactions.len();
     println!(
-        "Found {txs} transactions in the block {}",
+        "Found {tx_size} transactions in the block {}",
         block.header.number
     );
-    let console_bar = Arc::new(ProgressBar::new(txs as u64));
+    let console_bar = Arc::new(ProgressBar::new(tx_size as u64));
     let start = Instant::now();
     let mut logs = Vec::new();
     let mut txs = Vec::new();
