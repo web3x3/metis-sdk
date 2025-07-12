@@ -3,9 +3,9 @@
 @tailwind utilities;
 
 :root {
-  --primary: 190 100% 45%;
-  --secondary: 180 100% 83%;
-  --accent: 190 100% 45%;
+  --primary: 190 100% 35%;
+  --secondary: 180 50% 75%;
+  --accent: 190 50% 90%;
   --neutral: 200 15% 65%;
   --base-100: 0 0% 100%;
   --info: 199 90% 80%;
@@ -16,8 +16,8 @@
 
 .dark {
   --primary: 190 100% 45%;
-  --secondary: 187 100% 12%;
-  --accent: 190 100% 35%;
+  --secondary: 180 50% 20%;
+  --accent: 190 50% 15%;
   --neutral: 200 15% 40%;
   --base-100: 0 0% 100%;
   --info: 199 90% 70%;
@@ -25,3 +25,4 @@
   --warning: 45 95% 70%;
   --error: 0 90% 70%;
 }
+
