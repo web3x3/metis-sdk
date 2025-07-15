@@ -33,11 +33,13 @@ start_node() {
 
   local datadir="${BASE_DIR}/node${node_id}"
   local log_file="${LOG_DIR}/node${node_id}.log"
+  local ipc_path="${BASE_DIR}/node${node_id}/reth.ipc" # Unique IPC path for each node
 
   echo "Starting node ${node_id} ..."
   echo "  Data directory: ${datadir}"
   echo "  Log file: ${log_file}"
   echo "  P2P Port: ${p2p_port} | HTTP Port: ${http_port} | AuthRPC Port: ${authrpc_port}"
+  echo "  IPC Path: ${ipc_path}"
 
   # Start node (run in background with nohup, redirect output to log)
   nohup metis node \
@@ -56,6 +58,7 @@ start_node() {
     --metrics=0.0.0.0:"${metrics_port}" \
     --discovery.port="${p2p_port}" \
     --port="${p2p_port}" \
+    --ipcpath="${ipc_path}" \
     >> "${log_file}" 2>&1 &
 
   # Record process ID (for later stopping the node)
