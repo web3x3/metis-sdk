@@ -49,7 +49,7 @@ start_node() {
     --http.port="${http_port}" \
     --http.addr=0.0.0.0 \
     --http.corsdomain=* \
-    --http.api=admin,net,eth,web3,debug,txpool,trace \
+    --http.api=all \
     --authrpc.addr=0.0.0.0 \
     --authrpc.port="${authrpc_port}" \
     --authrpc.jwtsecret="${JWT_SECRET}" \

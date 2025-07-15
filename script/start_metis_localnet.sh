@@ -9,7 +9,7 @@
 
 # create genesis data
 cd ../lib/malaketh-layered
-cargo run --bin malachitebft-eth-utils genesis
+cargo run --release --bin malachitebft-eth-utils genesis
 cd -
 
 # start metis nodes
