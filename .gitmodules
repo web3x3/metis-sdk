@@ -1,0 +1,3 @@
+[submodule "lib/malaketh-layered"]
+	path = lib/malaketh-layered
+	url = https://github.com/informalsystems/malaketh-layered.git
