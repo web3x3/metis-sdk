@@ -38,7 +38,7 @@ pub struct ParallelEthEvmConfig<C = ChainSpec, EvmFactory = EthEvmFactory> {
     pub config: EthEvmConfig<C, EvmFactory>,
 }
 
-impl ParallelEthEvmConfig {
+impl<ChainSpec> ParallelEthEvmConfig<ChainSpec> {
     pub fn new(chain_spec: Arc<ChainSpec>) -> Self {
         Self {
             config: EthEvmConfig::new(chain_spec),
@@ -48,7 +48,7 @@ impl ParallelEthEvmConfig {
 
 impl<ChainSpec, EvmF> ConfigureEvm for ParallelEthEvmConfig<ChainSpec, EvmF>
 where
-    ChainSpec: EthExecutorSpec + EthChainSpec + Hardforks + 'static,
+    ChainSpec: EthExecutorSpec + EthChainSpec<Header = Header> + Hardforks + 'static,
     EvmF: EvmFactory<
             Tx: TransactionEnv
                     + FromRecoveredTx<TransactionSigned>
