@@ -50,5 +50,5 @@ COPY --from=builder /app/metis /usr/local/bin
 # Copy licenses
 COPY LICENSE ./
 
-EXPOSE 30303 30303/udp 9001 8545 8546
+EXPOSE 30303 30303/udp 9001 8551 8545 8546
 ENTRYPOINT ["/usr/local/bin/metis"]

@@ -7,14 +7,16 @@ on:
 
 env:
   REPO_NAME: ${{ github.repository_owner }}/metis-sdk
-  IMAGE_NAME: metisprotocol/hyperion
   CARGO_TERM_COLOR: always
-  DOCKER_IMAGE_NAME: ghcr.io/metisprotocol/hyperion
+  EL_IMAGE_NAME: metisprotocol/hyperion
+  DOCKER_EL_IMAGE_NAME: ghcr.io/metisprotocol/hyperion
+  CL_IMAGE_NAME: metisprotocol/hyperion-cl
+  DOCKER_CL_IMAGE_NAME: ghcr.io/metisprotocol/hyperion-cl
   DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:
-  build:
-    name: build and push
+  el-image-build:
+    name: build and push el image
     runs-on: ubuntu-24.04
     permissions:
       packages: write
@@ -47,3 +49,54 @@ jobs:
           docker buildx create --use --name cross-builder
       - name: Build and push ${{ matrix.build.name }}
         run: ${{ matrix.build.command }}
+
+  cl-image-build:
+    name: build and push cl image
+    runs-on: ubuntu-24.04
+    permissions:
+      packages: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - uses: rui314/setup-mold@v1
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - name: Install Protobuf Compiler (protoc)
+        uses: arduino/setup-protoc@v2
+      - name: Build consensus client
+        run: |
+          mkdir dist/bin
+          cd lib/malaketh-layered
+          cargo build -r
+          cp target/release/malachitebft-eth-app ../../dist/bin
+
+      - name: Setup QEMU
+        uses: docker/setup-qemu-action@v3
+      - name: Setup Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Log in to Docker
+        run: |
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username ${DOCKER_USERNAME} --password-stdin
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5.6.1
+        with:
+          images: |
+            ${{ env.DOCKER_CL_IMAGE_NAME }}
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v6
+        with:
+          sbom: true
+          provenance: true
+          push: true
+          builder: ${{ steps.buildx.outputs.name }}
+          context: .
+          file: .github/workflows/release/cl.Dockerfile
+          platforms: linux/amd64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
