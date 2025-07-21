@@ -1,21 +1,7 @@
----
-title: Quick Start With Consensus
-icon: "Atom"
----
-
-Welcome to the Metis SDK! This guide will help you quickly launch a Metis dev node.
-
-## Pre-Built Binaries
-
-[Archives of precompiled binaries](https://github.com/MetisProtocol/metis-sdk/releases/) of metis are available for macOS and Linux. They are static executables. Users of platforms not explicitly listed below should download one of these archives.
-
-## Run From Docker
-You can modify the corresponding configuration items in the metis-sdk/example directory, and directly start with 
-```bash
-docker compose up -d
-```
+# Guide
 
 ## Mandatory Modifications
+
 ### 1. configs/node/config/config.toml
 Update `persistent_peers` under `[consensus.p2p]` to the IP addresses of the peers in the target chain you want to connect to.
 
