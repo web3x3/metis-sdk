@@ -9,6 +9,26 @@ Welcome to the Metis SDK! This guide will help you quickly launch a Metis dev no
 
 [Archives of precompiled binaries](https://github.com/MetisProtocol/metis-sdk/releases/) of metis are available for macOS and Linux. They are static executables. Users of platforms not explicitly listed below should download one of these archives.
 
+## Docker
+
+Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion
+```
+
+Or a specific version (e.g. v0.3.0) with:
+
+```shell
+docker pull ghcr.io/metisprotocol/hyperion:v0.3.0
+```
+
+You can test the image with:
+
+```shell
+docker run --rm ghcr.io/metisprotocol/hyperion --version
+```
+
 ## Run From Docker
 You can modify the corresponding configuration items in the metis-sdk/example directory, and directly start with 
 ```bash
