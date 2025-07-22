@@ -25,7 +25,7 @@ cargo run -r --bin metis-blockfetch https://mainnet.infura.io/v3/c60b0bb42f8a4c6
 Prepare Test Suites
 
 ```shell
-git clone https://github.com/ethereum/tests
+git clone -b v17.1 https://github.com/ethereum/tests
 ```
 
 Run the following command to test
