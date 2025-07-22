@@ -16,6 +16,22 @@ For example
 cargo run -r --bin metis-blockfetch https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27 10889447
 ```
 
+## Blocktrace Tool
+
+`metis-blocktrace` is a tool for generating block trace for the specific block number.
+
+```shell
+cargo run -r --bin metis-blocktrace <RPC_URL> <BLOCK_NUMBER>
+```
+
+Where `<BLOCK_NUMBER>` is the block number.
+
+For example
+
+```shell
+cargo run -r --bin metis-blocktrace https://mainnet.infura.io/v3/c60b0bb42f8a4c6481ecd229eddaca27 10889447
+```
+
 ## Ethertest Tool
 
 `metis-ethertest` is a tool for running [ethertest](https://github.com/ethereum/tests).

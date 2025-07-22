@@ -67,6 +67,11 @@ path = "bins/blockfetch/main.rs"
 doc = false
 
 [[bin]]
+name = "metis-blocktrace"
+path = "bins/blocktrace/main.rs"
+doc = false
+
+[[bin]]
 name = "metis-eelstest"
 path = "bins/eelstest/main.rs"
 doc = false
