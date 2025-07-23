@@ -594,6 +594,12 @@ fn setup_env(test: &Test, spec_id: SpecId) -> Result<EvmEnv, Box<TestError>> {
     let mut env = EvmEnv::default();
     env.cfg_env.chain_id = 1;
     env.cfg_env.spec = spec_id;
+    // Configure max blobs per spec
+    if env.cfg_env.spec.is_enabled_in(SpecId::PRAGUE) {
+        env.cfg_env.set_max_blobs_per_tx(9);
+    } else {
+        env.cfg_env.set_max_blobs_per_tx(6);
+    }
     env.block_env.number = test.env.current_number;
     env.block_env.beneficiary = test.env.current_coinbase;
     env.block_env.gas_limit = test.env.current_gas_limit.try_into().unwrap_or(u64::MAX);

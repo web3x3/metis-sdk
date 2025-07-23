@@ -38,7 +38,7 @@ jobs:
         run: |
           cd crates/tools
           # Download ethereum state test suites
-          git clone https://github.com/ethereum/tests
+          git clone -b v17.1 https://github.com/ethereum/tests
           TEST_DIR=tests/GeneralStateTests
           cargo run -r --bin metis-ethertest run $TEST_DIR
 
