@@ -1,46 +1,47 @@
-# 使用 Rust 的 Nightly 版本基础镜像
+# Use Rust Nightly version base image
 FROM rustlang/rust:nightly
 
-# 设置工作目录
+# Set working directory
 WORKDIR /app
 
-# 安装必要的依赖，包括 protoc
+# Install necessary dependencies, including protoc
 RUN apt-get update && apt-get install -y \
     protobuf-compiler \
     && rm -rf /var/lib/apt/lists/*
 
-# 克隆项目代码
+# Clone project code
 RUN git clone -b app_config https://github.com/chengzhinei/malaketh-layered.git .
 
-# 构建项目
+# Build the project
 RUN cargo build --release
 
-# 将生成的二进制文件复制到一个新的轻量级镜像中
+# Copy the generated binary to a new lightweight image
 #FROM debian:bullseye-slim
 #FROM debian:bookworm-slim
 #FROM ubuntu:22.04
 FROM ubuntu:24.04
 
-# 安装必要的依赖
+# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# 设置工作目录
+# Set working directory
 WORKDIR /app
 
-# 从之前的构建镜像中复制生成的二进制文件
+# Copy the generated binary from the previous build image
 COPY --from=0 /app/target/release/malachitebft-eth-app /app/
 #COPY --from=0 /app/target/release/malachitebft-eth-cli /app/
 #COPY --from=0 /app/target/release/malachitebft-eth-engine /app/
 COPY --from=0 /app/target/release/malachitebft-eth-utils /app/
 
-# 设置环境变量
+# Set environment variables
 ENV PATH="/app:${PATH}"
 
-# 暴露必要的端口
+# Expose necessary ports
 EXPOSE 8545 8551 9090 3000
 
-# 运行应用程序（这里假设你要运行 malachitebft-eth-app）
+# Run the application (assuming you want to run malachitebft-eth-app here)
 CMD ["malachitebft-eth-app"]
+
