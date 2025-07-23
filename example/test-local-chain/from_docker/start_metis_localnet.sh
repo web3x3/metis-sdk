@@ -7,18 +7,20 @@
 #   3 malaketh-layered nodes
 #
 
-# create genesis data
-cd ../lib/malaketh-layered
-cargo run --release --bin malachitebft-eth-utils genesis
-cd -
 
 # start metis nodes
 # as reth engine
-./metis_nodes.sh
+docker compose up -d
+
+# init chain config
+cp -fr nodes_config_bin nodes
 
 # Establishing links between peers
-./add_peers.sh
+#./add_peers.sh
+
+# waiting for metis node completely started
+sleep 3
 
 # start malaketh-layered nodes
 # as consensus components
-./malachite_nodes.sh
+docker compose -f compose-mala.yaml up -d
