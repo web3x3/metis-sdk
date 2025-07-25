@@ -1,12 +1,15 @@
 # Guide
 
-## Mandatory Modifications
+## Necessary Modifications
 
 ### 1. configs/node/config/config.toml
 Update `persistent_peers` under `[consensus.p2p]` to the IP addresses of the peers in the target chain you want to connect to.
 
-### 2. configs/node/config/genesis.json
+### 2. genesis.json
 Replace with the `genesis.json` file corresponding to the target chain you want to connect to.
+need to be replaced file: 
+configs/node/config/genesis.json
+configs/assets/genesis.json
 
 ### 3. configs/node/config/priv_validator_key.json
 You need to generate your own private key and replace this file. Steps to generate the file:
@@ -35,5 +38,5 @@ Replace with the `jwtsecret` file corresponding to the target chain you want to 
 
 ## After completing the above modifications, start the service with Docker
 ```bash
-docker compose up -d
+./start_node.sh
 ```

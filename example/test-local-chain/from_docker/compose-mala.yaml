@@ -1,6 +1,6 @@
 services:
   mala0:
-    image: malaketh-layered-ubuntu24
+    image: ghcr.io/metisprotocol/malachitebft
     container_name: mala0
     network_mode: host
     volumes:
@@ -16,7 +16,7 @@ services:
       - "--home"
       - "/data"
   mala1:
-    image: malaketh-layered-ubuntu24
+    image: ghcr.io/metisprotocol/malachitebft
     container_name: mala1
     network_mode: host
     volumes:
@@ -34,7 +34,7 @@ services:
       - "--home"
       - "/data"
   mala2:
-    image: malaketh-layered-ubuntu24
+    image: ghcr.io/metisprotocol/malachitebft
     container_name: mala2
     network_mode: host
     volumes:

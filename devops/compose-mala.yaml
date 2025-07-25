@@ -1,0 +1,17 @@
+services:
+  mala0:
+    image: ghcr.io/metisprotocol/malachitebft
+    container_name: mala0
+    volumes:
+      - ./configs/node/:/data
+      - ./configs/assets:/app/assets
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    environment:
+      PATH: /app
+    command:
+      # - "malachitebft-eth-app"
+      - "start"
+      #- "--start-height=267"
+      - "--home"
+      - "/data"
