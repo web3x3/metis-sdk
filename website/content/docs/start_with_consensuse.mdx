@@ -9,38 +9,24 @@ Welcome to the Metis SDK! This guide will help you quickly launch a Metis dev no
 
 [Archives of precompiled binaries](https://github.com/MetisProtocol/metis-sdk/releases/) of metis are available for macOS and Linux. They are static executables. Users of platforms not explicitly listed below should download one of these archives.
 
-## Docker
-
-Metis hyperion node docker images for both x86_64 and ARM64 machines are published with every release of reth on GitHub Container Registry.
-
-```shell
-docker pull ghcr.io/metisprotocol/hyperion
-```
-
-Or a specific version (e.g. v0.3.0) with:
-
-```shell
-docker pull ghcr.io/metisprotocol/hyperion:v0.3.0
-```
-
-You can test the image with:
-
-```shell
-docker run --rm ghcr.io/metisprotocol/hyperion --version
-```
-
 ## Run From Docker
-You can modify the corresponding configuration items in the metis-sdk/example directory, and directly start with 
+Note: Before starting, please ensure that all necessary modifications have been completed.
 ```bash
-docker compose up -d
+git clone https://github.com/MetisProtocol/metis-sdk.git
+cd metis-sdk/devops
+bash start_node.sh
 ```
 
-## Mandatory Modifications
+## Necessary Modifications
+
 ### 1. configs/node/config/config.toml
 Update `persistent_peers` under `[consensus.p2p]` to the IP addresses of the peers in the target chain you want to connect to.
 
-### 2. configs/node/config/genesis.json
+### 2. genesis.json
 Replace with the `genesis.json` file corresponding to the target chain you want to connect to.
+need to be replaced file: 
+configs/node/config/genesis.json
+configs/assets/genesis.json
 
 ### 3. configs/node/config/priv_validator_key.json
 You need to generate your own private key and replace this file. Steps to generate the file:
@@ -66,8 +52,3 @@ Replace with the `jwtsecret` file corresponding to the target chain you want to 
 1. Ensure that `reth0` in this file matches the service name `reth0` in `compose.yaml`
 2. The port in `engine_url` must match `--authrpc.port` in `compose.yaml`
 3. The port in `eth_url` must match `--http.port` in `compose.yaml`
-
-## After completing the above modifications, start the service with Docker
-```bash
-docker compose up -d
-```
