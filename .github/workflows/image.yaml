@@ -11,7 +11,7 @@ env:
   EL_IMAGE_NAME: metisprotocol/hyperion
   DOCKER_EL_IMAGE_NAME: ghcr.io/metisprotocol/hyperion
   CL_IMAGE_NAME: metisprotocol/hyperion-cl
-  DOCKER_CL_IMAGE_NAME: ghcr.io/metisprotocol/hyperion-cl
+  DOCKER_CL_IMAGE_NAME: ghcr.io/metisprotocol/malachitebft
   DOCKER_USERNAME: ${{ github.actor }}
 
 jobs:
@@ -65,15 +65,6 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
-      - name: Install Protobuf Compiler (protoc)
-        uses: arduino/setup-protoc@v2
-      - name: Build consensus client
-        run: |
-          mkdir dist/bin
-          cd lib/malaketh-layered
-          cargo build -r
-          cp target/release/malachitebft-eth-app ../../dist/bin
-
       - name: Setup QEMU
         uses: docker/setup-qemu-action@v3
       - name: Setup Docker Buildx
