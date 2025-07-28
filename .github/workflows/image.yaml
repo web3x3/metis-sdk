@@ -10,7 +10,7 @@ env:
   CARGO_TERM_COLOR: always
   EL_IMAGE_NAME: metisprotocol/hyperion
   DOCKER_EL_IMAGE_NAME: ghcr.io/metisprotocol/hyperion
-  CL_IMAGE_NAME: metisprotocol/hyperion-cl
+  CL_IMAGE_NAME: metisprotocol/malachitebft
   DOCKER_CL_IMAGE_NAME: ghcr.io/metisprotocol/malachitebft
   DOCKER_USERNAME: ${{ github.actor }}
 
