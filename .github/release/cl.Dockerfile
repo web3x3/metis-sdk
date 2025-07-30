@@ -1,27 +1,40 @@
-# Use Rust Nightly version base image
-FROM rustlang/rust:nightly
+# Stage 1: Multi-platform build environment (using buildx for cross-architecture compilation)
+FROM --platform=$BUILDPLATFORM rustlang/rust:nightly AS builder
+
+# Install cross-compilation dependencies and protoc
+RUN apt-get update && apt-get install -y \
+    protobuf-compiler \
+    gcc-aarch64-linux-gnu \
+    libc6-dev-arm64-cross \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set working directory
 WORKDIR /app
 
-# Install necessary dependencies, including protoc
-RUN apt-get update && apt-get install -y \
-    protobuf-compiler \
-    && rm -rf /var/lib/apt/lists/*
-
 # Clone project code
 RUN git clone https://github.com/MetisProtocol/malaketh-layered.git .
 
-# Build the project
-RUN cargo build --release
+# Set Rust target based on architecture
+ARG TARGETARCH
+RUN case ${TARGETARCH} in \
+        amd64) TARGET=x86_64-unknown-linux-gnu ;; \
+        arm64) TARGET=aarch64-unknown-linux-gnu ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+    esac && \
+    rustup target add ${TARGET}
 
-# Copy the generated binary to a new lightweight image
-#FROM debian:bullseye-slim
-#FROM debian:bookworm-slim
-#FROM ubuntu:22.04
-FROM ubuntu:24.04
+# Cross-compile the project (specify target architecture)
+ARG TARGETARCH
+RUN case ${TARGETARCH} in \
+        amd64) TARGET=x86_64-unknown-linux-gnu ;; \
+        arm64) TARGET=aarch64-unknown-linux-gnu ;; \
+    esac && \
+    cargo build --release --target ${TARGET}
 
-# Install necessary dependencies
+# Stage 2: Multi-platform runtime environment
+FROM --platform=$TARGETPLATFORM ubuntu:24.04
+
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     ca-certificates \
@@ -30,18 +43,23 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy the generated binary from the previous build image
-COPY --from=0 /app/target/release/malachitebft-eth-app /app/
-#COPY --from=0 /app/target/release/malachitebft-eth-cli /app/
-#COPY --from=0 /app/target/release/malachitebft-eth-engine /app/
-COPY --from=0 /app/target/release/malachitebft-eth-utils /app/
+# Copy compiled binaries based on target architecture
+ARG TARGETARCH
+COPY --from=builder /app/target/$(case ${TARGETARCH} in \
+    amd64) echo "x86_64-unknown-linux-gnu" ;; \
+    arm64) echo "aarch64-unknown-linux-gnu" ;; \
+esac)/release/malachitebft-eth-app /app/
+COPY --from=builder /app/target/$(case ${TARGETARCH} in \
+    amd64) echo "x86_64-unknown-linux-gnu" ;; \
+    arm64) echo "aarch64-unknown-linux-gnu" ;; \
+esac)/release/malachitebft-eth-utils /app/
 
-# Set environment variables
+# Add application directory to system path
 ENV PATH="/app:${PATH}"
 
-# Expose necessary ports
+# Expose required ports
 EXPOSE 8545 8551 9090 3000
 
-# Run the application (assuming you want to run malachitebft-eth-app here)
+# Default command to run the application
 CMD ["malachitebft-eth-app"]
-
+    
