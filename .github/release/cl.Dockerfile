@@ -1,40 +1,36 @@
-# Stage 1: Multi-platform build environment (using buildx for cross-architecture compilation)
+# Use Rust Nightly version base image
+#FROM rustlang/rust:nightly
 FROM --platform=$BUILDPLATFORM rustlang/rust:nightly AS builder
 
-# Install cross-compilation dependencies and protoc
+# Set working directory
+WORKDIR /app
+
+# Install necessary dependencies, including protoc
 RUN apt-get update && apt-get install -y \
     protobuf-compiler \
     gcc-aarch64-linux-gnu \
     libc6-dev-arm64-cross \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory
-WORKDIR /app
-
 # Clone project code
 RUN git clone https://github.com/MetisProtocol/malaketh-layered.git .
 
-# Set Rust target based on architecture
+RUN rustup target add aarch64-unknown-linux-gnu
+
 ARG TARGETARCH
-RUN case ${TARGETARCH} in \
-        amd64) TARGET=x86_64-unknown-linux-gnu ;; \
-        arm64) TARGET=aarch64-unknown-linux-gnu ;; \
-        *) echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
-    esac && \
-    rustup target add ${TARGET}
 
-# Cross-compile the project (specify target architecture)
-ARG TARGETARCH
-RUN case ${TARGETARCH} in \
-        amd64) TARGET=x86_64-unknown-linux-gnu ;; \
-        arm64) TARGET=aarch64-unknown-linux-gnu ;; \
-    esac && \
-    cargo build --release --target ${TARGET}
+# Build the project
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        export CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc; \
+        cargo build --release --target aarch64-unknown-linux-gnu; \
+    else \
+        cargo build --release; \
+    fi
 
-# Stage 2: Multi-platform runtime environment
-FROM --platform=$TARGETPLATFORM ubuntu:24.04
+# Copy the generated binary to a new lightweight image
+FROM ubuntu:24.04
 
-# Install runtime dependencies
+# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     libssl-dev \
     ca-certificates \
@@ -43,23 +39,24 @@ RUN apt-get update && apt-get install -y \
 # Set working directory
 WORKDIR /app
 
-# Copy compiled binaries based on target architecture
 ARG TARGETARCH
-COPY --from=builder /app/target/$(case ${TARGETARCH} in \
-    amd64) echo "x86_64-unknown-linux-gnu" ;; \
-    arm64) echo "aarch64-unknown-linux-gnu" ;; \
-esac)/release/malachitebft-eth-app /app/
-COPY --from=builder /app/target/$(case ${TARGETARCH} in \
-    amd64) echo "x86_64-unknown-linux-gnu" ;; \
-    arm64) echo "aarch64-unknown-linux-gnu" ;; \
-esac)/release/malachitebft-eth-utils /app/
 
-# Add application directory to system path
+RUN if [ "$TARGETARCH" = "arm64" ]; then \
+        echo "aarch64-unknown-linux-gnu/" > /target-subdir.txt; \
+    else \
+        echo "" > /target-subdir.txt; \
+    fi
+
+RUN --mount=from=builder,source=/app/target,target=/builder-target \
+    TARGET_SUBDIR=$(cat /target-subdir.txt) && \
+    cp /builder-target/${TARGET_SUBDIR}release/malachitebft-eth-app /app/
+
+
+# Set environment variables
 ENV PATH="/app:${PATH}"
 
-# Expose required ports
+# Expose necessary ports
 EXPOSE 8545 8551 9090 3000
 
-# Default command to run the application
+# Run the application (assuming you want to run malachitebft-eth-app here)
 CMD ["malachitebft-eth-app"]
-    
