@@ -13,7 +13,10 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone project code
-RUN git clone https://github.com/MetisProtocol/malaketh-layered.git .
+RUN git clone -b test-log https://github.com/MetisProtocol/malachite.git
+RUN git clone -b test-log https://github.com/MetisProtocol/malaketh-layered.git
+
+WORKDIR /app/malaketh-layered
 
 RUN rustup target add aarch64-unknown-linux-gnu
 
@@ -47,7 +50,7 @@ RUN if [ "$TARGETARCH" = "arm64" ]; then \
         echo "" > /target-subdir.txt; \
     fi
 
-RUN --mount=from=builder,source=/app/target,target=/builder-target \
+RUN --mount=from=builder,source=/app/malaketh-layered/target,target=/builder-target \
     TARGET_SUBDIR=$(cat /target-subdir.txt) && \
     cp /builder-target/${TARGET_SUBDIR}release/malachitebft-eth-app /app/
 
