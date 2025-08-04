@@ -99,7 +99,7 @@ reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
 
 # OP Reth dependencies
 reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
-reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
+reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
 reth-optimism-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
 reth-optimism-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
 reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth", tag = "v1.5.1" }
