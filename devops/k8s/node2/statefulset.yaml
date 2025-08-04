@@ -1,0 +1,112 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: seq2
+spec:
+  selector:
+    matchLabels:
+      app: seq2
+      node: sequencer
+  replicas: 1
+  revisionHistoryLimit: 0
+  serviceName: seq2
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        node: sequencer
+        app: seq2
+    spec:
+      enableServiceLinks: false
+      terminationGracePeriodSeconds: 30
+      hostNetwork: false
+      dnsPolicy: ClusterFirst
+      containers:
+        - name: reth
+          image: ghcr.io/metisprotocol/hyperion
+          ports:
+            - containerPort: 8545
+              name: http
+            - containerPort: 8546
+              name: websocket
+            - containerPort: 30303
+              name: p2p-tcp
+            - containerPort: 30303
+              name: p2p-udp
+              protocol: UDP
+            - containerPort: 9001
+              name: metrics
+          args:
+            - node
+            - --datadir=/data
+            - --chain=/genesis/genesis.json
+            - --http
+            - --http.api=eth,net,web3,debug,txpool
+            - --http.addr=0.0.0.0
+            - --http.corsdomain=*
+            - --ws
+            - --ws.api=eth,net,web3,debug,txpool
+            - --ws.addr=0.0.0.0
+            - --ws.origins=*
+            - --ipcdisable
+            - --metrics=0.0.0.0:9001
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2G
+            limits:
+              memory: 4G
+              cpu: 2000m
+          startupProbe:
+            failureThreshold: 10
+            tcpSocket:
+              port: 8545
+          livenessProbe:
+            tcpSocket:
+              port: 8545
+          readinessProbe:
+            tcpSocket:
+              port: 8545
+          volumeMounts:
+            - name: reth
+              mountPath: /data
+            - name: genesis
+              mountPath: /genesis
+        - name: mala
+          image: ghcr.io/metisprotocol/malachitebft
+          ports:
+            - containerPort: 27000
+              name: p2p
+            - containerPort: 29000
+              name: metrics
+          command:
+            - /app/malachitebft-eth-app
+          args:
+            - start
+            - --home=/data
+            # - --start-height=5514733
+          resources:
+            requests:
+              cpu: 1000m
+              memory: 2G
+            limits:
+              memory: 4G
+              cpu: 2000m
+          volumeMounts:
+            - name: reth
+              mountPath: /reth
+            - name: mala
+              mountPath: /data
+      volumes:
+        - name: reth
+          persistentVolumeClaim:
+            claimName: seq2-reth
+        - name: mala
+          hostPath:
+            path: /data/node2
+            type: DirectoryOrCreate
+        - name: genesis
+          configMap:
+            name: genesis
+            defaultMode: 0600
