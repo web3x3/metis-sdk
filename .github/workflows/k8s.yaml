@@ -43,7 +43,12 @@ jobs:
 
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
-
+          # Temp remove the node2 and node3 config, because in the GitHub CI,
+          # we are resource-constrained. In the future, we will use self-host
+          # machines to perform complex execution and consensus client tests.
+          rm -rf k8s/node2 k8s/node3
+          sed -i '/^  - node2$/s/^/#/' k8s/kustomization.yaml
+          sed -i '/^  - node3$/s/^/#/' k8s/kustomization.yaml
           # Deploy Kustomize configuration
           echo "Applying Kustomize manifests..."
           kustomize build k8s | kubectl apply -f -
@@ -77,14 +82,6 @@ jobs:
             kubectl logs seq1-0 -c mala -n hyperion || true
             kubectl logs seq1-0 -c reth -n hyperion || true
 
-            echo "Container logs for seq2-0:"
-            kubectl logs seq2-0 -c mala -n hyperion || true
-            kubectl logs seq2-0 -c reth -n hyperion || true
-
-            echo "Container logs for seq3-0:"
-            kubectl logs seq3-0 -c mala -n hyperion || true
-            kubectl logs seq3-0 -c reth -n hyperion || true
-
             exit 1
           fi
 
@@ -107,8 +104,10 @@ jobs:
             exit 1
           fi
 
-          echo "Retrieving mala container logs..."
-          kubectl logs seq1-0 -c mala -n hyperion -f --tail=100
+          echo "Retrieving execution client container logs..."
+          timeout 30s kubectl logs seq1-0 -c reth -n hyperion -f --tail=100 || true
+          echo "Retrieving consensus client container logs..."
+          timeout 30s kubectl logs seq1-0 -c mala -n hyperion -f --tail=100 || true
 
       - name: Cleanup
         if: always()
