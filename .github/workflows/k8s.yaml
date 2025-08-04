@@ -7,6 +7,10 @@ on:
     branches: ["**"]
     types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   unit:
     runs-on: ubuntu-latest

@@ -11,6 +11,6 @@ resources:
   # - monitoring.yaml
 images:
   - name: ghcr.io/metisprotocol/hyperion
-    newTag: v0.4.2
+    newTag: v0.4.1
   - name: ghcr.io/metisprotocol/malachitebft
-    newTag: v0.4.2
+    newTag: v0.4.1
