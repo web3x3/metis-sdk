@@ -15,81 +15,108 @@ jobs:
   unit:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-      
-      - name: Setup Kubernetes with mounts
-        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+
+      - name: Start Minikube cluster
+        uses: manusa/actions-setup-minikube@31167b45c86e1ac521a8060ad1e29987022109c # v2.10.0
         with:
-          version: v0.20.0
-          cluster_name: kind
-          node_image: kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72
-          config: |
-            kind: Cluster
-            apiVersion: kind.x-k8s.io/v1alpha4
-            nodes:
-            - role: control-plane
-              extraMounts:
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node1
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node2
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node3
-            - role: worker
-              extraMounts:
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node1
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node2
-              - hostPath: ${{ github.workspace }}/devops/configs/node
-                containerPath: /data/node3
-      
+          minikube version: 'v1.32.0'
+          kubernetes version: 'v1.27.3'
+          driver: docker
+          container runtime: containerd
+          cpus: 2
+          memory: 4096
+          disk size: 20g
+          start args: --addons=metrics-server
+
+      - name: Verify Minikube setup
+        run: |
+          minikube status
+          kubectl get nodes
+          kubectl version
+
       - name: Setup Kustomize
         uses: fluxcd/pkg/actions/kustomize@main
 
-      - name: Run Kubernetes deploy test
+      - name: Create necessary directories
         run: |
           cd devops
-          # Deploy Kubernetes manifests in the k8s folder
-          cat k8s/kustomization.yaml
+          mkdir -p configs/node  # Ensure mount directory exists
+          # Optional: Add test configuration files
+          echo "test config" > configs/node/test.conf
 
+      - name: Run deployment tests
+        run: |
+          cd devops
+          
+          # Start background mount processes
+          echo "Starting directory mounts..."
+          minikube mount ./configs/node:/data/node1 &
+          echo "Mount 1 PID: $!"
+          minikube mount ./configs/node:/data/node2 &
+          echo "Mount 2 PID: $!"
+          minikube mount ./configs/node:/data/node3 &
+          echo "Mount 3 PID: $!"
+          
+          # Wait for mounts to complete
+          sleep 10
+          
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
           
-          # Build the kustomization and deploy manifests
+          # Deploy Kustomize configuration
+          echo "Applying Kustomize manifests..."
           kustomize build k8s | kubectl apply -f -
           
-          # Wait for deployment to initialize
-          echo "Waiting for deployment to initialize..."
-          sleep 10
+          # Wait for deployment initialization
+          echo "Waiting for deployment to stabilize..."
+          sleep 15
           
-          # Check status of all resources
-          echo "Checking deployment status..."
+          # Check resource status
+          echo "Current cluster state:"
           kubectl get all -n hyperion
-
+          kubectl get namespaces
+          
+          # Wait for StatefulSet to be ready
           echo "Waiting for StatefulSet pods to be ready..."
-          kubectl wait --for=condition=ready pod -l app=seq1 -n hyperion --timeout=300s
-
-          # Verify StatefulSet exists
-          echo "Verifying StatefulSet deployment..."
-          if ! kubectl get statefulset seq1 -n hyperion &> /dev/null; then
-            echo "Deployment failed: seq1 StatefulSet not found"
+          if ! kubectl wait --for=condition=ready pod -l app=seq1 -n hyperion --timeout=300s; then
+            echo "Pods failed to become ready within timeout"
+            kubectl describe pods -l app=seq1 -n hyperion
             exit 1
           fi
-
-          # Check StatefulSet replica status
+          
+          # Verify StatefulSet
+          echo "Verifying StatefulSet..."
+          if ! kubectl get statefulset seq1 -n hyperion &> /dev/null; then
+            echo "StatefulSet seq1 not found"
+            exit 1
+          fi
+          
+          # Check replica status
           DESIRED_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.spec.replicas}')
           READY_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.status.readyReplicas}')
-
+          
           echo "Desired replicas: $DESIRED_REPLICAS"
           echo "Ready replicas: $READY_REPLICAS"
-
-          if [ "$READY_REPLICAS" -lt "$DESIRED_REPLICAS" ]; then
-            echo "Deployment failed: Not all replicas are ready"
+          
+          if [ "$READY_REPLICAS" -ne "$DESIRED_REPLICAS" ]; then
+            echo "Not all replicas are ready"
+            kubectl describe statefulset seq1 -n hyperion
             exit 1
           fi
-
+          
           # View container logs
-          echo "Viewing mala container logs from seq1-0..."
-          kubectl logs seq1-0 -c mala -n hyperion -f
+          echo "Retrieving mala container logs..."
+          kubectl logs seq1-0 -c mala -n hyperion -f --tail=100
+
+      - name: Cleanup
+        if: always()
+        run: |
+          # Clean up Kubernetes resources
+          cd devops
+          kustomize build k8s | kubectl delete -f - --ignore-not-found=true
+          
+          # Stop Minikube
+          minikube stop
+          minikube delete
