@@ -20,4 +20,3 @@ spec:
       name: metrics
   selector:
     node: sequencer
-

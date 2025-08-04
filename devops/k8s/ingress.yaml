@@ -17,4 +17,3 @@ spec:
                 name: "sequencer"
                 port:
                   number: 8545
-

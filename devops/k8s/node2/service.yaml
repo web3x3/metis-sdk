@@ -20,4 +20,3 @@ spec:
       name: metrics
   selector:
     app: seq2
-

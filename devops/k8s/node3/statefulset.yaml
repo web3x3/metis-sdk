@@ -110,4 +110,3 @@ spec:
           configMap:
             name: genesis
             defaultMode: 0600
-
