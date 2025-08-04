@@ -81,32 +81,21 @@ jobs:
           # Check resource status with more details
           echo "Current cluster state with details:"
           kubectl get all -n hyperion -o wide
-          kubectl get pvc -n hyperion
-          kubectl get pv -n hyperion
 
           # Debug pending pods
           echo "Checking events for pending pods..."
           kubectl get events -n hyperion --sort-by='.lastTimestamp'
-
-          # Debug CrashLoopBackOff pod
-          if kubectl get pod seq1-0 -n hyperion &> /dev/null; then
-            echo "Fetching logs from seq1-0 (previous attempt)..."
-            kubectl logs seq1-0 -n hyperion --previous
-          
-            echo "Describing seq1-0 pod..."
-            kubectl describe pod seq1-0 -n hyperion
-          fi
 
           # Wait for StatefulSet to be ready
           echo "Waiting for StatefulSet pods to be ready..."
           if ! kubectl wait --for=condition=ready pod -l app=seq1 -n hyperion --timeout=300s; then
             echo "Pods failed to become ready within timeout"
             kubectl describe pods -l app=seq1 -n hyperion
-            
+
             # Additional debug information
             echo "StatefulSet details:"
             kubectl describe statefulset seq1 -n hyperion
-            
+
             echo "Container logs for seq1-0:"
             kubectl logs seq1-0 -c mala -n hyperion || true
             kubectl logs seq1-0 -c reth -n hyperion || true
@@ -128,19 +117,19 @@ jobs:
             echo "StatefulSet seq1 not found"
             exit 1
           fi
-          
+
           DESIRED_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.spec.replicas}')
           READY_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.status.readyReplicas}')
-          
+
           echo "Desired replicas: $DESIRED_REPLICAS"
           echo "Ready replicas: $READY_REPLICAS"
-          
+
           if [ "$READY_REPLICAS" -ne "$DESIRED_REPLICAS" ]; then
             echo "Not all replicas are ready"
             kubectl describe statefulset seq1 -n hyperion
             exit 1
           fi
-          
+
           echo "Retrieving mala container logs..."
           kubectl logs seq1-0 -c mala -n hyperion -f --tail=100
 
