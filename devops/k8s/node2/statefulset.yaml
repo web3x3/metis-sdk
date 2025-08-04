@@ -51,6 +51,7 @@ spec:
             - --ws.origins=*
             - --ipcdisable
             - --metrics=0.0.0.0:9001
+            - --authrpc.jwtsecret=/genesis/jwtsecret
           resources:
             requests:
               cpu: 1000m
