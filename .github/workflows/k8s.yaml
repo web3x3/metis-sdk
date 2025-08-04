@@ -104,8 +104,10 @@ jobs:
             exit 1
           fi
 
-          echo "Retrieving mala container logs..."
-          kubectl logs seq1-0 -c mala -n hyperion -f --tail=100
+          echo "Retrieving execution client container logs..."
+          timeout 30s kubectl logs seq1-0 -c reth -n hyperion -f --tail=100 || true
+          echo "Retrieving consensus client container logs..."
+          timeout 30s kubectl logs seq1-0 -c mala -n hyperion -f --tail=100 || true
 
       - name: Cleanup
         if: always()
