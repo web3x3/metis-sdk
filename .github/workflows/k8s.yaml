@@ -19,10 +19,31 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Setup Kubernetes
         uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
-        with:
+      - name: Setup Kubernetes with mounts
           version: v0.20.0
           cluster_name: kind
           node_image: kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72
+          config: |
+            kind: Cluster
+            apiVersion: kind.x-k8s.io/v1alpha4
+            nodes:
+            - role: control-plane
+              extraMounts:
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node1
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node2
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node3
+            - role: worker
+              extraMounts:
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node1
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node2
+              - hostPath: ${{ github.workspace }}/devops/configs/node
+                containerPath: /data/node3
+
       - name: Setup Kustomize
         uses: fluxcd/pkg/actions/kustomize@main
 
@@ -31,10 +52,6 @@ jobs:
           cd devops
           # Deploy Kubernetes manifests in the k8s folder
           cat k8s/kustomization.yaml
-          # Mount local config folders
-          minikube mount ./configs/node:/data/node1
-          minikube mount ./configs/node:/data/node2
-          minikube mount ./configs/node:/data/node3
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
           # Build the kustomization and deploy manifests
