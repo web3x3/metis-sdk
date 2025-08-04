@@ -94,19 +94,30 @@ spec:
               memory: 4G
               cpu: 2000m
           volumeMounts:
-            - name: reth
-              mountPath: /reth
-            - name: mala
-              mountPath: /data
+            - name: app-config-volume
+              mountPath: /data/config/app_config.toml
+              subPath: app_config.toml
+            - name: app-config-volume
+              mountPath: /data/config/config.toml
+              subPath: config.toml
+            - name: app-config-volume
+              mountPath: /data/config/genesis.json
+              subPath: genesis.json
+            - name: app-config-volume
+              mountPath: /data/config/priv_validator_key.json
+              subPath: priv_validator_key.json
+            - name: app-config-volume
+              mountPath: /data/jwt.hex
+              subPath: jwt.hex
       volumes:
         - name: reth
           persistentVolumeClaim:
             claimName: seq2-reth
-        - name: mala
-          hostPath:
-            path: /data/node2
-            type: DirectoryOrCreate
+        - name: app-config-volume
+          configMap:
+            name: node-configs
         - name: genesis
           configMap:
             name: genesis
             defaultMode: 0600
+
