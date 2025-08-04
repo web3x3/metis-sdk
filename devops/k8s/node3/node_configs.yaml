@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: node-configs
+  name: node3-configs
   namespace: lazai
 data:
   app_config.toml: |

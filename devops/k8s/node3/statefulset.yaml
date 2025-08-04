@@ -115,7 +115,7 @@ spec:
             claimName: seq3-reth
         - name: app-config-volume
           configMap:
-            name: node-configs
+            name: node3-configs
         - name: genesis
           configMap:
             name: genesis

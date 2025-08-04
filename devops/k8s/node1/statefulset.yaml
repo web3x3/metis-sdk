@@ -115,7 +115,7 @@ spec:
             claimName: seq1-reth
         - name: app-config-volume
           configMap:
-            name: node-configs
+            name: node1-configs
         - name: genesis
           configMap:
             name: genesis
