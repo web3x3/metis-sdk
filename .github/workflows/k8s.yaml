@@ -30,31 +30,40 @@ jobs:
           minikube status
           kubectl get nodes
           kubectl version
+          kubectl get namespaces
 
       - name: Setup Kustomize
         uses: fluxcd/pkg/actions/kustomize@main
 
-      - name: Create necessary directories
+      - name: Create necessary directories and verify mounts
         run: |
           cd devops
-          mkdir -p configs/node  # Ensure mount directory exists
+          mkdir -p configs/node
           echo "test config" > configs/node/test.conf
+          
+          # Verify directory contents before mounting
+          echo "Contents of configs/node directory:"
+          ls -la configs/node
+          cat configs/node/test.conf
+
+          # Start mounts with verbose output
+          echo "Starting directory mounts..."
+          minikube mount --verbose ./configs/node:/data/node1 &
+          echo "Mount 1 PID: $!"
+          minikube mount --verbose ./configs/node:/data/node2 &
+          echo "Mount 2 PID: $!"
+          minikube mount --verbose ./configs/node:/data/node3 &
+          echo "Mount 3 PID: $!"
+          
+          # Wait for mounts and verify they're working
+          sleep 10
+          echo "Verifying mounts in Minikube..."
+          minikube ssh "ls -la /data/node1"
+          minikube ssh "cat /data/node1/test.conf"
 
       - name: Run deployment tests
         run: |
           cd devops
-          
-          # Start background mount processes
-          echo "Starting directory mounts..."
-          minikube mount ./configs/node:/data/node1 &
-          echo "Mount 1 PID: $!"
-          minikube mount ./configs/node:/data/node2 &
-          echo "Mount 2 PID: $!"
-          minikube mount ./configs/node:/data/node3 &
-          echo "Mount 3 PID: $!"
-          
-          # Wait for mounts to complete
-          sleep 10
           
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
@@ -63,31 +72,64 @@ jobs:
           echo "Applying Kustomize manifests..."
           kustomize build k8s | kubectl apply -f -
           
-          # Wait for deployment initialization
-          echo "Waiting for deployment to stabilize..."
-          sleep 15
+          # Add extended monitoring during deployment
+          echo "Monitoring pod status during initialization..."
+          for i in {1..10}; do
+            kubectl get pods -n hyperion
+            sleep 3
+          done
+
+          # Check resource status with more details
+          echo "Current cluster state with details:"
+          kubectl get all -n hyperion -o wide
+          kubectl get pvc -n hyperion
+          kubectl get pv -n hyperion
+
+          # Debug pending pods
+          echo "Checking events for pending pods..."
+          kubectl get events -n hyperion --sort-by='.lastTimestamp'
+
+          # Debug CrashLoopBackOff pod
+          if kubectl get pod seq1-0 -n hyperion &> /dev/null; then
+            echo "Fetching logs from seq1-0 (previous attempt)..."
+            kubectl logs seq1-0 -n hyperion --previous
           
-          # Check resource status
-          echo "Current cluster state:"
-          kubectl get all -n hyperion
-          kubectl get namespaces
-          
+            echo "Describing seq1-0 pod..."
+            kubectl describe pod seq1-0 -n hyperion
+          fi
+
           # Wait for StatefulSet to be ready
           echo "Waiting for StatefulSet pods to be ready..."
           if ! kubectl wait --for=condition=ready pod -l app=seq1 -n hyperion --timeout=300s; then
             echo "Pods failed to become ready within timeout"
             kubectl describe pods -l app=seq1 -n hyperion
+            
+            # Additional debug information
+            echo "StatefulSet details:"
+            kubectl describe statefulset seq1 -n hyperion
+            
+            echo "Container logs for seq1-0:"
+            kubectl logs seq1-0 -c mala -n hyperion || true
+            kubectl logs seq1-0 -c reth -n hyperion || true
+
+            echo "Container logs for seq2-0:"
+            kubectl logs seq2-0 -c mala -n hyperion || true
+            kubectl logs seq2-0 -c reth -n hyperion || true
+
+            echo "Container logs for seq3-0:"
+            kubectl logs seq3-0 -c mala -n hyperion || true
+            kubectl logs seq3-0 -c reth -n hyperion || true
+
             exit 1
           fi
-          
-          # Verify StatefulSet
+
+          # Rest of your verification steps...
           echo "Verifying StatefulSet..."
           if ! kubectl get statefulset seq1 -n hyperion &> /dev/null; then
             echo "StatefulSet seq1 not found"
             exit 1
           fi
           
-          # Check replica status
           DESIRED_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.spec.replicas}')
           READY_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.status.readyReplicas}')
           
@@ -100,17 +142,13 @@ jobs:
             exit 1
           fi
           
-          # View container logs
           echo "Retrieving mala container logs..."
           kubectl logs seq1-0 -c mala -n hyperion -f --tail=100
 
       - name: Cleanup
         if: always()
         run: |
-          # Clean up Kubernetes resources
           cd devops
           kustomize build k8s | kubectl delete -f - --ignore-not-found=true
-          
-          # Stop Minikube
           minikube stop
           minikube delete
