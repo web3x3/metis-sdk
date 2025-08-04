@@ -20,7 +20,7 @@ spec:
     spec:
       enableServiceLinks: false
       terminationGracePeriodSeconds: 30
-      hostNetwork: false
+      hostNetwork: true
       dnsPolicy: ClusterFirst
       containers:
         - name: reth
