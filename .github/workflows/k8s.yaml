@@ -24,6 +24,8 @@ jobs:
           minikube version: 'v1.35.0'
           kubernetes version: 'v1.33.0'
           github token: ${{ secrets.GITHUB_TOKEN }}
+          driver: docker  # Use docker driver which supports mounting
+          start args: --memory 4096 --cpus 2  # Add sufficient resources
 
       - name: Verify Minikube setup
         run: |
