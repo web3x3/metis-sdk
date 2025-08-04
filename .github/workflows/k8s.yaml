@@ -1,0 +1,65 @@
+name: Kubernetes Deploy Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: ["**"]
+    types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+      - name: Setup Kubernetes
+        uses: helm/kind-action@a1b0e391336a6ee6713a0583f8c6240d70863de3 # v1.12.0
+        with:
+          version: v0.20.0
+          cluster_name: kind
+          node_image: kindest/node:v1.27.3@sha256:3966ac761ae0136263ffdb6cfd4db23ef8a83cba8a463690e98317add2c9ba72
+      - name: Setup Kustomize
+        uses: fluxcd/pkg/actions/kustomize@main
+
+      - name: Run Kubernetes deploy test
+        run: |
+          cd devops
+          # Deploy Kubernetes manifests in the k8s folder
+          cat k8s/kustomization.yaml
+          # Create namespace
+          kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
+          # Build the kustomization and deploy manifests
+          kustomize build k8s | kubectl apply -f -
+          # Wait for deployment to initialize
+          echo "Waiting for deployment to initialize..."
+          sleep 10
+          # Check status of all resources
+          echo "Checking deployment status..."
+          kubectl get all -n hyperion
+
+          echo "Waiting for StatefulSet pods to be ready..."
+          kubectl wait --for=condition=ready pod -l app=seq1 -n hyperion --timeout=300s
+
+          # Verify StatefulSet exists
+          echo "Verifying StatefulSet deployment..."
+          if ! kubectl get statefulset seq1 -n hyperion &> /dev/null; then
+            echo "Deployment failed: seq1 StatefulSet not found"
+            exit 1
+          fi
+
+          # Check StatefulSet replica status
+          DESIRED_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.spec.replicas}')
+          READY_REPLICAS=$(kubectl get statefulset seq1 -n hyperion -o jsonpath='{.status.readyReplicas}')
+
+          echo "Desired replicas: $DESIRED_REPLICAS"
+          echo "Ready replicas: $READY_REPLICAS"
+
+          if [ "$READY_REPLICAS" -lt "$DESIRED_REPLICAS" ]; then
+            echo "Deployment failed: Not all replicas are ready"
+            exit 1
+          fi
+
+          # View container logs
+          echo "Viewing mala container logs from seq1-0..."
+          kubectl logs seq1-0 -c mala -n hyperion -f

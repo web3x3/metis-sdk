@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: hyperion
+resources:
+  - node1
+  - node2
+  - node3
+  - ingress.yaml
+  - service.yaml
+  - genesis-configmap.yaml
+  # - monitoring.yaml
+images:
+  - name: ghcr.io/metisprotocol/hyperion
+    newTag: v0.4.2
+  - name: ghcr.io/metisprotocol/malachitebft
+    newTag: v0.4.2
