@@ -50,11 +50,11 @@ jobs:
 
           # Start mounts with verbose output
           echo "Starting directory mounts..."
-          minikube mount ./configs/node:/data/node1 &
+          minikube mount ../example/test-local-chain/from_docker/nodes_config_bin/0:/data/node1 &
           echo "Mount 1 PID: $!"
-          minikube mount ./configs/node:/data/node2 &
+          minikube mount ../example/test-local-chain/from_docker/nodes_config_bin/1:/data/node2 &
           echo "Mount 2 PID: $!"
-          minikube mount ./configs/node:/data/node3 &
+          minikube mount ../example/test-local-chain/from_docker/nodes_config_bin/2:/data/node3 &
           echo "Mount 3 PID: $!"
           
           # Wait for mounts and verify they're working
