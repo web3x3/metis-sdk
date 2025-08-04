@@ -18,17 +18,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
-      - name: Start Minikube cluster
-        uses: manusa/actions-setup-minikube@31167b45c86e1ac521a8060ad1e29987022109c # v2.10.0
+      - name: Setup Minikube
+        uses: manusa/actions-setup-minikube@v2.14.0
         with:
-          minikube version: 'v1.32.0'
-          kubernetes version: 'v1.27.3'
-          driver: docker
-          container runtime: containerd
-          cpus: 2
-          memory: 4096
-          disk size: 20g
-          start args: --addons=metrics-server
+          minikube version: 'v1.35.0'
+          kubernetes version: 'v1.33.0'
+          github token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Verify Minikube setup
         run: |
@@ -43,7 +38,6 @@ jobs:
         run: |
           cd devops
           mkdir -p configs/node  # Ensure mount directory exists
-          # Optional: Add test configuration files
           echo "test config" > configs/node/test.conf
 
       - name: Run deployment tests
