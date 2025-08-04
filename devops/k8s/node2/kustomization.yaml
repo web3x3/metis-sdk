@@ -5,4 +5,4 @@ resources:
   - reth-pvc.yaml
   - service.yaml
   - statefulset.yaml
-  - app_configs.yaml
+  - node_configs.yaml
