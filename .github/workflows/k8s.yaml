@@ -48,30 +48,27 @@ jobs:
 
           # Start mounts with verbose output
           echo "Starting directory mounts..."
-          minikube mount --verbose ./configs/node:/data/node1 &
+          minikube mount ./configs/node:/data/node1 &
           echo "Mount 1 PID: $!"
-          minikube mount --verbose ./configs/node:/data/node2 &
+          minikube mount ./configs/node:/data/node2 &
           echo "Mount 2 PID: $!"
-          minikube mount --verbose ./configs/node:/data/node3 &
+          minikube mount ./configs/node:/data/node3 &
           echo "Mount 3 PID: $!"
           
           # Wait for mounts and verify they're working
           sleep 10
-          echo "Verifying mounts in Minikube..."
-          minikube ssh "ls -la /data/node1"
-          minikube ssh "cat /data/node1/test.conf"
 
       - name: Run deployment tests
         run: |
           cd devops
-          
+
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
-          
+
           # Deploy Kustomize configuration
           echo "Applying Kustomize manifests..."
           kustomize build k8s | kubectl apply -f -
-          
+
           # Add extended monitoring during deployment
           echo "Monitoring pod status during initialization..."
           for i in {1..10}; do
