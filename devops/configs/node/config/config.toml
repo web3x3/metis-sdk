@@ -17,8 +17,8 @@ timeout_step = "30s"
 [consensus.p2p]
 listen_addr = "/ip4/0.0.0.0/tcp/27000"
 persistent_peers = [
-    "/ip4/127.0.0.1/tcp/27001",
-    "/ip4/127.0.0.1/tcp/27002",
+    "/ip4/mala1/tcp/27001",
+    "/ip4/mala2/tcp/27002",
 ]
 transport = "tcp"
 pubsub_max_size = "4.2 MB"
