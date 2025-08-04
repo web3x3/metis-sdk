@@ -18,11 +18,6 @@ spec:
         node: sequencer
         app: seq1
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 2000
-        fsGroupChangePolicy: "OnRootMismatch"
       enableServiceLinks: false
       terminationGracePeriodSeconds: 30
       hostNetwork: false

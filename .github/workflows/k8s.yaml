@@ -32,9 +32,9 @@ jobs:
           # Deploy Kubernetes manifests in the k8s folder
           cat k8s/kustomization.yaml
           # Mount local config folders
-          minikube mount ./devops/configs/node:/data/node1
-          minikube mount ./devops/configs/node:/data/node2
-          minikube mount ./devops/configs/node:/data/node3
+          minikube mount ./configs/node:/data/node1
+          minikube mount ./configs/node:/data/node2
+          minikube mount ./configs/node:/data/node3
           # Create namespace
           kubectl create namespace hyperion --dry-run=client -o yaml | kubectl apply -f -
           # Build the kustomization and deploy manifests
