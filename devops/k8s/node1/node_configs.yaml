@@ -28,8 +28,10 @@ data:
     [consensus.p2p]
     listen_addr = "/ip4/0.0.0.0/tcp/27000"
     persistent_peers = [
-        "/ip4/127.0.0.1/tcp/27001",
-        "/ip4/127.0.0.1/tcp/27002",
+      #"/ip4/127.0.0.1/tcp/27001",
+      #"/ip4/127.0.0.1/tcp/27002",
+      "/dns/seq2/tcp/27000",
+      "/dns/seq3/tcp/27000",
     ]
     transport = "tcp"
     pubsub_max_size = "4.2 MB"
@@ -141,5 +143,3 @@ data:
       "type": "tendermint/PrivKeyEd25519",
       "value": "lxupTIP9eOdVszL7uONRqET6vUc+G6fJhrYdQAcsSRY="
     }
-  jwt.hex: |
-    167814d140ef5b51febc9b2aa29c08dba3b67e0a343352722d33d1570e9fbfa1

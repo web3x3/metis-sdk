@@ -20,7 +20,7 @@ spec:
     spec:
       enableServiceLinks: false
       terminationGracePeriodSeconds: 30
-      hostNetwork: true
+      hostNetwork: false
       dnsPolicy: ClusterFirst
       containers:
         - name: reth
@@ -51,7 +51,7 @@ spec:
             - --ws.origins=*
             - --ipcdisable
             - --metrics=0.0.0.0:9001
-            - --authrpc.jwtsecret=/genesis/jwtsecret
+            - --authrpc.jwtsecret=/genesis/jwt.hex
           resources:
             requests:
               cpu: 1000m
@@ -107,7 +107,7 @@ spec:
             - name: app-config-volume
               mountPath: /data/config/priv_validator_key.json
               subPath: priv_validator_key.json
-            - name: app-config-volume
+            - name: genesis
               mountPath: /data/jwt.hex
               subPath: jwt.hex
       volumes:

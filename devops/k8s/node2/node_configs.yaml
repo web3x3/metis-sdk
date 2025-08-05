@@ -5,8 +5,8 @@ metadata:
   namespace: lazai
 data:
   app_config.toml: |
-    engine_url = "http://127.0.0.1:18551"
-    eth_url = "http://127.0.0.1:18545"
+    engine_url = "http://127.0.0.1:8551"
+    eth_url = "http://127.0.0.1:8545"
     wt_path = "/data/jwt.hex"
   config.toml: |
     moniker = "validator-1"
@@ -26,10 +26,13 @@ data:
     timeout_step = "30s"
 
     [consensus.p2p]
-    listen_addr = "/ip4/0.0.0.0/tcp/27001"
+    #listen_addr = "/ip4/0.0.0.0/tcp/27001"
+    listen_addr = "/ip4/0.0.0.0/tcp/27000"
     persistent_peers = [
-        "/ip4/127.0.0.1/tcp/27000",
-        "/ip4/127.0.0.1/tcp/27002",
+      #"/ip4/127.0.0.1/tcp/27000",
+      #"/ip4/127.0.0.1/tcp/27002",
+      "/dns/seq1/tcp/27000",
+      "/dns/seq3/tcp/27000",
     ]
     transport = "tcp"
     pubsub_max_size = "4.2 MB"
@@ -141,5 +144,3 @@ data:
       "type": "tendermint/PrivKeyEd25519",
       "value": "kvdd/GXaLWITuFyYpHhBh76AKiHPfLC+JMbYuUdTmeo="
     }
-  jwt.hex: |
-    167814d140ef5b51febc9b2aa29c08dba3b67e0a343352722d33d1570e9fbfa1

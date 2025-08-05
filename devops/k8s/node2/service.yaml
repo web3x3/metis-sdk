@@ -18,5 +18,9 @@ spec:
       targetPort: 9001
       port: 9001
       name: metrics
+    - protocol: TCP
+      targetPort: 27000
+      port: 27000
+      name: p2p
   selector:
     app: seq2
