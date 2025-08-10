@@ -1,0 +1,57 @@
+name: Prepare Metis Image
+
+on:
+  workflow_call:
+    inputs:
+      image_tag:
+        required: true
+        type: string
+        description: "Docker image tag to use"
+      binary_name:
+        required: false
+        type: string
+        default: "metis"
+        description: "Binary name to build (metis or op-metis)"
+      cargo_features:
+        required: false
+        type: string
+        default: "asm-keccak"
+        description: "Cargo features to enable"
+      cargo_package:
+        required: false
+        type: string
+        description: "Optional cargo package path"
+
+jobs:
+  prepare-metis:
+    if: github.repository == 'MetisProtocol/metis-sdk'
+    timeout-minutes: 45
+    runs-on:
+      group: Metis
+    steps:
+      - uses: actions/checkout@v4
+      - run: mkdir artifacts
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and export metis image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: .github/assets/hive/Dockerfile
+          tags: ${{ inputs.image_tag }}
+          outputs: type=docker,dest=./artifacts/metis_image.tar
+          build-args: |
+            CARGO_BIN=${{ inputs.binary_name }}
+            MANIFEST_PATH=${{ inputs.cargo_package }}
+            FEATURES=${{ inputs.cargo_features }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Upload metis image
+        id: upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: artifacts
+          path: ./artifacts
