@@ -24,8 +24,7 @@ jobs:
   prepare-hive:
     if: github.repository == 'MetisProtocol/metis-sdk'
     timeout-minutes: 45
-    runs-on:
-      group: Metis
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Checkout hive tests
@@ -146,8 +145,7 @@ jobs:
       - prepare-metis
       - prepare-hive
     name: run ${{ matrix.scenario.sim }}${{ matrix.scenario.limit && format(' - {0}', matrix.scenario.limit) }}
-    runs-on:
-      group: Metis
+    runs-on: ubuntu-latest
     permissions:
       issues: write
     steps:
@@ -214,8 +212,7 @@ jobs:
   notify-on-error:
     needs: test
     if: failure()
-    runs-on:
-      group: Metis
+    runs-on: ubuntu-latest
     steps:
       - name: Slack Webhook Action
         uses: rtCamp/action-slack-notify@v2

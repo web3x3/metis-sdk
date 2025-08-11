@@ -26,8 +26,7 @@ jobs:
   prepare-metis:
     if: github.repository == 'MetisProtocol/metis-sdk'
     timeout-minutes: 45
-    runs-on:
-      group: Metis
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - run: mkdir artifacts
