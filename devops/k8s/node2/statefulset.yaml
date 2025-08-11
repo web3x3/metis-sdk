@@ -52,13 +52,6 @@ spec:
             - --ipcdisable
             - --metrics=0.0.0.0:9001
             - --authrpc.jwtsecret=/genesis/jwt.hex
-          resources:
-            requests:
-              cpu: 1000m
-              memory: 2G
-            limits:
-              memory: 4G
-              cpu: 2000m
           startupProbe:
             failureThreshold: 10
             tcpSocket:
@@ -87,13 +80,6 @@ spec:
             - start
             - --home=/data
             # - --start-height=5514733
-          resources:
-            requests:
-              cpu: 1000m
-              memory: 2G
-            limits:
-              memory: 4G
-              cpu: 2000m
           volumeMounts:
             - name: app-config-volume
               mountPath: /data/config/app_config.toml

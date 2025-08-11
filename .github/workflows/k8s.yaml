@@ -46,9 +46,9 @@ jobs:
           # Temp remove the node2 and node3 config, because in the GitHub CI,
           # we are resource-constrained. In the future, we will use self-host
           # machines to perform complex execution and consensus client tests.
-          rm -rf k8s/node2 k8s/node3
-          sed -i '/^  - node2$/s/^/#/' k8s/kustomization.yaml
-          sed -i '/^  - node3$/s/^/#/' k8s/kustomization.yaml
+          #rm -rf k8s/node2 k8s/node3
+          #sed -i '/^  - node2$/s/^/#/' k8s/kustomization.yaml
+          #sed -i '/^  - node3$/s/^/#/' k8s/kustomization.yaml
           # Deploy Kustomize configuration
           echo "Applying Kustomize manifests..."
           kustomize build k8s | kubectl apply -f -
