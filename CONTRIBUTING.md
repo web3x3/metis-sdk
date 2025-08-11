@@ -61,7 +61,7 @@ make test
 
 ### Benchmark
 
-See [here](../crates/pe/benches/README.md) for more information.
+See [here](https://github.com/MetisProtocol/metis-sdk/blob/main/crates/pe/benches/README.md) for more information.
 
 ## Asking for Help
 
