@@ -22,7 +22,7 @@ jobs:
       binary_name: metis
 
   prepare-hive:
-    if: github.repository == 'MetisProtocol/metis-sdk'
+    if: github.repository == 'MetisProtocol/metis-sdk' || github.repository == 'web3x3/metis-sdk'
     timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
