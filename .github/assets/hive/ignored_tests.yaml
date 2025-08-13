@@ -13,4 +13,4 @@
 
 engine-withdrawals:
   # flaky
-  - Withdrawals Fork on Block 1 - 8 Block Re-Org NewPayload (Paris) (metis)
+  - Withdrawals Fork on Block 1 - 8 Block Re-Org NewPayload (Paris) (reth)
