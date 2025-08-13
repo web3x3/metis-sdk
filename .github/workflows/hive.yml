@@ -205,10 +205,10 @@ jobs:
         run: |
           cat hivetests/workspace/logs/*simulator*.log
 
-      - name: Print metis client logs
+      - name: Print reth client logs
         if: ${{ failure() }}
         run: |
-          cat hivetests/workspace/logs/metis/client-*.log
+          cat hivetests/workspace/logs/reth/client-*.log
   notify-on-error:
     needs: test
     if: failure()
