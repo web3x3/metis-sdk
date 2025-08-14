@@ -18,11 +18,11 @@ async fn test_withdraw() -> Result<(), Box<dyn Error>> {
 
     let receipt = receipts.first().unwrap();
 
-    println!("receipt {:?}", receipt);
+    println!("receipt {receipt:?}");
     assert!(receipt.success);
 
     // There should be exactly one entry with withdrawal requests
-    println!("request {:?}", requests);
+    println!("request {requests:?}");
     assert_eq!(requests.len(), 1);
     assert_eq!(requests[0][0], 1);
 

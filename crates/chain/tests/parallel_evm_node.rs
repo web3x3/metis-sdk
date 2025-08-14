@@ -37,9 +37,9 @@ async fn test_parallel_evm_node() -> Result<(), Box<dyn Error>> {
         Ok(_) => Ok(()),
         Err(e) => {
             eprintln!("💣 Error Details:");
-            eprintln!("{:#?}", e);
+            eprintln!("{e:#?}");
             if let Some(io_error) = e.downcast_ref::<std::io::Error>() {
-                eprintln!("🗂️ IO Error: {}", io_error);
+                eprintln!("🗂️ IO Error: {io_error}");
             }
             panic!("❌ Test failed due to above error");
         }

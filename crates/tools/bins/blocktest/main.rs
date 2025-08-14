@@ -323,7 +323,7 @@ fn main() -> Result<()> {
                         for test_path in tests {
                             match execute_test(&test_path) {
                                 Ok(_) => pb.inc(1),
-                                Err(e) => panic!("Test failed: {:?}", e),
+                                Err(e) => panic!("Test failed: {e:?}"),
                             }
                         }
                         pb.finish_with_message("All tests completed");

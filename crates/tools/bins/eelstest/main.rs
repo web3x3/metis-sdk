@@ -690,7 +690,7 @@ fn main() -> Result<()> {
             if total_errors.is_empty() {
                 Ok(())
             } else {
-                println!("Test failed, errors: {:?}", total_errors);
+                println!("Test failed, errors: {total_errors:?}");
                 exit(1);
             }
         }

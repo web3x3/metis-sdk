@@ -10,7 +10,7 @@ pub mod common;
 #[tokio::test]
 async fn test_compare_receipt() -> Result<(), Box<dyn Error>> {
     let (keypair, sender) = common::keypair::get_random_keypair();
-    println!("Sending tx: {:?}", sender);
+    println!("Sending tx: {sender:?}");
 
     let parallel_receipt = {
         let (chain_spec, db, recovered_block) =

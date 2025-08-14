@@ -150,8 +150,8 @@ async fn main() -> anyhow::Result<()> {
                 })
                 .build()
                 .unwrap();
-            println!("tx {:?}", tx);
-            let file_name = format!("traces/{}.json", tx_number);
+            println!("tx {tx:?}");
+            let file_name = format!("traces/{tx_number}.json");
             let write = OpenOptions::new()
                 .write(true)
                 .create(true)
@@ -165,7 +165,7 @@ async fn main() -> anyhow::Result<()> {
             // Inspect and commit the transaction to the EVM
             let res: Result<_, _> = evm.inspect_one(tx, TracerEip3155::new(Box::new(writer)));
 
-            println!("tx result gas used {:?}", res);
+            println!("tx result gas used {res:?}");
 
             // Flush the file writer
             inner.lock().unwrap().flush().expect("Failed to flush file");
