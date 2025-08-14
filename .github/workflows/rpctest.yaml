@@ -10,7 +10,7 @@ on:
     types: [synchronize, opened, reopened, converted_to_draft, ready_for_review]
 
 env:
-  RUST_VERSION: 1.87
+  RUST_VERSION: 1.88
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
