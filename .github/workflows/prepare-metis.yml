@@ -24,7 +24,7 @@ on:
 
 jobs:
   prepare-metis:
-    if: github.repository == 'MetisProtocol/metis-sdk' || github.repository == 'web3x3/metis-sdk'
+    if: github.repository == 'MetisProtocol/metis-sdk'
     timeout-minutes: 45
     runs-on: ubuntu-latest
     steps:
