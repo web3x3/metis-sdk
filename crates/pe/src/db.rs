@@ -43,9 +43,10 @@ impl DatabaseRef for InMemoryDB {
         if code_hash == KECCAK_EMPTY {
             Ok(Bytecode::default())
         } else {
-            self.bytecodes.get(&code_hash).cloned().ok_or_else(|| {
-                DBError::StorageNotFound(format!("code_hash_not_found {}", code_hash))
-            })
+            self.bytecodes
+                .get(&code_hash)
+                .cloned()
+                .ok_or_else(|| DBError::StorageNotFound(format!("code_hash_not_found {code_hash}")))
         }
     }
 

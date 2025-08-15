@@ -20,7 +20,7 @@ The following hardware is recommended.
 ## Dependencies
 
 - `git`
-- `Rust 1.87+`
+- `Rust 1.88+`
 - `LLVM 18` (optional, if you enable the `compiler` feature, you can reference the [document](../crates/vm/docs/dev.md) to install it)
 
 ## Building

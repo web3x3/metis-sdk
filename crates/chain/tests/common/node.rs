@@ -30,12 +30,13 @@ where
         "02f876820a28808477359400847735940082520894ab0840c0e43688012c1adb0f5e3fc665188f83d28a029d394a5d630544000080c080a0a044076b7e67b5deecc63f61a8d7913fab86ca365b344b5759d1fe3563b4c39ea019eab979dd000da04dfc72bb0377c092d30fd9e1cab5ae487de49586cc8b0090"
     );
     let eth_api: HttpClient = node.rpc_server_handles.rpc.http_client().unwrap();
-    let hash: B256 = EngineEthApiClient::<Transaction, Transaction>::send_raw_transaction(
-        &eth_api,
-        raw_tx.into(),
-    )
-    .await
-    .map_err(|e| Box::new(e) as Box<dyn Error>)?;
+    let hash: B256 =
+        EngineEthApiClient::<Transaction, Transaction, Transaction>::send_raw_transaction(
+            &eth_api,
+            raw_tx.into(),
+        )
+        .await
+        .map_err(|e| Box::new(e) as Box<dyn Error>)?;
 
     let expected = b256!("0xb1c6512f4fc202c04355fbda66755e0e344b152e633010e8fd75ecec09b63398");
     assert_eq!(hash, expected);
