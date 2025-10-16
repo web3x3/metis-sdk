@@ -1,12 +1,12 @@
 use crate::{
-    AccountMeta, Entry, FinishExecFlags, Location, LocationHash, LocationValue, ReadOrigin,
-    ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
-    mv_memory::{MvMemory, RewardPolicy, reward_policy},
-    result::{ReadError, TxExecutionResult, VmExecutionError, VmExecutionResult},
+    mv_memory::{reward_policy, MvMemory, RewardPolicy}, result::{ReadError, TxExecutionResult, VmExecutionError, VmExecutionResult}, AccountMeta, Entry, FinishExecFlags, Location, LocationHash,
+    LocationValue, ReadOrigin, ReadOrigins, ReadSet, TxIdx,
+    TxVersion,
+    WriteSet,
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use metis_primitives::{BuildIdentityHasher, EvmState, HashMap, I257, hash_deterministic};
+use metis_primitives::{hash_deterministic, BuildIdentityHasher, EvmState, HashMap, I257};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 use revm::context::ContextSetters;
@@ -14,19 +14,19 @@ use revm::context::ContextSetters;
 use revm::handler::FrameInitOrResult;
 use revm::handler::{EvmTr, FrameResult, FrameTr};
 use revm::{
-    Database, DatabaseRef, ExecuteEvm, MainBuilder, MainContext, MainnetEvm,
-    bytecode::Bytecode,
-    context::{
-        ContextTr, TxEnv,
-        result::{EVMError, InvalidTransaction},
-    },
-    context_interface::{JournalTr, result::HaltReason},
-    handler::MainnetContext,
-    primitives::{Address, B256, KECCAK_EMPTY, U256, hardfork::SpecId},
+    bytecode::Bytecode, context::{
+        result::{EVMError, InvalidTransaction}, ContextTr, Evm,
+        TxEnv,
+    }, context_interface::{result::HaltReason, JournalTr}, handler::{EthFrame, Handler, MainnetContext}, interpreter::{interpreter::EthInterpreter, interpreter_action::FrameInit},
+    primitives::{hardfork::SpecId, Address, B256, KECCAK_EMPTY, U256},
     state::AccountInfo,
+    Database,
+    DatabaseRef,
+    ExecuteEvm,
+    MainBuilder,
+    MainContext,
 };
-use revm::{handler::Handler, interpreter::interpreter_action::FrameInit};
-use smallvec::{SmallVec, smallvec};
+use smallvec::{smallvec, SmallVec};
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
 
@@ -646,13 +646,28 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
     }
 }
 
+// 类型别名：带有 Metis 预编译的 EVM
+pub type MetisEvm<DB> = Evm<
+    MainnetContext<DB>,
+    (),
+    revm::handler::instructions::EthInstructions<EthInterpreter, MainnetContext<DB>>,
+    metis_vm::MetisPrecompiles,
+    EthFrame<EthInterpreter>,
+>;
+
 #[inline]
-pub(crate) fn build_evm<DB: Database>(db: DB, evm_env: EvmEnv) -> MainnetEvm<MainnetContext<DB>> {
-    MainnetContext::mainnet()
+pub fn build_evm<DB: Database>(db: DB, evm_env: EvmEnv) -> MetisEvm<DB> {
+    use metis_vm::MetisPrecompiles;
+    
+    let context = MainnetContext::mainnet()
         .with_db(db)
         .with_cfg(evm_env.cfg_env)
-        .with_block(evm_env.block_env)
-        .build_mainnet()
+        .with_block(evm_env.block_env);
+
+    let evm = context.build_mainnet();
+    let precompiles = MetisPrecompiles::new();
+    
+    evm.with_precompiles(precompiles)
 }
 
 pub struct WithoutRewardBeneficiaryHandler<EVM> {
