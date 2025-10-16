@@ -41,6 +41,7 @@ pub mod db;
 pub use db::InMemoryDB;
 pub use metis_primitives::{Account, AccountInfo, AccountState, BlockHashes, Bytecodes};
 mod vm;
+pub use vm::{build_evm, MetisEvm};
 
 mod op_executor;
 pub use op_executor::OpParallelExecutor;
