@@ -1,3 +1,4 @@
+use crate::metis::MetisEvmConfig;
 use crate::state::StateStorageAdapter;
 use alloy_consensus::Header;
 use alloy_eips::eip7685::Requests;
@@ -7,24 +8,21 @@ use alloy_evm::block::{
 };
 use alloy_evm::eth::dao_fork::DAO_HARDFORK_BENEFICIARY;
 use alloy_evm::eth::{dao_fork, eip6110};
-use alloy_evm::{Database, FromRecoveredTx, FromTxWithEncoded};
+use alloy_evm::Database;
 use alloy_hardforks::EthereumHardfork;
-use metis_primitives::{CfgEnv, ExecutionResult, SpecId, TxEnv};
+use metis_primitives::{CfgEnv, ExecutionResult, TxEnv};
 use reth::api::{FullNodeTypes, NodeTypes};
 use reth::builder::BuilderContext;
 use reth::builder::components::ExecutorBuilder;
 use reth::{providers::BlockExecutionResult, revm::db::State};
-use reth_chainspec::{ChainSpec, EthChainSpec, Hardforks};
+use reth_chainspec::ChainSpec;
 use reth_ethereum_primitives::{Block, EthPrimitives, Receipt, TransactionSigned};
-use reth_evm::TransactionEnv;
 use reth_evm::block::{ExecutableTx, InternalBlockExecutionError};
 use reth_evm::eth::spec::EthExecutorSpec;
-use reth_evm::eth::{EthBlockExecutionCtx, EthBlockExecutor, EthBlockExecutorFactory};
-use reth_evm::precompiles::PrecompilesMap;
+use reth_evm::eth::{EthBlockExecutionCtx, EthBlockExecutor};
 use reth_evm::{ConfigureEvm, OnStateHook, execute::BlockExecutor};
-use reth_evm::{EthEvmFactory, Evm, EvmEnv, EvmFactory, NextBlockEnvAttributes};
-pub use reth_evm_ethereum::EthEvmConfig;
-use reth_evm_ethereum::{EthBlockAssembler, RethReceiptBuilder};
+use reth_evm::{Evm, EvmEnv, NextBlockEnvAttributes};
+use reth_evm_ethereum::RethReceiptBuilder;
 use reth_primitives_traits::{SealedBlock, SealedHeader};
 use revm::DatabaseCommit;
 use std::convert::Infallible;
@@ -32,44 +30,31 @@ use std::fmt::Debug;
 use std::num::NonZeroUsize;
 use std::sync::Arc;
 
-/// Ethereum-related EVM configuration with the parallel executor.
+/// Ethereum-related EVM configuration with MetisPrecompiles support.
+/// Uses MetisEvmConfig which provides complete custom precompile integration.
 #[derive(Debug, Clone)]
-pub struct ParallelEthEvmConfig<C = ChainSpec, EvmFactory = EthEvmFactory> {
-    pub config: EthEvmConfig<C, EvmFactory>,
+pub struct ParallelEthEvmConfig {
+    pub config: MetisEvmConfig,
 }
 
-impl<ChainSpec> ParallelEthEvmConfig<ChainSpec> {
+impl ParallelEthEvmConfig {
     pub fn new(chain_spec: Arc<ChainSpec>) -> Self {
         Self {
-            config: EthEvmConfig::new(chain_spec),
+            config: MetisEvmConfig::new(chain_spec),
         }
     }
 }
 
-impl<ChainSpec, EvmF> ConfigureEvm for ParallelEthEvmConfig<ChainSpec, EvmF>
-where
-    ChainSpec: EthExecutorSpec + EthChainSpec<Header = Header> + Hardforks + 'static,
-    EvmF: EvmFactory<
-            Tx: TransactionEnv
-                    + FromRecoveredTx<TransactionSigned>
-                    + FromTxWithEncoded<TransactionSigned>,
-            Spec = SpecId,
-            Precompiles = PrecompilesMap,
-        > + Clone
-        + Debug
-        + Send
-        + Sync
-        + Unpin
-        + 'static,
-{
+// ConfigureEvm implementation - delegates to MetisEvmConfig
+impl ConfigureEvm for ParallelEthEvmConfig {
     type Primitives = EthPrimitives;
     type Error = Infallible;
     type NextBlockEnvCtx = NextBlockEnvAttributes;
-    type BlockExecutorFactory = EthBlockExecutorFactory<RethReceiptBuilder, Arc<ChainSpec>, EvmF>;
-    type BlockAssembler = EthBlockAssembler<ChainSpec>;
+    type BlockExecutorFactory = <MetisEvmConfig as ConfigureEvm>::BlockExecutorFactory;
+    type BlockAssembler = <MetisEvmConfig as ConfigureEvm>::BlockAssembler;
 
     fn block_executor_factory(&self) -> &Self::BlockExecutorFactory {
-        &self.config.executor_factory
+        self.config.block_executor_factory()
     }
 
     fn block_assembler(&self) -> &Self::BlockAssembler {
