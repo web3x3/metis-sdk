@@ -5,8 +5,8 @@ static ALLOC: reth_cli_util::allocator::Allocator = reth_cli_util::allocator::ne
 
 use metis_chain::provider::ParallelExecutorBuilder;
 use reth::cli::Cli;
-use reth_node_ethereum::EthereumNode;
 use reth_node_ethereum::node::EthereumAddOns;
+use reth_node_ethereum::EthereumNode;
 use tracing::info;
 
 fn main() {
@@ -18,28 +18,20 @@ fn main() {
     }
 
     if let Err(err) = Cli::parse_args().run(async move |builder, _| {
-        info!(target: "metis::cli", "Launching node");
-        if std::env::var_os("ENABLE_PARALLEL_EXECUTOR").is_some() {
-            let handle = builder
-                // Use the default ethereum node types
-                .with_types::<EthereumNode>()
-                // Configure the components of the node
-                // use default ethereum components but use our parallel executor.
-                .with_components(
-                    EthereumNode::components().executor(ParallelExecutorBuilder::default()),
-                )
-                .with_add_ons(EthereumAddOns::default());
-            handle.launch().await?.wait_for_node_exit().await
-        } else {
-            let handle = builder
-                // Use the default ethereum node types
-                .with_types::<EthereumNode>()
-                // Configure the components of the node
-                // use default ethereum components but use our parallel executor.
-                .with_components(EthereumNode::components())
-                .with_add_ons(EthereumAddOns::default());
-            handle.launch().await?.wait_for_node_exit().await
-        }
+        info!(target: "metis::cli", "🔥 Launching Metis node with MetisPrecompiles support");
+
+        // ✅ Use ParallelExecutorBuilder - it correctly integrates MetisPrecompiles
+        // via the build_evm function in metis-sdk/crates/pe/src/vm.rs
+        let handle = builder
+            .with_types::<EthereumNode>()
+            .with_components(
+                EthereumNode::components()
+                    .executor(ParallelExecutorBuilder::default())  // ← Uses MetisPrecompiles
+            )
+            .with_add_ons(EthereumAddOns::default());
+
+        info!(target: "metis::cli", "✅ Node configured with ParallelExecutorBuilder (MetisPrecompiles enabled)");
+        handle.launch_with_debug_capabilities().await?.wait_for_node_exit().await
     }) {
         eprintln!("Error: {err:?}");
         std::process::exit(1);
