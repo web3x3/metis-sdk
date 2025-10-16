@@ -72,41 +72,39 @@ op-alloy-rpc-types = { version = "0.18.12" }
 op-revm = { version = "8.0.3" }
 
 # Reth dependencies
-reth = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0", default-features = false }
-reth-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-node-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-evm-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-tracing = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-ethereum = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0", features = [
-  "full",
-] }
-reth-cli-util = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-chain-state = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-ethereum-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-primitives-traits = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-ethereum-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-node-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-node-core = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-db = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-db-api = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-provider = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0", features = [
-  "test-utils",
-] }
-reth-ethereum-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-stages = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
+# ✅ Using local reth for custom modifications (MetisPrecompiles support)
+reth = { path = "../reth/bin/reth", default-features = false }
+reth-chainspec = { path = "../reth/crates/chainspec" }
+reth-node-ethereum = { path = "../reth/crates/ethereum/node" }
+reth-evm-ethereum = { path = "../reth/crates/ethereum/evm" }
+reth-evm = { path = "../reth/crates/evm/evm" }
+reth-primitives = { path = "../reth/crates/primitives" }
+reth-tracing = { path = "../reth/crates/tracing" }
+reth-ethereum = { path = "../reth/crates/ethereum/reth", features = ["full"] }
+reth-cli-util = { path = "../reth/crates/cli/util" }
+reth-chain-state = { path = "../reth/crates/chain-state" }
+reth-ethereum-cli = { path = "../reth/crates/ethereum/cli" }
+reth-primitives-traits = { path = "../reth/crates/primitives-traits" }
+reth-ethereum-primitives = { path = "../reth/crates/ethereum/primitives" }
+reth-node-api = { path = "../reth/crates/node/api" }
+reth-node-core = { path = "../reth/crates/node/core" }
+reth-db = { path = "../reth/crates/storage/db" }
+reth-db-api = { path = "../reth/crates/storage/db-api" }
+reth-provider = { path = "../reth/crates/storage/provider", features = ["test-utils"] }
+reth-ethereum-consensus = { path = "../reth/crates/ethereum/consensus" }
+reth-stages = { path = "../reth/crates/stages/stages" }
 
-# OP Reth dependencies
-reth-optimism-chainspec = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-cli = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-consensus = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-evm = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-forks = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-node = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-payload-builder = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-primitives = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
-reth-optimism-rpc = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
+# OP Reth dependencies - using local path for compatibility
+reth-optimism-chainspec = { path = "../reth/crates/optimism/chainspec" }
+reth-optimism-cli = { path = "../reth/crates/optimism/cli" }
+reth-optimism-consensus = { path = "../reth/crates/optimism/consensus" }
+reth-optimism-evm = { path = "../reth/crates/optimism/evm" }
+reth-optimism-forks = { path = "../reth/crates/optimism/hardforks" }
+reth-optimism-node = { path = "../reth/crates/optimism/node" }
+reth-optimism-payload-builder = { path = "../reth/crates/optimism/payload" }
+reth-optimism-primitives = { path = "../reth/crates/optimism/primitives" }
+reth-optimism-rpc = { path = "../reth/crates/optimism/rpc" }
+reth-rpc-eth-api = { path = "../reth/crates/rpc/rpc-eth-api" }
 
 # Reth test dependencies
 reth-exex-test-utils = { git = "https://github.com/paradigmxyz/reth", tag = "v1.6.0" }
