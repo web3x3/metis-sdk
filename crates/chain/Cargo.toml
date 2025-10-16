@@ -6,6 +6,7 @@ edition.workspace = true
 [dependencies]
 metis-primitives.workspace = true
 metis-pe.workspace = true
+metis-vm.workspace = true
 
 # comefbft abci
 tendermint.workspace = true
@@ -21,6 +22,7 @@ alloy-eips.workspace = true
 alloy-sol-types.workspace = true
 alloy-genesis.workspace = true
 alloy-consensus.workspace = true
+alloy-rpc-types-eth.workspace = true
 
 revm.workspace = true
 
@@ -39,6 +41,7 @@ reth-primitives-traits.workspace = true
 reth-ethereum-primitives.workspace = true
 reth-node-api.workspace = true
 reth-node-core.workspace = true
+reth-rpc-eth-api.workspace = true
 
 # Alloy OP
 alloy-op-evm.workspace = true
@@ -97,7 +100,7 @@ default = []
 # Note: No jemalloc on Windows
 jemalloc = ["reth/jemalloc", "metis-pe/jemalloc"]
 compiler = ["metis-pe/compiler", "dep:revmc-build"]
-inference = ["dep:alith"]
+inference = ["dep:alith", "metis-vm/inference"]
 asm-keccak = [
     "reth-node-core/asm-keccak",
     "reth-primitives/asm-keccak",
