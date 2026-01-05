@@ -80,11 +80,6 @@ impl ParallelExecutionContext {
     pub fn get_cached_result(&self, tx_hash: &TxHash) -> Option<&CachedExecutionResult> {
         self.execution_cache.get(tx_hash)
     }
-
-    /// Check if we have cached results (indicating parallel execution was done)
-    pub fn has_cached_results(&self) -> bool {
-        !self.execution_cache.is_empty()
-    }
 }
 
 impl Default for ParallelExecutionContext {
@@ -137,28 +132,6 @@ pub fn get_global_cached_result(tx_hash: &TxHash) -> Option<CachedExecutionResul
                 "❌ Cache MISS for tx 0x{:x}", tx_hash);
         }
         result
-    })
-}
-
-/// Clear global cache
-/// Called after block execution completes
-pub fn clear_global_cache() {
-    GLOBAL_EXECUTION_CACHE.with(|cache| {
-        let cleared_count = cache.borrow().len();
-        cache.borrow_mut().clear();
-        tracing::debug!(target: "metis::parallel",
-            "🧹 Cleared global cache ({} entries removed)",
-            cleared_count
-        );
-    });
-}
-
-/// Get cache statistics (for debugging)
-pub fn get_cache_stats() -> (usize, usize) {
-    GLOBAL_EXECUTION_CACHE.with(|cache| {
-        let len = cache.borrow().len();
-        let capacity = cache.borrow().capacity();
-        (len, capacity)
     })
 }
 
