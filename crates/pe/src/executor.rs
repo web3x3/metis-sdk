@@ -110,12 +110,10 @@ where
         }
 
         let block_size = txs.len();
-
         let task_provider = NormalProvider::new(block_size);
         let scheduler = Scheduler::new(task_provider);
 
         let mv_memory = build_mv_memory(&evm_env.block_env, &txs);
-
         let vm = Vm::new(
             &db,
             &mv_memory,
@@ -479,8 +477,6 @@ where
             };
         }
     }
-
-    // (rest of impl continues unchanged; methods below are type-parametrized via `HR`)
 }
 
 #[inline]
@@ -491,7 +487,6 @@ fn try_validate<T: TaskProvider>(
 ) -> Option<Task> {
     let read_set_valid = mv_memory.validate_read_locations(tx_version.tx_idx);
     let aborted = !read_set_valid && scheduler.try_validation_abort(tx_version);
-
     if aborted {
         tracing::info!(
             target: "metis::parallel::rerun",
