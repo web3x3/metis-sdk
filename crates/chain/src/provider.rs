@@ -33,6 +33,7 @@ pub use reth_evm_ethereum::EthEvmConfig;
 use reth_evm_ethereum::{EthBlockAssembler, RethReceiptBuilder};
 use reth_primitives_traits::{SealedBlock, SealedHeader};
 use revm::{context::BlockEnv as RevmBlockEnv, context::result::ResultAndState};
+use revm::Database as RevmDatabase;
 use std::convert::Infallible;
 use std::fmt::Debug;
 use std::num::NonZeroUsize;
@@ -503,22 +504,12 @@ where
     E: Evm<DB = &'db mut State<DB>, Tx = TxEnv, BlockEnv = revm::context::BlockEnv>,
     Spec: EthExecutorSpec + EthChainSpec + Hardforks + Clone,
 {
-    /// Merge and commit parallel execution results using StateAccumulator
-    fn merge_and_commit_parallel_results(
-        &mut self,
-        results: &[metis_pe::TxExecutionResult],
-    ) -> Result<(), BlockExecutionError> {
-        let mut accumulator = crate::state_accumulator::StateAccumulator::new();
-        accumulator.accumulate(results);
-        accumulator.commit_to(self.evm_mut().db_mut())
-    }
-
     /// Cache parallel execution results for later use by execute_transaction()
     /// This is used in payload builder to avoid re-executing transactions
     pub fn cache_parallel_results(
         &mut self,
         tx_hashes: &[alloy_primitives::TxHash],
-        results: &[metis_pe::TxExecutionResult],
+        results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>],
     ) {
         tracing::info!(target: "metis::parallel",
             "💾 Caching {} parallel execution results",
@@ -558,11 +549,13 @@ where
             .spec
             .is_spurious_dragon_active_at_block(block_env.number.try_into().unwrap_or(u64::MAX));
 
-        // Build proper CfgEnv from spec and context
+        // Build CfgEnv for metis-pe based on the current block.
+        //
+        // NOTE: We must ensure fork rules match reth's canonical env, otherwise state roots can
+        // diverge. (The `block_env` itself is cloned from the canonical EVM instance.)
         let block_number = block_env.number.try_into().unwrap_or(u64::MAX);
         let block_timestamp = block_env.timestamp.to::<u64>();
 
-        // Get the proper spec ID for the current block using EthereumHardforks trait
         let spec_id = if self.spec.is_cancun_active_at_timestamp(block_timestamp) {
             SpecId::CANCUN
         } else if self.spec.is_shanghai_active_at_timestamp(block_timestamp) {
@@ -579,17 +572,9 @@ where
         cfg_env.chain_id = self.spec.chain_id();
         cfg_env.spec = spec_id;
 
-        // Clone and configure BlockEnv with proper blob gas settings
-        let mut block_env = self.evm().block().clone();
+        let block_env = self.evm().block().clone();
 
-        // For Cancun and later, we need to set blob gas fields
-        // Use 0 for dev mode / fresh blocks (no parent blob gas usage)
-        if spec_id >= SpecId::CANCUN {
-            use revm::primitives::eip4844::BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN;
-            block_env.set_blob_excess_gas_and_price(0, BLOB_BASE_FEE_UPDATE_FRACTION_CANCUN);
-        }
-
-        // Save chain_id before moving cfg_env
+        // Save chain_id before moving cfg_env (used only for logging)
         let chain_id = cfg_env.chain_id;
         let evm_env = EvmEnv::new(cfg_env, block_env);
         let db = self.evm_mut().db_mut();
@@ -627,18 +612,21 @@ where
         }
 
         let pe_start_time = std::time::Instant::now();
-        let mut parallel_executor = metis_pe::ParallelExecutor::default();
+        // IMPORTANT: align metis-pe ResultAndState<HR> with the executor's concrete HaltReason type
+        let mut parallel_executor =
+            metis_pe::ParallelExecutor::<<E as alloy_evm::Evm>::HaltReason>::default();
         tracing::debug!(target: "metis::parallel",
             "🔥 About to call parallel_executor.execute() - THIS IS WHERE PARALLEL EXECUTION HAPPENS"
         );
 
+        // Build TxEnv list without consuming the original txs so we can commit in-order later
+        let transactions_vec: Vec<_> = transactions.into_iter().collect();
+        let tx_envs: Vec<TxEnv> = transactions_vec.iter().map(|tx| tx.to_tx_env()).collect();
+
         let results = parallel_executor.execute(
             StateStorageAdapter::new(db),
             evm_env,
-            transactions
-                .into_iter()
-                .map(|tx| tx.to_tx_env())
-                .collect::<Vec<TxEnv>>(),
+            tx_envs,
             NonZeroUsize::new(num_threads).unwrap_or(NonZeroUsize::new(1).unwrap()),
         );
 
@@ -648,31 +636,63 @@ where
             pe_duration
         );
 
-        // CRITICAL: The parallel executor already sets cumulative_gas_used in each receipt
-        // as the cumulative value (including all previous transactions).
-        // We should NOT sum all cumulative_gas_used values - that would be wrong!
-        // Instead, we use the last receipt's cumulative_gas_used as the total gas.
-
-        // CRITICAL: Merge state changes in transaction order to match serial execution behavior.
-        // In serial execution, transactions are executed sequentially, and later transactions
-        // see the state changes from earlier transactions. We need to replicate this behavior
-        // by merging states in transaction order (not by address).
-        //
-        // Key insight: Parallel executor returns states for each transaction as if they were
-        // executed independently. However, in reality, later transactions may have seen state
-        // changes from earlier transactions (due to Block-STM's dependency resolution).
-        // We need to merge states in transaction order, where later transactions overwrite
-        // earlier transactions for the same address.
         let results_vec = results.map_err(|err| {
             tracing::error!(target: "metis::parallel", "❌ Parallel execution FAILED: {:?}", err);
             BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(err)))
         })?;
 
-        let receipts: Vec<Receipt> = results_vec.iter().map(|r| r.receipt.clone()).collect();
+        // Commit pre-executed ResultAndState using the executor's native commit semantics.
+        //
+        // This is REQUIRED for correct state roots because it goes through revm's journal / bundle
+        // and reth's commit logic (account clearing, selfdestruct, created contracts, etc.).
+        tracing::info!(target: "metis::parallel",
+            "📝 Committing {} pre-executed transaction states via commit_transaction()",
+            results_vec.len()
+        );
 
-        // Use unified state merge and commit function
-        // This ensures consistent state handling across all parallel execution paths
-        self.merge_and_commit_parallel_results(&results_vec)?;
+        let mut receipts: Vec<Receipt> = Vec::with_capacity(results_vec.len());
+
+        for (idx, (tx, result)) in transactions_vec.into_iter().zip(results_vec.into_iter()).enumerate() {
+            receipts.push(result.receipt.clone());
+
+            tracing::debug!(target: "metis::parallel",
+                "   commit tx[{}]=0x{:x}",
+                idx,
+                tx.tx().hash()
+            );
+
+            // Apply state exactly as reth would after executing the tx
+            // SAFETY: For Ethereum mainnet, metis_primitives::HaltReason IS the executor's HaltReason.
+            // They are the exact same type (both are revm::primitives::HaltReason).
+            // We use ptr::read to transfer ownership without triggering drop on the source,
+            // then forget the original to prevent double free.
+            // let result_and_state_converted = unsafe {
+            //     let converted = std::ptr::read(&result.result_and_state as *const _ as *const _);
+            //     std::mem::forget(result); // Prevent double drop
+            //     converted
+            // };
+            // self.commit_transaction(result_and_state_converted, tx)?;
+            //
+            // IMPORTANT:
+            // revm::db::State will panic if we commit accounts that are not present in its internal
+            // cache ("All accounts should be present inside cache"). Prewarm the cache for every
+            // touched address in this tx's state before committing.
+            {
+                let mut addrs: Vec<_> = result.result_and_state.state.keys().copied().collect();
+                addrs.sort_unstable();
+                let db = self.evm_mut().db_mut();
+                for addr in addrs {
+                    db.basic(addr).map_err(|err| {
+                        BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(err)))
+                    })?;
+                }
+            }
+            self.commit_transaction(result.result_and_state, tx)?;
+        }
+
+        tracing::info!(target: "metis::parallel",
+            "✅ All pre-executed transaction states committed successfully"
+        );
 
         // The total gas used is the cumulative_gas_used of the last receipt
         // (which already includes all previous transactions' gas)
