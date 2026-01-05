@@ -32,7 +32,7 @@ where
     let concurrency_level = thread::available_parallelism().unwrap_or(NonZeroUsize::MIN);
     let mut pe = ParallelExecutor::default();
     assert_eq!(
-        metis_pe::execute_sequential(
+        metis_pe::execute_sequential::<_, metis_primitives::HaltReason>(
             &db,
             EvmEnv::default(),
             txs.clone(),
