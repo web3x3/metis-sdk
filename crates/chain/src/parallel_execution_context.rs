@@ -104,7 +104,7 @@ thread_local! {
 
 /// Set global cache with parallel execution results
 /// Called by payload builder before serial execution loop
-pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionResult]) {
+pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>]) {
     GLOBAL_EXECUTION_CACHE.with(|cache| {
         let mut cache = cache.borrow_mut();
         cache.clear();
