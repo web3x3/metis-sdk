@@ -1,3 +1,4 @@
+pub mod batch_executor;
 pub mod hook_provider;
 pub mod op_provider;
 pub mod parallel_execution_context;
