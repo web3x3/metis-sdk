@@ -8,7 +8,7 @@ use crate::{
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use metis_primitives::{BuildIdentityHasher, HashMap, I257, Transaction, hash_deterministic};
+use metis_primitives::{BuildIdentityHasher, HashMap, I257, ResultAndState, Transaction, hash_deterministic};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 use op_revm::{DefaultOp, OpBuilder, OpContext, OpEvm, OpSpecId, OpTransaction};
@@ -423,7 +423,7 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
     pub(crate) fn execute(
         &self,
         tx_version: &TxVersion,
-    ) -> Result<VmExecutionResult, VmExecutionError> {
+    ) -> Result<VmExecutionResult<op_revm::OpHaltReason>, VmExecutionError> {
         // SAFETY: A correct scheduler would guarantee this index to be inbound.
         let tx = unsafe { self.txs.get_unchecked(tx_version.tx_idx) };
         let from_hash = hash_deterministic(Location::Basic(tx.caller));
@@ -440,9 +440,10 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
         let result = {
             evm.0.set_tx(OpTransaction::new(tx.clone()));
             #[cfg(feature = "compiler")]
-            let mut t = WithoutRewardBeneficiaryHandler::new(self.worker.clone());
+            let mut t =
+                WithoutRewardBeneficiaryHandler::<_, op_revm::OpHaltReason>::new(self.worker.clone());
             #[cfg(not(feature = "compiler"))]
-            let mut t = WithoutRewardBeneficiaryHandler::default();
+            let mut t = WithoutRewardBeneficiaryHandler::<_, op_revm::OpHaltReason>::default();
             t.run(&mut evm)
         };
         match result {
@@ -571,8 +572,17 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
                 let tx_type = reth_primitives::TxType::try_from(tx.tx_type).map_err(|err| {
                     VmExecutionError::ExecutionError(EVMError::Custom(err.to_string()))
                 })?;
+
+                // Combine result and state into ResultAndState to preserve all execution information
+                // SAFETY: OpEvm's execution result uses the same memory layout as standard execution.
+                // The transmute is safe because we know OpEvm returns OpHaltReason which has the same
+                // memory layout as HaltReason.
+                let result_and_state: ResultAndState<op_revm::OpHaltReason> = unsafe {
+                    std::mem::transmute(ResultAndState { result, state })
+                };
+
                 Ok(VmExecutionResult {
-                    execution_result: TxExecutionResult::from_raw(tx_type, result, state),
+                    execution_result: TxExecutionResult::from_raw(tx_type, result_and_state),
                     flags,
                 })
             }
