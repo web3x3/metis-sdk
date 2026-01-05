@@ -258,19 +258,6 @@ where
         self.executor.apply_pre_execution_changes()
     }
 
-    /// 执行交易并立即提交状态变更
-    ///
-    /// **调用场景：**
-    /// 1. **Block Builder 流式执行**：通过 `BasicBlockBuilder.execute_transaction()` 调用
-    ///    - 用于构建新块（payload builder、dev mode mining）
-    ///    - 用于验证 payload（payload validator）
-    /// 2. **RPC 调用**：`eth_call`、`eth_estimateGas`、`eth_simulateV1` 等
-    ///    - 通过 `simulate::execute_transactions()` 调用
-    ///
-    /// **特点：**
-    /// - 执行后立即提交状态变更到数据库
-    /// - 返回 gas_used
-    /// - 会调用回调函数 `f` 处理执行结果
     fn execute_transaction_with_result_closure(
         &mut self,
         tx: impl ExecutableTx<Self>,
@@ -415,27 +402,6 @@ where
         Ok(result)
     }
 
-    /// 执行交易但不提交状态变更
-    ///
-    /// **调用场景：**
-    /// 1. **调试和追踪**：`debug_traceTransaction`、`trace_block` 等 RPC 方法
-    ///    - 需要检查执行结果但不修改状态
-    /// 2. **条件执行**：需要先检查执行结果再决定是否提交的场景
-    ///    - 通常配合 `commit_transaction()` 使用
-    ///
-    /// **特点：**
-    /// - 执行后不提交状态变更
-    /// - 返回 `ResultAndState`，包含执行结果和状态变更
-    /// - 需要后续调用 `commit_transaction()` 来提交状态
-    ///
-    /// **使用模式：**
-    /// ```rust
-    /// let result = executor.execute_transaction_without_commit(tx)?;
-    /// // 检查 result.result 决定是否提交
-    /// if should_commit {
-    ///     executor.commit_transaction(result, tx)?;
-    /// }
-    /// ```
     fn execute_transaction_without_commit(
         &mut self,
         tx: impl ExecutableTx<Self>,
