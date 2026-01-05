@@ -36,11 +36,13 @@ impl StateAccumulator {
     ///
     /// # Arguments
     /// * `results` - Transaction execution results from metis-pe engine
-    pub fn accumulate(&mut self, results: &[metis_pe::TxExecutionResult]) {
+    pub fn accumulate(&mut self, results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>]) {
         for result in results.iter() {
             // Merge this transaction's state
             // Later transactions overwrite earlier ones for the same address
-            for (address, account) in result.state.iter() {
+            // DEPRECATED: Using .state() for backward compatibility
+            // TODO: In Phase 3, delete this entire file and use commit_transaction() instead
+            for (address, account) in result.state().iter() {
                 // Insert or update the account state
                 self.changes.insert(*address, account.clone());
             }
