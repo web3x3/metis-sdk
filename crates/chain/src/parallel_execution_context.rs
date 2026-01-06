@@ -112,8 +112,8 @@ pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionRe
                 },
             );
         }
-        tracing::info!(target: "metis::parallel",
-            "💾 Set global cache with {} parallel execution results",
+        tracing::debug!(target: "metis::parallel",
+            "Set global cache with {} parallel execution results",
             cache.len()
         );
     });
@@ -123,15 +123,7 @@ pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionRe
 /// Called by executor during execute_transaction
 pub fn get_global_cached_result(tx_hash: &TxHash) -> Option<CachedExecutionResult> {
     GLOBAL_EXECUTION_CACHE.with(|cache| {
-        let result = cache.borrow().get(tx_hash).cloned();
-        if result.is_some() {
-            tracing::debug!(target: "metis::parallel",
-                "🎯 Cache HIT for tx 0x{:x}", tx_hash);
-        } else {
-            tracing::debug!(target: "metis::parallel",
-                "❌ Cache MISS for tx 0x{:x}", tx_hash);
-        }
-        result
+        cache.borrow().get(tx_hash).cloned()
     })
 }
 
