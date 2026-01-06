@@ -196,7 +196,8 @@ fn execute_test(path: &Path) -> Result<(), TestError> {
             txs.push(tx);
         }
         // Explicit HR to avoid inference ambiguity after HR was made generic in metis-pe.
-        let mut executor: ParallelExecutor<metis_primitives::HaltReason> = ParallelExecutor::default();
+        let mut executor: ParallelExecutor<metis_primitives::HaltReason> =
+            ParallelExecutor::default();
         // Clone the state for execution.
         let mut cache = cache_state.clone();
         cache.set_state_clear_flag(spec_id.is_enabled_in(SpecId::SPURIOUS_DRAGON));
