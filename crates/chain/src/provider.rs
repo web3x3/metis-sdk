@@ -3,15 +3,15 @@ use crate::state::StateStorageAdapter;
 use alloy_consensus::{Header, Transaction};
 use alloy_eips::eip7685::Requests;
 use alloy_evm::block::{
-    BlockExecutionError, BlockValidationError, CommitChanges, SystemCaller,
+    BlockExecutionError, BlockValidationError, CommitChanges,
     state_changes::post_block_balance_increments,
 };
+use alloy_evm::eth::dao_fork;
 use alloy_evm::eth::dao_fork::DAO_HARDFORK_BENEFICIARY;
-use alloy_evm::eth::{dao_fork, eip6110};
 use alloy_evm::{Database, FromRecoveredTx, FromTxWithEncoded};
 use alloy_hardforks::EthereumHardfork;
 use alloy_rpc_types_engine::ExecutionData;
-use metis_primitives::{CfgEnv, ExecutionResult, Output, SpecId, SuccessReason, TxEnv};
+use metis_primitives::{CfgEnv, ExecutionResult, SpecId, TxEnv};
 use reth::api::{FullNodeTypes, NodeTypes};
 use reth::builder::BuilderContext;
 use reth::builder::components::ExecutorBuilder;
@@ -32,8 +32,8 @@ use reth_evm::{OnStateHook, execute::BlockExecutor};
 pub use reth_evm_ethereum::EthEvmConfig;
 use reth_evm_ethereum::{EthBlockAssembler, RethReceiptBuilder};
 use reth_primitives_traits::{SealedBlock, SealedHeader};
-use revm::{context::BlockEnv as RevmBlockEnv, context::result::ResultAndState};
 use revm::Database as RevmDatabase;
+use revm::{context::BlockEnv as RevmBlockEnv, context::result::ResultAndState};
 use std::convert::Infallible;
 use std::fmt::Debug;
 use std::num::NonZeroUsize;
@@ -116,7 +116,6 @@ where
         DB: Database + 'a,
         I: reth::revm::Inspector<<Self::EvmFactory as EvmFactory>::Context<&'a mut State<DB>>> + 'a,
     {
-
         ParallelBlockExecutor {
             spec: self.config.chain_spec().clone(),
             executor: EthBlockExecutor::new(
@@ -325,7 +324,7 @@ where
     }
 
     fn finish(
-        mut self,
+        self,
     ) -> Result<(Self::Evm, BlockExecutionResult<Self::Receipt>), BlockExecutionError> {
         // Apply post_execution (block rewards, withdrawals, etc.)
         // This is called once per block after all transactions execute
@@ -503,7 +502,9 @@ where
                 let db = self.evm_mut().db_mut();
                 for addr in addrs {
                     db.basic(addr).map_err(|err| {
-                        BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(err)))
+                        BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(
+                            err,
+                        )))
                     })?;
                 }
             }
