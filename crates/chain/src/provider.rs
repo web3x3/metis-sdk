@@ -526,7 +526,7 @@ where
             self.post_execution()?;
             self.context.mark_post_execution_called();
         }
-        
+
         // Parse EIP-7685 requests (withdrawal, deposit, consolidation) if Prague is active
         let block_env: &revm::context::BlockEnv = self.executor.evm.block();
         let requests = if self
