@@ -186,9 +186,9 @@ pub fn parallel_ethereum_payload<EvmConfig, Client, Pool, F>(
 ) -> Result<BuildOutcome<EthBuiltPayload>, PayloadBuilderError>
 where
     EvmConfig: ConfigureEvm<Primitives = EthPrimitives, NextBlockEnvCtx = NextBlockEnvAttributes>,
-    // metis-pe currently expects `alloy_evm::EvmEnv` with default generics
-    // (revm `SpecId` + revm `BlockEnv`). Constrain EVM config accordingly so we can pass
-    // the canonical `next_evm_env` directly without lossy conversions.
+// metis-pe currently expects `alloy_evm::EvmEnv` with default generics
+// (revm `SpecId` + revm `BlockEnv`). Constrain EVM config accordingly so we can pass
+// the canonical `next_evm_env` directly without lossy conversions.
     <<EvmConfig as ConfigureEvm>::BlockExecutorFactory as reth_evm::block::BlockExecutorFactory>::EvmFactory:
         alloy_evm::EvmFactory<
             Spec = revm::primitives::hardfork::SpecId,
@@ -229,11 +229,7 @@ where
     };
 
     let mut builder = evm_config
-        .builder_for_next_block(
-            &mut db,
-            &parent_header,
-            next_attrs.clone(),
-        )
+        .builder_for_next_block(&mut db, &parent_header, next_attrs.clone())
         .map_err(PayloadBuilderError::other)?;
 
     let chain_spec = client.chain_spec();
@@ -432,7 +428,10 @@ where
         // Ensure state clearing semantics match reth serial execution.
         // This affects empty-account clearing (EIP-161 / SpuriousDragon) and can change state root.
         let state_clear_flag = chain_spec.is_spurious_dragon_active_at_block(block_number);
-        builder.evm_mut().db_mut().set_state_clear_flag(state_clear_flag);
+        builder
+            .evm_mut()
+            .db_mut()
+            .set_state_clear_flag(state_clear_flag);
 
         // Convert transactions to TxEnv format
         let tx_envs: Vec<TxEnv> = collected_transactions
