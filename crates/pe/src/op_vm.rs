@@ -8,7 +8,9 @@ use crate::{
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use metis_primitives::{BuildIdentityHasher, HashMap, I257, ResultAndState, Transaction, hash_deterministic};
+use metis_primitives::{
+    BuildIdentityHasher, HashMap, I257, ResultAndState, Transaction, hash_deterministic,
+};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 use op_revm::{DefaultOp, OpBuilder, OpContext, OpEvm, OpSpecId, OpTransaction};
@@ -440,8 +442,9 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
         let result = {
             evm.0.set_tx(OpTransaction::new(tx.clone()));
             #[cfg(feature = "compiler")]
-            let mut t =
-                WithoutRewardBeneficiaryHandler::<_, op_revm::OpHaltReason>::new(self.worker.clone());
+            let mut t = WithoutRewardBeneficiaryHandler::<_, op_revm::OpHaltReason>::new(
+                self.worker.clone(),
+            );
             #[cfg(not(feature = "compiler"))]
             let mut t = WithoutRewardBeneficiaryHandler::<_, op_revm::OpHaltReason>::default();
             t.run(&mut evm)
@@ -573,13 +576,10 @@ impl<'a, DB: DatabaseRef> OpVm<'a, DB> {
                     VmExecutionError::ExecutionError(EVMError::Custom(err.to_string()))
                 })?;
 
-                // Combine result and state into ResultAndState to preserve all execution information
-                // SAFETY: OpEvm's execution result uses the same memory layout as standard execution.
-                // The transmute is safe because we know OpEvm returns OpHaltReason which has the same
-                // memory layout as HaltReason.
-                let result_and_state: ResultAndState<op_revm::OpHaltReason> = unsafe {
-                    std::mem::transmute(ResultAndState { result, state })
-                };
+                // Combine result and state into ResultAndState to preserve all execution information.
+                // `result` already uses `op_revm::OpHaltReason`, so no conversion is needed here.
+                let result_and_state: ResultAndState<op_revm::OpHaltReason> =
+                    ResultAndState { result, state };
 
                 Ok(VmExecutionResult {
                     execution_result: TxExecutionResult::from_raw(tx_type, result_and_state),
