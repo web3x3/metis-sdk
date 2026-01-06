@@ -116,7 +116,6 @@ where
         DB: Database + 'a,
         I: reth::revm::Inspector<<Self::EvmFactory as EvmFactory>::Context<&'a mut State<DB>>> + 'a,
     {
-        tracing::debug!("Creating ParallelBlockExecutor");
 
         ParallelBlockExecutor {
             spec: self.config.chain_spec().clone(),
@@ -263,72 +262,57 @@ where
         tx: impl ExecutableTx<Self>,
         f: impl FnOnce(&ExecutionResult<<Self::Evm as reth_evm::Evm>::HaltReason>),
     ) -> Result<u64, BlockExecutionError> {
-        static CALL_COUNT: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(0);
-        let count = CALL_COUNT.fetch_add(1, std::sync::atomic::Ordering::Relaxed) + 1;
-        let tx_hash = *tx.tx().hash();
-
-        tracing::info!(target: "metis::parallel",
-            "🔍 execute_transaction_with_result_closure() CALLED [call #{}] for tx 0x{:x}",
-            count, tx_hash
-        );
-
-        // Check global cache first (set by payload builder)
-        if let Some(cached) = crate::parallel_execution_context::get_global_cached_result(&tx_hash)
-        {
-            tracing::info!(target: "metis::parallel", call_count=?count, tx_hash=?format!("{:?}", tx_hash),
-                "✅ Using CACHED parallel execution result from GLOBAL cache (skipping re-execution)");
-
-            // Call the callback with a dummy execution result (since we already have the receipt)
-            let dummy_result = ExecutionResult::Success {
-                reason: SuccessReason::Stop,
-                gas_used: cached.gas_used,
-                gas_refunded: 0,
-                logs: cached.receipt.logs.clone(),
-                output: Output::Call(metis_primitives::Bytes::new()),
-            };
-            f(&dummy_result);
-
-            return Ok(cached.gas_used);
-        }
-
-        // Check local cache (for backwards compatibility)
-        if let Some(cached) = self.context.get_cached_result(&tx_hash) {
-            tracing::info!(target: "metis::parallel", call_count=?count, tx_hash=?format!("{:?}", tx_hash),
-                "✅ Using CACHED parallel execution result from LOCAL cache (skipping re-execution)");
-
-            let dummy_result = ExecutionResult::Success {
-                reason: SuccessReason::Stop,
-                gas_used: cached.gas_used,
-                gas_refunded: 0,
-                logs: cached.receipt.logs.clone(),
-                output: Output::Call(metis_primitives::Bytes::new()),
-            };
-            f(&dummy_result);
-
-            return Ok(cached.gas_used);
-        }
-
-        tracing::debug!(target: "metis::cli", call_count=?count, tx_hash=?format!("{:?}", tx_hash),
-            "execute_transaction_with_result_closure() called - IMMEDIATE SERIAL EXECUTION");
-
-        // CRITICAL FIX: Execute transactions IMMEDIATELY in Payload Validator mode.
+        self.executor.execute_transaction_with_result_closure(tx, f)
+        // let tx_hash = *tx.tx().hash();
         //
-        // Problem: In Payload Validator mode, Reth uses Streaming API:
-        // 1. Calls execute_transaction() multiple times to buffer transactions
-        // 2. Starts parallel state root calculation IMMEDIATELY (uses current DB snapshot)
-        // 3. Calls finish() to execute buffered transactions
-        // 4. State root calculation completes using OLD snapshot from step 2
+        // // Check global cache first (set by payload builder)
+        // if let Some(cached) = crate::parallel_execution_context::get_global_cached_result(&tx_hash)
+        // {
+        //     // Call the callback with a dummy execution result (since we already have the receipt)
+        //     let dummy_result = ExecutionResult::Success {
+        //         reason: SuccessReason::Stop,
+        //         gas_used: cached.gas_used,
+        //         gas_refunded: 0,
+        //         logs: cached.receipt.logs.clone(),
+        //         output: Output::Call(metis_primitives::Bytes::new()),
+        //     };
+        //     f(&dummy_result);
         //
-        // Solution: Execute each transaction immediately when called.
-        // Trade-off: Loses parallelism in Payload Validator mode, but ensures correctness.
-        // Note: Payload Builder mode (with execute_transactions()) still uses parallel execution.
-
-        // Execute immediately using the inner executor (serial execution)
-        let result = self
-            .executor
-            .execute_transaction_with_result_closure(tx, f)?;
-
-        Ok(result)
+        //     return Ok(cached.gas_used);
+        // }
+        //
+        // // Check local cache (for backwards compatibility)
+        // if let Some(cached) = self.context.get_cached_result(&tx_hash) {
+        //     let dummy_result = ExecutionResult::Success {
+        //         reason: SuccessReason::Stop,
+        //         gas_used: cached.gas_used,
+        //         gas_refunded: 0,
+        //         logs: cached.receipt.logs.clone(),
+        //         output: Output::Call(metis_primitives::Bytes::new()),
+        //     };
+        //     f(&dummy_result);
+        //
+        //     return Ok(cached.gas_used);
+        // }
+        //
+        // // CRITICAL FIX: Execute transactions IMMEDIATELY in Payload Validator mode.
+        // //
+        // // Problem: In Payload Validator mode, Reth uses Streaming API:
+        // // 1. Calls execute_transaction() multiple times to buffer transactions
+        // // 2. Starts parallel state root calculation IMMEDIATELY (uses current DB snapshot)
+        // // 3. Calls finish() to execute buffered transactions
+        // // 4. State root calculation completes using OLD snapshot from step 2
+        // //
+        // // Solution: Execute each transaction immediately when called.
+        // // Trade-off: Loses parallelism in Payload Validator mode, but ensures correctness.
+        // // Note: Payload Builder mode (with execute_transactions()) still uses parallel execution.
+        //
+        // // Execute immediately using the inner executor (serial execution)
+        // let result = self
+        //     .executor
+        //     .execute_transaction_with_result_closure(tx, f)?;
+        //
+        // Ok(result)
     }
 
     fn execute_transaction_with_commit_condition(
@@ -336,8 +320,6 @@ where
         tx: impl ExecutableTx<Self>,
         f: impl FnOnce(&ExecutionResult<<Self::Evm as Evm>::HaltReason>) -> CommitChanges,
     ) -> Result<Option<u64>, BlockExecutionError> {
-        // Same immediate execution strategy as execute_transaction_with_result_closure()
-        // Execute immediately using the inner executor (serial execution)
         self.executor
             .execute_transaction_with_commit_condition(tx, f)
     }
@@ -345,17 +327,12 @@ where
     fn finish(
         mut self,
     ) -> Result<(Self::Evm, BlockExecutionResult<Self::Receipt>), BlockExecutionError> {
-        tracing::info!(target: "metis::parallel", "ParallelBlockExecutor::finish() called");
-
         // Apply post_execution (block rewards, withdrawals, etc.)
         // This is called once per block after all transactions execute
-        if !self.context.post_execution_called {
-            tracing::info!(target: "metis::parallel", "Calling post_execution from finish()");
-            self.post_execution()?;
-            self.context.mark_post_execution_called();
-        } else {
-            tracing::debug!(target: "metis::parallel", "Skipping post_execution - already called");
-        }
+        // if !self.context.post_execution_called {
+        //     self.post_execution()?;
+        //     self.context.mark_post_execution_called();
+        // }
 
         // Delegate to inner executor for final state root calculation
         self.executor.finish()
@@ -382,23 +359,8 @@ where
     where
         Self: Sized,
     {
-        tracing::info!(target: "metis::cli", "ParallelBlockExecutor: Executing block with transaction processing");
         self.apply_pre_execution_changes()?;
         let result = self.execute(transactions)?;
-
-        // CRITICAL: For Payload Validator path, we need to ensure post_execution() is called
-        // even if execute_transactions() didn't call execute() (e.g., for empty blocks).
-        // However, execute_transactions() calls execute() which already calls post_execution(),
-        // so we don't need to call it again here.
-        //
-        // But wait: in Payload Validator path, execute_transactions() is NOT called!
-        // Instead, execute_transaction() is called multiple times, then finish() is called.
-        // So for Payload Validator path, post_execution() should be called in finish().
-        //
-        // Actually, for Payload Validator path, execute_block() is NOT called!
-        // Instead, execute_metered() calls execute_transaction() multiple times, then finish().
-        // So we need to call post_execution() in finish() for Payload Validator path.
-
         Ok(result)
     }
 
@@ -406,8 +368,6 @@ where
         &mut self,
         tx: impl ExecutableTx<Self>,
     ) -> Result<ResultAndState<<Self::Evm as Evm>::HaltReason>, BlockExecutionError> {
-        tracing::debug!(target: "metis::cli", 
-            "execute_transaction_without_commit() called - execution without commit");
         self.executor.execute_transaction_without_commit(tx)
     }
 
@@ -419,14 +379,6 @@ where
 
         // Check if we have cached result from parallel execution
         if let Some(cached) = self.context.get_cached_result(&tx_hash) {
-            tracing::info!(target: "metis::parallel",
-                "✨ Using CACHED result for tx_hash=0x{:x}, gas_used={} (from parallel execution)",
-                tx_hash, cached.gas_used
-            );
-            tracing::debug!(target: "metis::parallel",
-                "   Mode: CACHED (from parallel execution)"
-            );
-
             // Return cached gas_used
             // The transaction is NOT re-executed, we just use the cached result
             // This allows builder to add the transaction to the block structure
@@ -434,25 +386,7 @@ where
         }
 
         // No cache - execute normally (serial execution)
-        tracing::info!(target: "metis::parallel",
-            "🔷 SERIAL execution for tx_hash=0x{:x} (no cache available)",
-            tx_hash
-        );
-        tracing::debug!(target: "metis::parallel",
-            "   Mode: IMMEDIATE SERIAL"
-        );
-
-        let result = self.execute_transaction_with_result_closure(tx, |_| ());
-
-        if let Ok(gas_used) = result {
-            tracing::debug!(target: "metis::parallel",
-                "   ✅ Transaction executed: tx_hash=0x{:x}, gas_used={}",
-                tx_hash,
-                gas_used
-            );
-        }
-
-        result
+        self.execute_transaction_with_result_closure(tx, |_| ())
     }
 
     fn commit_transaction(
@@ -470,44 +404,12 @@ where
     E: Evm<DB = &'db mut State<DB>, Tx = TxEnv, BlockEnv = revm::context::BlockEnv>,
     Spec: EthExecutorSpec + EthChainSpec + Hardforks + Clone,
 {
-    /// Cache parallel execution results for later use by execute_transaction()
-    /// This is used in payload builder to avoid re-executing transactions
-    pub fn cache_parallel_results(
-        &mut self,
-        tx_hashes: &[alloy_primitives::TxHash],
-        results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>],
-    ) {
-        tracing::info!(target: "metis::parallel",
-            "💾 Caching {} parallel execution results",
-            results.len()
-        );
-
-        for (tx_hash, result) in tx_hashes.iter().zip(results.iter()) {
-            self.context.cache_result(
-                *tx_hash,
-                result.receipt.cumulative_gas_used,
-                result.receipt.clone(),
-            );
-            tracing::debug!(target: "metis::parallel",
-                "   Cached: tx_hash=0x{:x}, gas_used={}",
-                tx_hash,
-                result.receipt.cumulative_gas_used
-            );
-        }
-    }
-
     pub fn execute(
         &mut self,
         transactions: impl IntoIterator<Item = impl ExecutableTx<Self>>,
     ) -> Result<BlockExecutionResult<Receipt>, BlockExecutionError> {
-        tracing::warn!(target: "metis::parallel",
-            "🚀🚀🚀 PARALLEL EXECUTOR ACTIVE - EXECUTING TRANSACTIONS IN PARALLEL 🚀🚀🚀"
-        );
-        tracing::info!(target: "metis::parallel",
-            "🔥 ParallelBlockExecutor::execute() - Entry point for REAL parallel execution"
-        );
         tracing::debug!(target: "metis::parallel",
-            "   Using Block-STM algorithm for optimistic parallel execution"
+            "ParallelBlockExecutor::execute() - parallel execution entry point"
         );
 
         let block_env: &RevmBlockEnv = self.evm().block();
@@ -540,50 +442,23 @@ where
 
         let block_env = self.evm().block().clone();
 
-        // Save chain_id before moving cfg_env (used only for logging)
-        let chain_id = cfg_env.chain_id;
         let evm_env = EvmEnv::new(cfg_env, block_env);
         let db = self.evm_mut().db_mut();
         db.set_state_clear_flag(state_clear_flag);
 
         // Collect transactions and calculate blob gas used
         let transactions: Vec<_> = transactions.into_iter().collect();
-        let tx_count = transactions.len();
         let total_blob_gas_used: u64 = transactions
             .iter()
             .filter_map(|tx| tx.tx().blob_gas_used())
             .sum();
 
         let num_threads = num_cpus::get();
-        tracing::info!(target: "metis::parallel",
-            "⚡ Calling metis_pe::ParallelExecutor: tx_count={}, threads={}",
-            tx_count,
-            num_threads
-        );
-        tracing::debug!(target: "metis::parallel",
-            "   spec_id={:?}, chain_id={}, state_clear_flag={}",
-            spec_id,
-            chain_id,
-            state_clear_flag
-        );
-
-        // Print transaction hashes for debugging
-        for (idx, tx) in transactions.iter().enumerate() {
-            let tx_hash = tx.tx().hash();
-            tracing::debug!(target: "metis::parallel",
-                "   TX[{}]: hash=0x{:x}",
-                idx,
-                tx_hash
-            );
-        }
 
         let pe_start_time = std::time::Instant::now();
         // IMPORTANT: align metis-pe ResultAndState<HR> with the executor's concrete HaltReason type
         let mut parallel_executor =
             metis_pe::ParallelExecutor::<<E as alloy_evm::Evm>::HaltReason>::default();
-        tracing::debug!(target: "metis::parallel",
-            "🔥 About to call parallel_executor.execute() - THIS IS WHERE PARALLEL EXECUTION HAPPENS"
-        );
 
         // Build TxEnv list without consuming the original txs so we can commit in-order later
         let transactions_vec: Vec<_> = transactions.into_iter().collect();
@@ -597,13 +472,13 @@ where
         );
 
         let pe_duration = pe_start_time.elapsed();
-        tracing::info!(target: "metis::parallel",
-            "✅ parallel_executor.execute() returned: duration={:?}",
+        tracing::debug!(target: "metis::parallel",
+            "Parallel execution completed: duration={:?}",
             pe_duration
         );
 
         let results_vec = results.map_err(|err| {
-            tracing::error!(target: "metis::parallel", "❌ Parallel execution FAILED: {:?}", err);
+            tracing::error!(target: "metis::parallel", "Parallel execution failed: {:?}", err);
             BlockExecutionError::Internal(InternalBlockExecutionError::Other(Box::new(err)))
         })?;
 
@@ -611,34 +486,13 @@ where
         //
         // This is REQUIRED for correct state roots because it goes through revm's journal / bundle
         // and reth's commit logic (account clearing, selfdestruct, created contracts, etc.).
-        tracing::info!(target: "metis::parallel",
-            "📝 Committing {} pre-executed transaction states via commit_transaction()",
-            results_vec.len()
-        );
 
         let mut receipts: Vec<Receipt> = Vec::with_capacity(results_vec.len());
 
-        for (idx, (tx, result)) in transactions_vec.into_iter().zip(results_vec.into_iter()).enumerate() {
+        for (tx, result) in transactions_vec.into_iter().zip(results_vec.into_iter()) {
             receipts.push(result.receipt.clone());
 
-            tracing::debug!(target: "metis::parallel",
-                "   commit tx[{}]=0x{:x}",
-                idx,
-                tx.tx().hash()
-            );
-
             // Apply state exactly as reth would after executing the tx
-            // SAFETY: For Ethereum mainnet, metis_primitives::HaltReason IS the executor's HaltReason.
-            // They are the exact same type (both are revm::primitives::HaltReason).
-            // We use ptr::read to transfer ownership without triggering drop on the source,
-            // then forget the original to prevent double free.
-            // let result_and_state_converted = unsafe {
-            //     let converted = std::ptr::read(&result.result_and_state as *const _ as *const _);
-            //     std::mem::forget(result); // Prevent double drop
-            //     converted
-            // };
-            // self.commit_transaction(result_and_state_converted, tx)?;
-            //
             // IMPORTANT:
             // revm::db::State will panic if we commit accounts that are not present in its internal
             // cache ("All accounts should be present inside cache"). Prewarm the cache for every
@@ -656,20 +510,11 @@ where
             self.commit_transaction(result.result_and_state, tx)?;
         }
 
-        tracing::info!(target: "metis::parallel",
-            "✅ All pre-executed transaction states committed successfully"
-        );
-
         // The total gas used is the cumulative_gas_used of the last receipt
         // (which already includes all previous transactions' gas)
         let total_gas_used = receipts.last().map(|r| r.cumulative_gas_used).unwrap_or(0);
 
-        tracing::info!(target: "metis::parallel",
-            "✅ Parallel execution SUCCESSFUL! Total gas used: {}",
-            total_gas_used
-        );
-
-        // FIX (方案A): Call post_execution() here to ensure block rewards are applied.
+        // FIX: Call post_execution() here to ensure block rewards are applied.
         //
         // Problem: In some paths (like execute_block), finish() may not be called,
         // leading to missing block rewards and state root mismatches.
@@ -677,23 +522,9 @@ where
         // Solution: Call post_execution() here with a flag to prevent double application.
         // The flag ensures it's only called once per block execution.
         if !self.context.post_execution_called {
-            tracing::debug!(target: "metis::parallel", "Calling post_execution() to apply block rewards");
             self.post_execution()?;
             self.context.mark_post_execution_called();
-            tracing::debug!(target: "metis::parallel", "post_execution() completed successfully");
-        } else {
-            tracing::debug!(target: "metis::parallel", "Skipping post_execution() - already called");
         }
-
-        tracing::info!(target: "metis::parallel",
-            "🎉 ParallelBlockExecutor::execute() completed successfully"
-        );
-        tracing::info!(target: "metis::parallel",
-            "   Summary: receipts={}, gas_used={}, blob_gas_used={}",
-            receipts.len(),
-            total_gas_used,
-            total_blob_gas_used
-        );
 
         let result = BlockExecutionResult {
             receipts,
@@ -702,22 +533,16 @@ where
             blob_gas_used: total_blob_gas_used,
         };
 
-        tracing::debug!(target: "metis::parallel",
-            "✅ Returning BlockExecutionResult from execute()"
-        );
-
         Ok(result)
     }
 
     fn post_execution(&mut self) -> Result<(), BlockExecutionError> {
-        tracing::debug!(target: "metis::parallel", "Starting post-execution balance increments");
         let mut balance_increments = post_block_balance_increments(
             &self.spec,
             self.evm().block(),
             self.executor.ctx.ommers,
             self.executor.ctx.withdrawals.as_deref(),
         );
-        tracing::debug!(target: "metis::parallel", "Calculated {} balance increments", balance_increments.len());
         // Irregular state change at Ethereum DAO hardfork
         let block_env: &RevmBlockEnv = self.evm().block();
         if self
@@ -745,7 +570,6 @@ where
         // We need to commit in a deterministic order (sorted by address)
         let mut sorted_increments: Vec<_> = balance_increments.into_iter().collect();
         sorted_increments.sort_by_key(|(address, _)| *address);
-        tracing::debug!(target: "metis::parallel", "Sorted {} balance increments by address", sorted_increments.len());
 
         // CRITICAL: Use BTreeMap instead of HashMap to maintain sorted order.
         // BTreeMap preserves the sorted order when iterating, ensuring deterministic
@@ -754,41 +578,12 @@ where
             sorted_increments.into_iter().collect();
 
         // increment balances
-        tracing::debug!(target: "metis::parallel", "Applying balance increments to {} addresses", sorted_balance_increments.len());
         self.evm_mut()
             .db_mut()
             .increment_balances(sorted_balance_increments)
             .map_err(|_| BlockValidationError::IncrementBalanceFailed)?;
-        tracing::debug!(target: "metis::parallel", "Balance increments applied successfully");
 
         Ok(())
-    }
-
-    #[allow(dead_code)]
-    fn calc_requests(&mut self, receipts: Vec<Receipt>) -> Result<Requests, BlockExecutionError> {
-        let evm = self.executor.evm_mut();
-        let block = evm.block();
-        let requests = if self
-            .spec
-            .is_prague_active_at_timestamp(block.timestamp.try_into().unwrap_or(u64::MAX))
-        {
-            // Collect all EIP-6110 deposits
-            let deposit_requests =
-                eip6110::parse_deposits_from_receipts(self.spec.clone(), &receipts)?;
-
-            let mut requests = Requests::default();
-
-            if !deposit_requests.is_empty() {
-                requests.push_request_with_type(eip6110::DEPOSIT_REQUEST_TYPE, deposit_requests);
-            }
-            let mut system_caller = SystemCaller::new(self.spec.clone());
-            requests.extend(system_caller.apply_post_execution_changes(evm)?);
-            requests
-        } else {
-            Requests::default()
-        };
-
-        Ok(requests)
     }
 }
 
@@ -813,28 +608,11 @@ where
     where
         Tx: ExecutableTx<Self>,
     {
-        // Convert to a vec to count transactions (for logging)
+        // Convert to a vec to count transactions
         let tx_vec: Vec<Tx> = transactions.into_iter().collect();
-        tracing::info!(target: "metis::parallel",
-            "🎯 BatchExecutable::execute_transactions_batch() called with {} transactions",
-            tx_vec.len()
-        );
-        tracing::debug!(target: "metis::parallel",
-            "   This is the BatchExecutable trait method - enabling batch parallel execution"
-        );
 
         // Call the existing execute method which handles parallel execution
-        let result = self.execute(tx_vec);
-
-        if let Ok(ref res) = result {
-            tracing::info!(target: "metis::parallel",
-                "✅ BatchExecutable execution completed: receipts={}, gas_used={}",
-                res.receipts.len(),
-                res.gas_used
-            );
-        }
-
-        result
+        self.execute(tx_vec)
     }
 }
 
