@@ -1,12 +1,14 @@
 use crate::{
     AccountMeta, Entry, FinishExecFlags, Location, LocationHash, LocationValue, ReadOrigin,
     ReadOrigins, ReadSet, TxIdx, TxVersion, WriteSet,
-    mv_memory::{MvMemory},
+    mv_memory::MvMemory,
     result::{ReadError, TxExecutionResult, VmExecutionError, VmExecutionResult},
 };
 use alloy_evm::EvmEnv;
 use alloy_primitives::TxKind;
-use metis_primitives::{BuildIdentityHasher, EvmState, HashMap, I257, ResultAndState, hash_deterministic};
+use metis_primitives::{
+    BuildIdentityHasher, EvmState, HashMap, I257, ResultAndState, hash_deterministic,
+};
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
 use revm::context::ContextSetters;
@@ -26,7 +28,7 @@ use revm::{
     state::{Account, AccountInfo, AccountStatus},
 };
 use revm::{handler::Handler, interpreter::interpreter_action::FrameInit};
-use smallvec::{SmallVec};
+use smallvec::SmallVec;
 #[cfg(feature = "compiler")]
 use std::sync::Arc;
 
@@ -466,7 +468,12 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                 // explicitly apply the beneficiary (miner tip) reward into the finalized `state`.
                 // Otherwise, proposers that commit pre-executed `ResultAndState` will produce a
                 // different state root than validators that re-execute transactions.
-                self.apply_beneficiary_reward_to_state(&mut state, tx_version.tx_idx, tx, result.gas_used());
+                self.apply_beneficiary_reward_to_state(
+                    &mut state,
+                    tx_version.tx_idx,
+                    tx,
+                    result.gas_used(),
+                );
 
                 for (address, account) in &state {
                     if account.is_selfdestructed() {
@@ -667,16 +674,13 @@ impl<'a, DB: DatabaseRef> Vm<'a, DB> {
                 let beneficiary_location_hash = hash_deterministic(Location::Basic(beneficiary));
                 let mut base_info: Option<AccountInfo> = None;
 
-                if tx_idx > 0 {
-                    if let Some(written_txs) = self.mv_memory.data.get(&beneficiary_location_hash) {
-                        if let Some((_, Entry::Data(_, value))) =
-                            written_txs.range(..tx_idx).next_back()
-                        {
-                            if let LocationValue::Basic(info) = value {
-                                base_info = Some(info.clone());
-                            }
-                        }
-                    }
+                if tx_idx > 0
+                    && let Some(written_txs) = self.mv_memory.data.get(&beneficiary_location_hash)
+                    && let Some((_, Entry::Data(_, value))) =
+                        written_txs.range(..tx_idx).next_back()
+                    && let LocationValue::Basic(info) = value
+                {
+                    base_info = Some(info.clone());
                 }
 
                 if base_info.is_none() {
