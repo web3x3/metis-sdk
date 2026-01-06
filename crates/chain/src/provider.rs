@@ -526,10 +526,24 @@ where
             self.post_execution()?;
             self.context.mark_post_execution_called();
         }
+        
+        // Parse EIP-7685 requests (withdrawal, deposit, consolidation) if Prague is active
+        let block_env: &revm::context::BlockEnv = self.executor.evm.block();
+        let requests = if self
+            .spec
+            .is_prague_active_at_timestamp(block_env.timestamp.to::<u64>())
+        {
+            // Use the inner executor's system_caller to parse requests from system contracts
+            self.executor
+                .system_caller
+                .apply_post_execution_changes(&mut self.executor.evm)?
+        } else {
+            Requests::default()
+        };
 
         let result = BlockExecutionResult {
             receipts,
-            requests: Requests::default(),
+            requests,
             gas_used: total_gas_used,
             blob_gas_used: total_blob_gas_used,
         };
