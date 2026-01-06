@@ -23,15 +23,15 @@ use std::{
 
 use alloy_evm::EvmEnv;
 use metis_primitives::{
-    Account, AccountInfo, AccountStatus, CacheDB, DatabaseRef,
-    InvalidTransaction, KECCAK_EMPTY, SpecId, Transaction, TxEnv, U256, hash_deterministic,
+    Account, AccountInfo, AccountStatus, CacheDB, DatabaseRef, InvalidTransaction, KECCAK_EMPTY,
+    SpecId, Transaction, TxEnv, U256, hash_deterministic,
 };
 // Required for `evm.set_tx(...)`
 use metis_primitives::ContextSetters;
 // Required for `evm.finalize()`
-use revm::ExecuteEvm;
 #[cfg(feature = "compiler")]
 use metis_vm::ExtCompileWorker;
+use revm::ExecuteEvm;
 
 /// The main executor struct that executes blocks with Block-STM algorithm.
 ///
@@ -161,7 +161,6 @@ where
                             next_task = scheduler.next_task();
                         }
                     }
-
                 });
             }
         });
