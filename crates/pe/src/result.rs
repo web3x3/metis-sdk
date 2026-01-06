@@ -3,9 +3,9 @@ use alloy_consensus::TxType;
 use metis_primitives::{
     DBErrorMarker, DatabaseRef, EVMError, EvmState, InvalidTransaction, TxNonce,
 };
-use revm::context::result::ResultAndState as RevmResultAndState;
 use op_revm::OpTransactionError;
 use reth_primitives::Receipt;
+use revm::context::result::ResultAndState as RevmResultAndState;
 
 /// Database error definitions.
 #[derive(Debug, Clone, PartialEq, thiserror::Error)]
@@ -136,7 +136,10 @@ where
     ///
     /// This preserves the complete ResultAndState from revm, ensuring no information loss.
     #[inline]
-    pub fn from_raw(tx_type: TxType, result_and_state: metis_primitives::ResultAndState<HR>) -> Self {
+    pub fn from_raw(
+        tx_type: TxType,
+        result_and_state: metis_primitives::ResultAndState<HR>,
+    ) -> Self {
         let cumulative_gas_used = result_and_state.result.gas_used();
         let success = result_and_state.result.is_success();
         let logs = result_and_state.result.logs().to_vec();
