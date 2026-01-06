@@ -99,7 +99,10 @@ thread_local! {
 
 /// Set global cache with parallel execution results
 /// Called by payload builder before serial execution loop
-pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>]) {
+pub fn set_global_cache(
+    tx_hashes: &[TxHash],
+    results: &[metis_pe::TxExecutionResult<metis_primitives::HaltReason>],
+) {
     GLOBAL_EXECUTION_CACHE.with(|cache| {
         let mut cache = cache.borrow_mut();
         cache.clear();
@@ -122,9 +125,7 @@ pub fn set_global_cache(tx_hashes: &[TxHash], results: &[metis_pe::TxExecutionRe
 /// Get cached result from global cache
 /// Called by executor during execute_transaction
 pub fn get_global_cached_result(tx_hash: &TxHash) -> Option<CachedExecutionResult> {
-    GLOBAL_EXECUTION_CACHE.with(|cache| {
-        cache.borrow().get(tx_hash).cloned()
-    })
+    GLOBAL_EXECUTION_CACHE.with(|cache| cache.borrow().get(tx_hash).cloned())
 }
 
 #[cfg(test)]
