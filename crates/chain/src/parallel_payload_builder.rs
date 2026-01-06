@@ -458,8 +458,7 @@ where
             Err(err) => {
                 warn!(target: "payload_builder", "Parallel execution failed: {:?}", err);
                 return Err(PayloadBuilderError::other(ParallelExecutionError(format!(
-                    "{:?}",
-                    err
+                    "{err:?}"
                 ))));
             }
         };
