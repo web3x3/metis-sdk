@@ -30,7 +30,6 @@ use reth_node_builder::{
 use reth_node_core::cli::config::PayloadBuilderConfig;
 use reth_payload_builder_primitives::PayloadBuilderError;
 use reth_payload_primitives::PayloadBuilderAttributes;
-// Receipt import removed - no longer needed since we don't replace receipts
 use reth_revm::{database::StateProviderDatabase, db::State};
 use reth_storage_api::StateProviderFactory;
 use reth_transaction_pool::{
@@ -239,7 +238,7 @@ where
 
     let chain_spec = client.chain_spec();
 
-    info!(target: "payload_builder", id=%attributes.id, parent_header = ?parent_header.hash(), parent_number = parent_header.number, "🚀 Building payload with PARALLEL execution");
+    info!(target: "payload_builder", id=%attributes.id, parent_header = ?parent_header.hash(), parent_number = parent_header.number, "Building payload with parallel execution");
 
     let block_gas_limit: u64 = builder.evm_mut().block().gas_limit();
     let base_fee = builder.evm_mut().block().basefee();
@@ -275,9 +274,9 @@ where
     let mut block_transactions_rlp_length = 0usize;
     let mut blob_sidecars_to_include = Vec::new();
 
-    info!(target: "payload_builder", "📦 Phase 1: Collecting and validating transactions");
+    debug!(target: "payload_builder", "Phase 1: Collecting and validating transactions");
     debug!(target: "payload_builder",
-        "⚙️ Collection params: block_gas_limit={}, max_blob_count={:?}, is_osaka={}",
+        "Collection params: block_gas_limit={}, max_blob_count={:?}, is_osaka={}",
         block_gas_limit, max_blob_count, is_osaka
     );
 
@@ -378,13 +377,6 @@ where
         block_transactions_rlp_length += tx.inner().length();
 
         let tx_hash = *tx.hash();
-        debug!(target: "payload_builder",
-            "✅ Collected tx #{}: hash=0x{:x}, gas_limit={}, cumulative_gas={}",
-            collected_transactions.len() + 1,
-            tx_hash,
-            pool_tx.gas_limit(),
-            cumulative_gas_for_validation
-        );
 
         // Calculate blob gas used for this transaction
         let tx_blob_gas_used = tx.blob_gas_used();
@@ -399,25 +391,17 @@ where
 
         // Store blob sidecar for later inclusion
         if let Some(sidecar) = blob_sidecar_for_tx {
-            debug!(target: "payload_builder", "  📎 Including blob sidecar for tx 0x{:x}", tx_hash);
             blob_sidecars_to_include.push(sidecar);
         }
     }
 
-    info!(target: "payload_builder",
+    debug!(target: "payload_builder",
         tx_count = collected_transactions.len(),
-        "✅ Phase 1 complete: Collected {} transactions",
-        collected_transactions.len()
+        "Phase 1 complete: collected {} transactions, total_gas_limit={}, blob_count={}",
+        collected_transactions.len(),
+        cumulative_gas_for_validation,
+        blob_sidecars_to_include.len()
     );
-
-    if !collected_transactions.is_empty() {
-        debug!(target: "payload_builder",
-            "📊 Collected transactions summary: total_tx={}, total_gas_limit={}, blob_count={}",
-            collected_transactions.len(),
-            cumulative_gas_for_validation,
-            blob_sidecars_to_include.len()
-        );
-    }
 
     // ====================================================================
     // STEP 2: Execute transactions in parallel
@@ -429,8 +413,8 @@ where
     let mut total_fees = U256::ZERO;
 
     if !collected_transactions.is_empty() {
-        info!(target: "payload_builder",
-            "🚀 Phase 2: Starting parallel execution of {} transactions",
+        debug!(target: "payload_builder",
+            "Phase 2: Starting parallel execution of {} transactions",
             collected_transactions.len()
         );
 
@@ -482,13 +466,8 @@ where
         };
 
         let parallel_duration = parallel_start.elapsed();
-        info!(target: "payload_builder",
-            "✅ Step 2a complete: Parallel execution finished in {:?}",
-            parallel_duration
-        );
-
         debug!(target: "payload_builder",
-            "📊 Parallel execution stats: total_txs={}, duration={:?}, avg_per_tx={:?}us",
+            "Parallel execution stats: total_txs={}, duration={:?}, avg_per_tx={:?}us",
             tx_count,
             parallel_duration,
             parallel_duration.as_micros() / tx_count as u128
@@ -505,8 +484,8 @@ where
         // - Do NOT cache/replace receipts.
         // The only correct way to keep proposer/validator roots identical is to feed the
         // precomputed ResultAndState into the executor's commit_transaction.
-        info!(target: "payload_builder",
-            "📊 Step 2b: Committing {} pre-executed transactions via commit_transaction()",
+        debug!(target: "payload_builder",
+            "Step 2b: Committing {} pre-executed transactions via commit_transaction()",
             tx_count
         );
 
@@ -521,11 +500,6 @@ where
         {
             let tx_hash = ct.tx_hash;
 
-            info!(target: "payload_builder",
-                "🔧 TX[{}]: Committing pre-executed transaction hash=0x{:x}",
-                idx, tx_hash
-            );
-
             // 1) Add transaction to block body (no execution)
             let tx = ct.tx;
             // Fee estimation (only used to compare payloads) must be computed before moving `tx`
@@ -535,17 +509,6 @@ where
             builder.push_transaction_to_body(tx.clone())?;
 
             // 2) Commit the pre-executed ResultAndState using executor.commit_transaction()
-            // SAFETY: For Ethereum mainnet, metis_primitives::HaltReason IS the executor's HaltReason.
-            // They are the exact same type (both are revm::primitives::HaltReason).
-            // We use ptr::read to transfer ownership without triggering drop on the source,
-            // then forget the original to prevent double free.
-            // let result_and_state_converted = unsafe {
-            //     let converted = std::ptr::read(&result.result_and_state as *const _ as *const _);
-            //     std::mem::forget(result); // Prevent double drop
-            //     converted
-            // };
-            // match builder.commit_executed_transaction(result_and_state_converted, tx.clone()) {
-            //
             // IMPORTANT:
             // revm::db::State will panic if we commit accounts that are not present in its internal
             // cache ("All accounts should be present inside cache"). Prewarm the cache for every
@@ -576,30 +539,23 @@ where
         }
 
         let commit_duration = commit_start.elapsed();
-        info!(target: "payload_builder",
-            "✅ Step 2b complete: committed {} txs in {:?} (avg {:?} per tx)",
+        debug!(target: "payload_builder",
+            "Step 2b complete: committed {} txs in {:?} (avg {:?} per tx)",
             committed_count,
             commit_duration,
             commit_duration / (committed_count.max(1) as u32)
         );
 
-        info!(target: "payload_builder",
-            "📊 Execution statistics: parallel_executed={}, committed_to_block={}, parallel_time={:?}, commit_time={:?}, total_time={:?}",
+        debug!(target: "payload_builder",
+            "Execution stats: parallel_executed={}, committed={}, parallel_time={:?}, commit_time={:?}, total_time={:?}",
             tx_count, committed_count,
             parallel_duration, commit_duration, parallel_start.elapsed()
         );
-
-        debug!(target: "payload_builder",
-            "Parallel execution complete - parallel: {:?}, commit: {:?}, total: {:?}",
-            parallel_duration, commit_duration, parallel_start.elapsed()
-        );
-    } else {
-        info!(target: "payload_builder", "📦 No transactions to execute (empty block)");
     }
 
-    info!(target: "payload_builder",
+    debug!(target: "payload_builder",
         %total_fees,
-        "💰 Phase 2 complete: fees={}",
+        "Phase 2 complete: fees={}",
         total_fees
     );
 
@@ -628,9 +584,8 @@ where
     } = builder.finish(&state_provider)?;
 
     // Receipts are now correctly generated by commit_transaction during parallel execution
-    // No need to replace them - they're already correct!
-    info!(target: "payload_builder",
-        "✅ Block finalized: {} receipts, gas_used={}",
+    debug!(target: "payload_builder",
+        "Block finalized: {} receipts, gas_used={}",
         execution_result.receipts.len(),
         execution_result.gas_used
     );
@@ -723,8 +678,6 @@ where
         let conf = ctx.payload_builder_config();
         let chain = ctx.chain_spec().chain();
         let gas_limit = conf.gas_limit_for(chain);
-
-        info!(target: "payload_builder", "🚀 Creating ParallelEthereumPayloadBuilder with parallel execution support");
 
         Ok(ParallelEthereumPayloadBuilder::new(
             ctx.provider().clone(),
