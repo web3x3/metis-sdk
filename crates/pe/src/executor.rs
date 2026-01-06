@@ -133,42 +133,24 @@ where
 
         let start_time = std::time::Instant::now();
 
-        tracing::info!(
+        tracing::debug!(
             target: "metis::parallel::rerun",
             block_size = block_size,
             concurrency = concurrency_level.get(),
-            "🚀 Starting parallel execution"
+            "Starting parallel execution"
         );
 
         thread::scope(|scope| {
             for _ in 0..concurrency_level.into() {
                 scope.spawn(|| {
-                    let mut task_count = 0;
-                    let mut execution_count = 0;
-                    let mut validation_count = 0;
                     let mut next_task = scheduler.next_task();
 
                     while let Some(task) = next_task {
-                        task_count += 1;
                         next_task = match task {
                             Task::Execution(tx_version) => {
-                                execution_count += 1;
-                                tracing::debug!(
-                                    target: "metis::parallel::rerun",
-                                    tx_idx = tx_version.tx_idx,
-                                    tx_incarnation = tx_version.tx_incarnation,
-                                    "🔄 Executing TX (incarnation indicates rerun count)"
-                                );
                                 self.try_execute(&vm, &scheduler, tx_version)
                             }
                             Task::Validation(tx_version) => {
-                                validation_count += 1;
-                                tracing::debug!(
-                                    target: "metis::parallel::rerun",
-                                    tx_idx = tx_version.tx_idx,
-                                    tx_incarnation = tx_version.tx_incarnation,
-                                    "✓ Validating TX"
-                                );
                                 try_validate(&mv_memory, &scheduler, &tx_version)
                             }
                         };
@@ -180,13 +162,6 @@ where
                         }
                     }
 
-                    tracing::debug!(
-                        target: "metis::parallel::rerun",
-                        total_tasks = task_count,
-                        executions = execution_count,
-                        validations = validation_count,
-                        "🏁 Worker thread finished"
-                    );
                 });
             }
         });
@@ -195,21 +170,13 @@ where
 
         // Calculate statistics from execution
         let block_size = txs.len();
-        tracing::info!(
+        tracing::debug!(
             target: "metis::parallel::rerun",
             block_size = block_size,
             duration_ms = parallel_duration.as_millis(),
             avg_tx_time_us = parallel_duration.as_micros() / block_size.max(1) as u128,
             concurrency = concurrency_level.get(),
-            "✅ Parallel execution phase completed"
-        );
-
-        tracing::debug!(
-            target: "metis::parallel::rerun",
-            "📊 Block execution completed: block_size={}, total_duration_ms={}, avg_tx_time_us={}",
-            block_size,
-            parallel_duration.as_millis(),
-            parallel_duration.as_micros() / block_size.max(1) as u128
+            "Parallel execution phase completed"
         );
 
         if let Some(abort_reason) = self.abort_reason.take() {
@@ -236,18 +203,9 @@ where
         let mut cumulative_gas_used: u64 = 0;
         for i in 0..block_size {
             let mut execution_result = index_mutex!(self.execution_results, i).take().unwrap();
-            let gas_this_tx = execution_result.receipt.cumulative_gas_used; // gas before accumulation
             cumulative_gas_used =
                 cumulative_gas_used.saturating_add(execution_result.receipt.cumulative_gas_used);
             execution_result.receipt.cumulative_gas_used = cumulative_gas_used;
-
-            tracing::info!(
-                target: "metis::parallel",
-                tx_idx = i,
-                gas_this_tx = gas_this_tx,
-                cumulative_after = cumulative_gas_used,
-                "Accumulated cumulative_gas_used"
-            );
 
             fully_evaluated_results.push(execution_result);
         }
@@ -374,14 +332,6 @@ where
         #[cfg(feature = "async-dropper")]
         self.dropper.drop((mv_memory, scheduler, txs));
 
-        tracing::info!(
-            target: "metis::parallel::rerun",
-            block_size = block_size,
-            total_duration_ms = parallel_duration.as_millis(),
-            avg_tx_time_us = parallel_duration.as_micros() / block_size as u128,
-            "📊 Block execution completed"
-        );
-
         Ok(fully_evaluated_results)
     }
 
@@ -391,18 +341,9 @@ where
         scheduler: &Scheduler<T>,
         tx_version: TxVersion,
     ) -> Option<Task> {
-        let mut retry_count = 0;
         loop {
             return match vm.execute::<HR>(&tx_version) {
                 Err(VmExecutionError::Retry) => {
-                    retry_count += 1;
-                    tracing::debug!(
-                        target: "metis::parallel::rerun",
-                        tx_idx = tx_version.tx_idx,
-                        tx_incarnation = tx_version.tx_incarnation,
-                        retry_count = retry_count,
-                        "⏳ Execution blocked, retrying..."
-                    );
                     if self.abort_reason.get().is_none() {
                         continue;
                     }
@@ -412,7 +353,7 @@ where
                     tracing::warn!(
                         target: "metis::parallel::rerun",
                         tx_idx = tx_version.tx_idx,
-                        "⚠️ Fallback to sequential execution triggered"
+                        "Fallback to sequential execution triggered"
                     );
                     scheduler.abort();
                     self.abort_reason
@@ -420,24 +361,9 @@ where
                     None
                 }
                 Err(VmExecutionError::Blocking(blocking_tx_idx)) => {
-                    tracing::debug!(
-                        target: "metis::parallel::rerun",
-                        tx_idx = tx_version.tx_idx,
-                        tx_incarnation = tx_version.tx_incarnation,
-                        blocking_tx_idx = blocking_tx_idx,
-                        "🚧 TX blocked by dependency, adding to wait list"
-                    );
                     if !scheduler.add_dependency(tx_version.tx_idx, blocking_tx_idx)
                         && self.abort_reason.get().is_none()
                     {
-                        // Retry the execution immediately if the blocking transaction was
-                        // re-executed by the time we can add it as a dependency.
-                        tracing::debug!(
-                            target: "metis::parallel::rerun",
-                            tx_idx = tx_version.tx_idx,
-                            blocking_tx_idx = blocking_tx_idx,
-                            "🔄 Blocking TX already completed, retrying immediately"
-                        );
                         continue;
                     }
                     None
@@ -447,7 +373,7 @@ where
                         target: "metis::parallel::rerun",
                         tx_idx = tx_version.tx_idx,
                         error = ?err,
-                        "❌ Execution error occurred"
+                        "Execution error occurred"
                     );
                     scheduler.abort();
                     self.abort_reason
@@ -458,16 +384,6 @@ where
                     execution_result,
                     flags,
                 }) => {
-                    if tx_version.tx_incarnation > 0 {
-                        tracing::info!(
-                            target: "metis::parallel::rerun",
-                            tx_idx = tx_version.tx_idx,
-                            tx_incarnation = tx_version.tx_incarnation,
-                            retry_count = retry_count,
-                            "✅ TX re-executed successfully after {} reruns",
-                            tx_version.tx_incarnation
-                        );
-                    }
                     {
                         *index_mutex!(self.execution_results, tx_version.tx_idx) =
                             Some(execution_result);
@@ -488,22 +404,7 @@ fn try_validate<T: TaskProvider>(
     let read_set_valid = mv_memory.validate_read_locations(tx_version.tx_idx);
     let aborted = !read_set_valid && scheduler.try_validation_abort(tx_version);
     if aborted {
-        tracing::info!(
-            target: "metis::parallel::rerun",
-            tx_idx = tx_version.tx_idx,
-            tx_incarnation = tx_version.tx_incarnation,
-            "❌ Validation FAILED - TX will be re-executed (incarnation {}→{})",
-            tx_version.tx_incarnation,
-            tx_version.tx_incarnation + 1
-        );
         mv_memory.convert_writes_to_estimates(tx_version.tx_idx);
-    } else {
-        tracing::debug!(
-            target: "metis::parallel::rerun",
-            tx_idx = tx_version.tx_idx,
-            tx_incarnation = tx_version.tx_incarnation,
-            "✅ Validation SUCCESS"
-        );
     }
 
     scheduler.finish_validation(tx_version, aborted)
@@ -530,10 +431,10 @@ where
     let block_size = txs.len();
     let start_time = std::time::Instant::now();
 
-    tracing::info!(
+    tracing::debug!(
         target: "metis::parallel::rerun",
         block_size = block_size,
-        "🔄 Starting SEQUENTIAL execution (fallback from parallel)"
+        "Starting sequential execution (fallback from parallel)"
     );
 
     let mut db = CacheDB::new(db);
@@ -571,12 +472,12 @@ where
             }
         };
 
-           // IMPORTANT:
-    // Do NOT commit state changes to the shared database here.
+        // IMPORTANT:
+        // Do NOT commit state changes to the shared database here.
         // The caller (reth executor) must commit via commit_transaction(ResultAndState, tx)
         // to preserve correct journal/bundle semantics and deterministic state roots.
 
-// Store the complete ResultAndState (preserves all information for correct state root)
+        // Store the complete ResultAndState (preserves all information for correct state root)
         let mut execution_result = TxExecutionResult::from_raw(tx_type, result_and_state);
 
         // Accumulate cumulative gas used
@@ -588,20 +489,12 @@ where
     }
 
     let sequential_duration = start_time.elapsed();
-    tracing::info!(
+    tracing::debug!(
         target: "metis::parallel::rerun",
         block_size = block_size,
         duration_ms = sequential_duration.as_millis(),
         avg_tx_time_us = sequential_duration.as_micros() / block_size.max(1) as u128,
-        "✅ Sequential execution completed"
-    );
-
-    tracing::debug!(
-        target: "metis::parallel::rerun",
-        "📊 Sequential execution stats: block_size={}, total_duration_ms={}, avg_tx_time_us={}",
-        block_size,
-        sequential_duration.as_millis(),
-        sequential_duration.as_micros() / block_size.max(1) as u128
+        "Sequential execution completed"
     );
 
     Ok(results)
